@@ -457,29 +457,110 @@
     /** { plano, testeGratisAte, cobrancas: [...] } */
     getAssinatura: async function () {
       var id = await uid();
-      var perfil = await q(sb.from('perfis').select('plano, teste_gratis_ate').eq('id', id).maybeSingle());
+      var perfil = await q(sb.from('perfis').select('plano, teste_gratis_ate, acesso_ate').eq('id', id).maybeSingle());
       var linhas = await q(sb.from('cobrancas').select('*').order('numero', { ascending: true }));
       var teste = perfil && perfil.teste_gratis_ate;
       if (!teste) {
         var d = new Date();
-        d.setDate(d.getDate() + 30);
+        d.setDate(d.getDate() + 7);
         teste = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
       }
-      return { plano: (perfil && perfil.plano) || 'mensal', testeGratisAte: teste, cobrancas: linhas.map(cobrancaDoBanco) };
+      return {
+        plano: (perfil && perfil.plano) || 'mensal',
+        testeGratisAte: teste,
+        acessoAte: (perfil && perfil.acesso_ate) || teste,
+        cobrancas: linhas.map(cobrancaDoBanco)
+      };
     },
 
+    /** Só o fim do acesso pago (usado pelo app.js para bloquear o menu). */
+    getAcessoAte: async function () {
+      var id = await uid();
+      var perfil = await q(sb.from('perfis').select('acesso_ate').eq('id', id).maybeSingle());
+      return perfil && perfil.acesso_ate;
+    },
+
+    /* O pagamento (pago_em) não é gravado por aqui: só o servidor marca uma
+       mensalidade como paga, quando o Pix é aprovado. O app só cria as
+       próximas cobranças e troca plano/valor das em aberto. */
     saveAssinatura: async function (a) {
       var id = await uid();
-      await q(sb.from('perfis').update({ plano: a.plano === 'anual' ? 'anual' : 'mensal' }).eq('id', id));
+      var plano = a.plano === 'anual' ? 'anual' : 'mensal';
+      await q(sb.from('perfis').update({ plano: plano }).eq('id', id));
       if (a.cobrancas && a.cobrancas.length) {
         await q(sb.from('cobrancas').upsert(a.cobrancas.map(function (c) {
           return {
             id: c.id, usuario_id: id, numero: c.numero, offset_meses: c.offsetMeses, vencimento: c.vencimento,
-            plano: c.plano, valor: c.valor, pago_em: c.pagoEm || null
+            plano: c.plano, valor: c.valor
           };
-        }), { onConflict: 'id' }));
+        }), { onConflict: 'id', ignoreDuplicates: true }));
+        var hoje = new Date();
+        hoje = hoje.getFullYear() + '-' + String(hoje.getMonth() + 1).padStart(2, '0') + '-' + String(hoje.getDate()).padStart(2, '0');
+        var emAberto = a.cobrancas.filter(function (c) { return !c.pagoEm && c.vencimento >= hoje && c.plano === plano; });
+        if (emAberto.length) {
+          await q(sb.from('cobrancas').update({ plano: plano, valor: emAberto[0].valor })
+            .is('pago_em', null).gte('vencimento', hoje).neq('plano', plano));
+        }
       }
       return a;
+    },
+
+    /* ---------- Pix (funções /api na Vercel) ---------- */
+
+    /** Gera ou reaproveita o Pix de uma mensalidade. → { id, valor, qrCode, qrCodeBase64, expiraEm } */
+    criarPix: function (cobrancaId) {
+      return chamarApi('/api/pix/criar', { method: 'POST', body: JSON.stringify({ cobrancaId: cobrancaId }) });
+    },
+
+    /** → { status: 'approved' | 'pending' | 'expired' | ... } */
+    statusPix: function (pagamentoId) {
+      return chamarApi('/api/pix/status?id=' + encodeURIComponent(pagamentoId));
+    },
+
+    /* ---------- Assinatura no cartão (Mercado Pago) ---------- */
+
+    /** Assinatura mais recente da pessoa, ou null. → { id, plano, valor, status } */
+    getAssinaturaCartao: async function () {
+      var id = await uid();
+      var linhas = await q(sb.from('assinaturas').select('id, plano, valor, status')
+        .eq('usuario_id', id).order('criado_em', { ascending: false }).limit(1));
+      var l = linhas[0];
+      return l ? { id: l.id, plano: l.plano, valor: num(l.valor), status: l.status } : null;
+    },
+
+    /** Cria (ou reaproveita) a assinatura no plano atual. → { id, plano, valor, status, initPoint } */
+    criarAssinaturaCartao: function () {
+      return chamarApi('/api/subscriptions', { method: 'POST', body: '{}' });
+    },
+
+    /** Consulta no Mercado Pago e atualiza o status. → { id, plano, valor, status } */
+    consultarAssinaturaCartao: function (assinaturaId) {
+      return chamarApi('/api/subscriptions/' + encodeURIComponent(assinaturaId));
+    },
+
+    /** acao: 'pause' | 'reactivate' | 'cancel'. → { id, plano, valor, status } */
+    alterarAssinaturaCartao: function (assinaturaId, acao) {
+      return chamarApi('/api/subscriptions/' + encodeURIComponent(assinaturaId), {
+        method: 'POST', body: JSON.stringify({ acao: acao })
+      });
     }
   };
+
+  async function chamarApi(caminho, opcoes) {
+    var r = await sb.auth.getSession();
+    var token = r.data && r.data.session && r.data.session.access_token;
+    if (!token) throw erro('SEM_SESSAO', 'Sua sessão expirou. Entre novamente.');
+    opcoes = opcoes || {};
+    opcoes.headers = { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' };
+    var resp;
+    try {
+      resp = await fetch(caminho, opcoes);
+    } catch (e) {
+      throw erro('REDE', 'Sem conexão. Verifique sua internet e tente de novo.');
+    }
+    var dados = await resp.json().catch(function () { return {}; });
+    if (resp.status === 401) throw erro('SEM_SESSAO', dados.erro || 'Sua sessão expirou. Entre novamente.');
+    if (!resp.ok) throw erro('API', dados.erro || 'Não foi possível concluir agora. Tente de novo.');
+    return dados;
+  }
 })();

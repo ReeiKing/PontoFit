@@ -136,9 +136,31 @@
     document.dispatchEvent(new CustomEvent('pf:secao', { detail: { secao: id, anterior: anterior } }));
   }
 
+  /* ---------- Acesso bloqueado (mensalidade vencida) ----------
+     Quem bloqueia de verdade é o banco (RLS exige acesso ativo); aqui o menu
+     só deixa "Meu plano" aberto. O plano.js dispara 'pf:acesso' quando um
+     Pix é aprovado. Tolerância igual à do plano.js / private.acesso_ativo(). */
+  var bloqueado = false;
+  function definirBloqueio(acessoAte) {
+    bloqueado = !!acessoAte && PF.fmt.hojeISO() > PF.fmt.somarDias(acessoAte, 3);
+    if (bloqueado) document.documentElement.setAttribute('data-acesso-bloqueado', '');
+    else document.documentElement.removeAttribute('data-acesso-bloqueado');
+    document.querySelectorAll('[data-link-secao]').forEach(function (a) {
+      if (a.dataset.linkSecao === 'plano') return;
+      if (bloqueado) { a.setAttribute('aria-disabled', 'true'); a.setAttribute('tabindex', '-1'); }
+      else { a.removeAttribute('aria-disabled'); a.removeAttribute('tabindex'); }
+    });
+  }
+
+  document.addEventListener('pf:acesso', function (e) {
+    var estava = bloqueado;
+    definirBloqueio(e.detail.acessoAte);
+    if (estava && !bloqueado) PF.toast('Seu acesso foi reativado. Bom te ver de volta!', { titulo: 'Tudo liberado' });
+  });
+
   // Hash inválido ou vazio → corrige a URL sem criar entrada no histórico.
   function secaoNormalizada() {
-    var id = secaoDoHash();
+    var id = bloqueado ? 'plano' : secaoDoHash();
     if (location.hash !== '#' + id) history.replaceState(null, '', '#' + id);
     return id;
   }
@@ -186,6 +208,14 @@
     var usuario = resultado[0];
     if (!usuario) return; // redirecionando para o login
     mostrarUsuario(usuario);
-    mostrarSecao(secaoNormalizada(), false);
+    return PF.storage.getAcessoAte().then(definirBloqueio, function () { /* sem rede: o banco decide */ })
+      .then(function () {
+        mostrarSecao(secaoNormalizada(), false);
+        if (bloqueado) {
+          PF.toast('Sua mensalidade venceu. Pague com Pix para liberar o app na hora.', {
+            titulo: 'Acesso bloqueado', tipo: 'erro', duracao: 8000
+          });
+        }
+      });
   });
 })();

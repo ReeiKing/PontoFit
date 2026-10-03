@@ -736,6 +736,22 @@
 .assinatura__proxima { font-weight: 600; }
 .assinatura__proxima:empty { display: none; }
 
+/* Pagamento automático no cartão (Mercado Pago) */
+.cartao-auto { display: grid; gap: var(--esp-3); }
+@media (min-width: 768px) {
+  .cartao-auto { grid-template-columns: 1fr auto; align-items: center; gap: var(--esp-5); }
+  .cartao-auto__erro { grid-column: 1 / -1; }
+}
+.cartao-auto__texto { display: grid; gap: var(--esp-1); }
+.cartao-auto__acoes { display: flex; flex-wrap: wrap; align-items: center; gap: var(--esp-2); }
+.cartao-auto__acoes .badge { font-size: var(--fs-sm); padding: .2rem .7rem; }
+.cartao-auto__erro {
+  padding: var(--esp-2) var(--esp-3);
+  border-radius: 10px;
+  background: var(--vermelho-suave);
+  color: var(--vermelho);
+}
+
 .plano-app__numeros { grid-template-columns: repeat(3, 1fr); }
 @media (max-width: 639px) {
   .plano-app__numeros { grid-template-columns: 1fr 1fr; }
@@ -1112,3 +1128,63 @@
 .cesta__nova-linha { flex-wrap: wrap; }
 .cesta__nova-linha .input { flex: 1 1 12rem; }
 @media (max-width: 639px) { .cesta__nova-linha .btn { flex: 1 1 100%; } }
+
+/* ==========================================================================
+   Pagamento por Pix (diálogo da seção "Meu plano")
+   ========================================================================== */
+.pix {
+  width: min(420px, calc(100% - 2 * var(--gutter)));
+  max-height: calc(100% - 2 * var(--gutter));
+  margin: auto;
+  padding: var(--esp-5);
+  border: 0;
+  border-radius: 20px;
+  background: var(--superficie);
+  color: var(--texto);
+  box-shadow: var(--sombra-3);
+  overflow-y: auto;
+}
+.pix[open] { display: grid; gap: var(--esp-3); }
+.pix::backdrop { background: rgba(15, 23, 19, .6); }
+.pix__topo { display: flex; justify-content: space-between; align-items: start; gap: var(--esp-3); }
+.pix__rotulo { font-size: var(--fs-sm); font-weight: 600; color: var(--texto-sec); }
+.pix__titulo { font-size: 1.25rem; }
+.pix__valor { font-family: var(--fonte-titulo); font-size: 1.75rem; font-weight: 700; color: var(--verde-escuro); }
+.pix__qr {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 240px;
+  max-width: 100%;
+  aspect-ratio: 1;
+  margin-inline: auto;
+  border-radius: 12px;
+  background: #fff; /* o QR precisa de fundo claro, inclusive no modo escuro */
+}
+.pix__qr img { width: 100%; height: auto; }
+.pix__qr img:not([src]) { visibility: hidden; }
+.pix__spinner {
+  position: absolute;
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--verde-suave);
+  border-top-color: var(--verde);
+  border-radius: 50%;
+  animation: girar .8s linear infinite;
+}
+.pix:not([data-pix-estado="carregando"]) .pix__spinner { display: none; }
+.pix__status { font-weight: 600; text-align: center; }
+.pix[data-pix-estado="pago"] .pix__status { color: var(--verde-escuro); }
+.pix[data-pix-estado="erro"] .pix__status,
+.pix[data-pix-estado="expirado"] .pix__status { color: var(--vermelho); }
+.pix[data-pix-estado="expirado"] .pix__qr img,
+.pix[data-pix-estado="pago"] .pix__qr img { opacity: .2; }
+.pix__copia { display: flex; gap: var(--esp-2); }
+.pix__copia .input { flex: 1; min-width: 0; font-family: ui-monospace, monospace; font-size: var(--fs-sm); }
+.pix__validade:empty { display: none; }
+
+/* Acesso bloqueado: só "Meu plano" fica disponível no menu (js/app.js) */
+[data-acesso-bloqueado] .menu__item:not([data-link-secao="plano"]) {
+  opacity: .45;
+  pointer-events: none;
+}

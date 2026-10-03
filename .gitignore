@@ -18,3 +18,6 @@ npm-debug.log*
 js/config.js
 js/vendor/
 dist/
+
+# Mercado Pago (checkpoint do assistente)
+.mp-integrate-progress.md

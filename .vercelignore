@@ -1,8 +1,5 @@
 # Fica no GitHub, mas não é enviado para o build da Vercel.
 
-# Pasta reservada para futuras funções serverless (vazia por enquanto).
-api/
-
 # Documentos e SQL do projeto (o banco é aplicado no painel da Supabase)
 CLAUDE.md
 schema.sql

@@ -744,6 +744,22 @@
           </div>
         </section>
 
+        <!-- Pagamento automático no cartão (Mercado Pago, js/plano.js) -->
+        <section class="card cartao-auto" data-mp-subscriptions-page="without-plan-pending" data-cartao-estado="carregando" aria-labelledby="plano-t-cartao" aria-busy="true">
+          <div class="cartao-auto__texto">
+            <h2 class="evo__titulo" id="plano-t-cartao">Pagamento automático no cartão</h2>
+            <p class="texto-sm texto-sec" data-cartao-texto>Carregando…</p>
+          </div>
+          <div class="cartao-auto__acoes">
+            <span class="badge" data-cartao-badge hidden></span>
+            <button class="btn btn--sm" type="button" data-cartao-assinar data-mp-subscription-cta="without-plan-pending" hidden><span>Assinar no cartão</span></button>
+            <button class="btn btn--sm btn--secundario" type="button" data-cartao-acao="pause" hidden><span>Pausar</span></button>
+            <button class="btn btn--sm btn--secundario" type="button" data-cartao-acao="reactivate" hidden><span>Reativar</span></button>
+            <button class="btn btn--sm btn--secundario" type="button" data-cartao-acao="cancel" hidden><span>Cancelar</span></button>
+          </div>
+          <p class="cartao-auto__erro texto-sm" data-cartao-erro role="alert" hidden></p>
+        </section>
+
         <ul class="evo__resumo plano-app__numeros" role="list">
           <li class="card resumo">
             <p class="resumo__rotulo">Pagas</p>
@@ -766,7 +782,7 @@
           <!-- Mensalidades -->
           <section class="card" aria-labelledby="plano-t-cobrancas">
             <h2 class="evo__titulo" id="plano-t-cobrancas" tabindex="-1">Mensalidades</h2>
-            <p class="plano-app__aviso texto-sm">O PontoFit ainda não processa pagamentos. Use esta lista para registrar o que você já pagou.</p>
+            <p class="plano-app__aviso texto-sm">Pague com Pix (QR Code ou copia e cola). A confirmação é automática e o acesso é liberado na hora.</p>
             <table class="tabela" data-cobrancas>
               <thead>
                 <tr>
@@ -799,6 +815,32 @@
           </section>
         </div>
       </div>
+
+      <!-- Pagamento por Pix (js/plano.js) -->
+      <dialog class="pix" data-pix-dialogo data-pix-estado="carregando" aria-labelledby="pix-titulo">
+        <header class="pix__topo">
+          <div>
+            <p class="pix__rotulo">Pagar com Pix</p>
+            <h2 class="pix__titulo" id="pix-titulo" data-pix-titulo></h2>
+          </div>
+          <button class="leitor__fechar" type="button" data-pix-fechar aria-label="Fechar pagamento">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </header>
+        <p class="pix__valor" data-pix-valor></p>
+        <div class="pix__qr">
+          <img data-pix-img alt="QR Code do Pix. Abra o app do seu banco, escolha Pix e leia o código." width="240" height="240">
+          <span class="pix__spinner" aria-hidden="true"></span>
+        </div>
+        <p class="pix__status" data-pix-status role="status" aria-live="polite"></p>
+        <label class="campo__label" for="pix-codigo">Pix copia e cola</label>
+        <div class="pix__copia">
+          <input class="input" id="pix-codigo" data-pix-codigo readonly>
+          <button class="btn btn--sm" type="button" data-pix-copiar>Copiar</button>
+        </div>
+        <p class="pix__validade texto-sm texto-sec" data-pix-validade></p>
+        <p class="texto-sm texto-sec">Pode fechar esta janela depois de pagar: a confirmação chega sozinha e o acesso é liberado assim que o banco aprovar.</p>
+      </dialog>
     </section>
   </main>
 
