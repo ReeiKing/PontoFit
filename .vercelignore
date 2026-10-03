@@ -1,0 +1,9 @@
+# Fica no GitHub, mas não vai para o site publicado.
+
+# Funções serverless ainda inativas (Fase 11). Ao ativar o backend,
+# remova esta linha para a Vercel montar as funções de /api.
+api/
+
+# Documentos internos do projeto
+CLAUDE.md
+schema.sql

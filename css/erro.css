@@ -1,0 +1,14 @@
+/* PontoFit — erro.css: página 404 */
+.erro { display: grid; place-items: center; min-height: 100vh; min-height: 100dvh; padding: var(--gutter); }
+.erro__caixa { display: grid; gap: var(--esp-4); justify-items: start; max-width: 32rem; }
+.erro__codigo {
+  font-family: var(--fonte-titulo);
+  font-size: clamp(4rem, 3rem + 6vw, 7rem);
+  font-weight: 700;
+  line-height: 1;
+  background: linear-gradient(135deg, var(--verde), var(--agua));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.erro__acoes { margin-top: var(--esp-2); }

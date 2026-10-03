@@ -1,6 +1,6 @@
 # /api — funções serverless (futuro, Fase 11)
 
-**Inativo nesta versão.** Hoje todos os dados ficam no `localStorage`, acessados só por `js/storage.js`.
+**Inativo nesta versão.** A pasta inteira está no `.vercelignore`, então não vai para o site publicado; ao ativar o backend, tire a linha `api/` de lá. Hoje todos os dados ficam no `localStorage`, acessados só por `js/storage.js`.
 
 Na fase da Vercel, cada arquivo aqui vira uma Vercel Serverless Function, e `js/storage.js`
 passa a chamar estes endpoints com `fetch` — o resto do site não muda.
