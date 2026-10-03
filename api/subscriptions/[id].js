@@ -16,7 +16,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const ACOES = {
   pause: { status: 'paused', de: ['authorized'] },
   reactivate: { status: 'authorized', de: ['paused'] },
-  cancel: { status: 'canceled', de: ['pending', 'authorized', 'paused'] }
+  cancel: { status: 'cancelled', de: ['pending', 'authorized', 'paused'] }
 };
 
 module.exports = async function handler(req, res) {

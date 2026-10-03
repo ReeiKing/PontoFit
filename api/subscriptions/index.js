@@ -41,8 +41,8 @@ module.exports = async function handler(req, res) {
       }
       if (!atual.mp_id) return responder(res, 409, { erro: 'Já estamos preparando sua assinatura. Tente de novo em instantes.' });
       // Pendente de outro plano: cancela e cria uma nova no plano atual.
-      await mercadoPago('/preapproval/' + encodeURIComponent(atual.mp_id), { method: 'PUT', body: { status: 'canceled' } });
-      await db.from('assinaturas').update({ status: 'canceled', atualizado_em: new Date().toISOString() }).eq('id', atual.id);
+      await mercadoPago('/preapproval/' + encodeURIComponent(atual.mp_id), { method: 'PUT', body: { status: 'cancelled' } });
+      await db.from('assinaturas').update({ status: 'cancelled', atualizado_em: new Date().toISOString() }).eq('id', atual.id);
     }
 
     // Reserva a linha antes de chamar o Mercado Pago: o id vira o

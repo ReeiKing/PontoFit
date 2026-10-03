@@ -260,7 +260,7 @@
     paused: { badge: 'Pausado', classe: 'badge--agua', texto: function () {
       return 'As cobranças no cartão estão pausadas. Reative ou pague as mensalidades com Pix.';
     }, acoes: ['reactivate', 'cancel'] },
-    canceled: { badge: 'Cancelado', classe: 'badge--vermelho', texto: function (p) {
+    cancelled: { badge: 'Cancelado', classe: 'badge--vermelho', texto: function (p) {
       return 'A assinatura anterior foi cancelada. Você pode assinar de novo, ' + reais(p.valor) + ' por ' + p.periodo + ', ou seguir pagando com Pix.';
     }, acoes: [] }
   };
@@ -277,7 +277,7 @@
   function renderCartao() {
     var estado = cartao && CARTAO[cartao.status] ? cartao.status : 'nenhuma';
     var info = CARTAO[estado];
-    var plano = PLANOS[estado === 'nenhuma' || estado === 'canceled' ? assinatura.plano : cartao.plano];
+    var plano = PLANOS[estado === 'nenhuma' || estado === 'cancelled' ? assinatura.plano : cartao.plano];
     cartaoEl.dataset.cartaoEstado = estado;
     cartaoEl.setAttribute('aria-busy', 'false');
     cartaoEl.querySelector('[data-cartao-texto]').textContent = info.texto(plano);
@@ -287,7 +287,7 @@
     badge.className = 'badge ' + info.classe;
     badge.textContent = info.badge;
 
-    assinarBtn.hidden = !(estado === 'nenhuma' || estado === 'canceled' || estado === 'pending');
+    assinarBtn.hidden = !(estado === 'nenhuma' || estado === 'cancelled' || estado === 'pending');
     cartaoEl.querySelectorAll('[data-cartao-acao]').forEach(function (b) {
       b.hidden = info.acoes.indexOf(b.dataset.cartaoAcao) === -1;
     });

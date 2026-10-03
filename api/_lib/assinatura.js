@@ -14,7 +14,8 @@ const SUBSCRIPTION_OFFERS = {
 };
 
 // Status de assinatura no Mercado Pago que o PontoFit conhece.
-const STATUS = ['pending', 'authorized', 'paused', 'canceled'];
+// O Mercado Pago escreve 'cancelled' (com dois L), não 'canceled': PUT com 'canceled' é recusado.
+const STATUS = ['pending', 'authorized', 'paused', 'cancelled'];
 // Assinatura "viva": ainda pode gerar cobranças.
 const VIVOS = ['pending', 'authorized', 'paused'];
 
