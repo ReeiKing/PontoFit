@@ -1,0 +1,191 @@
+/* ==========================================================================
+   PontoFit — app.js
+   Layout da área do paciente (app.html):
+   - navegação por hash (#receitas, #cesta, #ficha, #evolucao, #medicamentos, #plano)
+     sem recarregar, com transição entre as seções;
+   - menu lateral fixo no desktop / gaveta no celular e tablet;
+   - nome, e-mail e iniciais do usuário no menu.
+
+   As seções (receitas.js, cesta.js, ficha.js, evolucao.js, medicamentos.js,
+   plano.js) ouvem o evento
+   'pf:secao' (detail.secao = id) para renderizar ao serem abertas, e
+   podem usar PF.app.usuario / PF.app.atualizarUsuario().
+   ========================================================================== */
+(function () {
+  'use strict';
+
+  var PF = (window.PF = window.PF || {});
+  // Na ordem do menu (define a direção da animação ao trocar de seção)
+  var SECOES = {
+    receitas: 'Receitas',
+    cesta: 'Cesta de compras',
+    ficha: 'Minha ficha',
+    evolucao: 'Minha evolução',
+    medicamentos: 'Medicamentos',
+    plano: 'Meu plano'
+  };
+  var ORDEM = Object.keys(SECOES);
+  var APELIDOS = { produtos: 'medicamentos' }; // links antigos de "Meus produtos"
+  var PADRAO = 'receitas'; // depois do login, o app abre no livro de receitas
+
+  var raiz = document.documentElement;
+  var menu = document.getElementById('menu-app');
+  var botaoAbrir = document.querySelector('[data-abrir-menu]');
+  var escurecer = document.querySelector('.app__escurecer');
+  var desktop = window.matchMedia('(min-width: 1024px)');
+  var movimentoReduzido = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  PF.app = { secaoAtual: null, usuario: null };
+
+  /* ---------- Usuário no menu ---------- */
+  function iniciais(nome) {
+    var partes = String(nome || '').trim().split(/\s+/).filter(Boolean);
+    if (!partes.length) return '?';
+    var primeira = partes[0].charAt(0);
+    var ultima = partes.length > 1 ? partes[partes.length - 1].charAt(0) : '';
+    return (primeira + ultima).toUpperCase();
+  }
+
+  function mostrarUsuario(usuario) {
+    PF.app.usuario = usuario;
+    document.querySelectorAll('[data-nome-usuario]').forEach(function (el) { el.textContent = usuario.nome; });
+    document.querySelectorAll('[data-email-usuario]').forEach(function (el) { el.textContent = usuario.email; });
+    document.querySelectorAll('[data-iniciais]').forEach(function (el) { el.textContent = iniciais(usuario.nome); });
+  }
+
+  /** Relê o usuário (ex.: depois de mudar o nome na ficha). */
+  PF.app.atualizarUsuario = async function () {
+    var u = await PF.storage.getUser();
+    if (u) mostrarUsuario(u);
+    return u;
+  };
+
+  /* ---------- Gaveta (celular/tablet) ---------- */
+  var elementosInertes = document.querySelectorAll('[data-inerte-com-gaveta]');
+
+  function gavetaAberta() { return menu.classList.contains('is-aberto'); }
+
+  function abrirGaveta() {
+    if (desktop.matches) return;
+    menu.classList.add('is-aberto');
+    escurecer.classList.add('is-visivel');
+    raiz.classList.add('gaveta-aberta');
+    botaoAbrir.setAttribute('aria-expanded', 'true');
+    // Enquanto a gaveta está aberta, o resto da página não recebe foco nem clique.
+    elementosInertes.forEach(function (el) { el.inert = true; });
+    var ativo = menu.querySelector('[aria-current="page"]') || menu.querySelector('a, button');
+    if (ativo) ativo.focus();
+  }
+
+  function fecharGaveta(devolverFoco) {
+    if (!gavetaAberta()) return;
+    menu.classList.remove('is-aberto');
+    escurecer.classList.remove('is-visivel');
+    raiz.classList.remove('gaveta-aberta');
+    botaoAbrir.setAttribute('aria-expanded', 'false');
+    elementosInertes.forEach(function (el) { el.inert = false; });
+    if (devolverFoco) botaoAbrir.focus();
+  }
+
+  botaoAbrir.addEventListener('click', abrirGaveta);
+  document.querySelectorAll('[data-fechar-menu]').forEach(function (el) {
+    el.addEventListener('click', function () { fecharGaveta(true); });
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && gavetaAberta()) fecharGaveta(true);
+  });
+  // Ao passar para o desktop, a gaveta deixa de existir.
+  desktop.addEventListener('change', function (e) { if (e.matches) fecharGaveta(false); });
+
+  /* ---------- Navegação por hash ---------- */
+  function secaoDoHash() {
+    var id = location.hash.replace('#', '');
+    id = APELIDOS[id] || id;
+    return Object.prototype.hasOwnProperty.call(SECOES, id) ? id : PADRAO;
+  }
+
+  function mostrarSecao(id, focar, comTransicao) {
+    var anterior = PF.app.secaoAtual;
+    PF.app.secaoAtual = id;
+
+    document.querySelectorAll('[data-secao]').forEach(function (s) {
+      var ativa = s.dataset.secao === id;
+      s.hidden = !ativa;
+      // Sem View Transitions, a seção nova entra com uma animação CSS simples.
+      if (ativa && anterior && anterior !== id && !comTransicao && !movimentoReduzido.matches) {
+        s.classList.remove('is-entrando');
+        void s.offsetWidth; // reinicia a animação
+        s.classList.add('is-entrando');
+      }
+    });
+
+    document.querySelectorAll('[data-link-secao]').forEach(function (a) {
+      if (a.dataset.linkSecao === id) a.setAttribute('aria-current', 'page');
+      else a.removeAttribute('aria-current');
+    });
+
+    document.title = SECOES[id] + ' | PontoFit';
+    window.scrollTo(0, 0);
+
+    // Leitores de tela e teclado vão para o título da seção aberta.
+    if (focar) {
+      var titulo = document.getElementById('titulo-' + id);
+      if (titulo) titulo.focus({ preventScroll: true });
+    }
+
+    document.dispatchEvent(new CustomEvent('pf:secao', { detail: { secao: id, anterior: anterior } }));
+  }
+
+  // Hash inválido ou vazio → corrige a URL sem criar entrada no histórico.
+  function secaoNormalizada() {
+    var id = secaoDoHash();
+    if (location.hash !== '#' + id) history.replaceState(null, '', '#' + id);
+    return id;
+  }
+
+  /* Transição entre seções: o conteúdo desliza para cima quando a seção nova
+     está mais abaixo no menu, e para baixo quando está mais acima.
+     Usa a View Transitions API onde existe (Chrome, Edge, Safari 18+). */
+  function trocarSecao(id) {
+    var anterior = PF.app.secaoAtual;
+    if (anterior === id) return mostrarSecao(id, true);
+    raiz.dataset.direcao = ORDEM.indexOf(id) >= ORDEM.indexOf(anterior) ? 'avanca' : 'volta';
+    if (document.startViewTransition && !movimentoReduzido.matches) {
+      var transicao = document.startViewTransition(function () { mostrarSecao(id, true, true); });
+      // A transição pode ser interrompida (outra navegação, tela redimensionada).
+      // A seção já foi trocada; só a animação é descartada, sem erro no console.
+      var ignorar = function () {};
+      transicao.ready.catch(ignorar);
+      transicao.finished.catch(ignorar);
+      transicao.updateCallbackDone.catch(ignorar);
+    } else {
+      mostrarSecao(id, true);
+    }
+  }
+
+  window.addEventListener('hashchange', function () {
+    fecharGaveta(false);
+    trocarSecao(secaoNormalizada());
+  });
+
+  // Clicar no item já ativo só fecha a gaveta.
+  document.querySelectorAll('[data-link-secao]').forEach(function (a) {
+    a.addEventListener('click', function () {
+      if (a.dataset.linkSecao === PF.app.secaoAtual) fecharGaveta(false);
+    });
+  });
+
+  /* ---------- Início ---------- */
+  // Espera a sessão E todos os scripts da página (ficha.js, evolucao.js…)
+  // estarem carregados; senão eles perderiam o primeiro evento 'pf:secao'.
+  var paginaPronta = document.readyState === 'loading'
+    ? new Promise(function (r) { document.addEventListener('DOMContentLoaded', r); })
+    : Promise.resolve();
+
+  Promise.all([PF.auth.pronto, paginaPronta]).then(function (resultado) {
+    var usuario = resultado[0];
+    if (!usuario) return; // redirecionando para o login
+    mostrarUsuario(usuario);
+    mostrarSecao(secaoNormalizada(), false);
+  });
+})();

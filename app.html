@@ -1,0 +1,815 @@
+<!doctype html>
+<html lang="pt-BR" data-protegida class="verificando-sessao">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Receitas | PontoFit</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#1F6E4A">
+  <link rel="icon" href="assets/svg/logo.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/app.css">
+  <noscript><style>.verificando-sessao body { visibility: visible; }</style></noscript>
+  <!-- Proteção de rota: carregados no <head> para checar a sessão antes de mostrar a página -->
+  <script src="js/storage.js"></script>
+  <script src="js/auth.js"></script>
+</head>
+<body class="app">
+  <noscript><p style="padding:1rem">Ative o JavaScript para acessar a área do paciente.</p></noscript>
+  <a class="pular-link" href="#app-conteudo">Pular para o conteúdo</a>
+
+  <!-- ============ Barra superior (celular e tablet) ============ -->
+  <header class="app__topo" data-inerte-com-gaveta>
+    <button class="app__menu-btn" type="button" aria-controls="menu-app" aria-expanded="false" data-abrir-menu>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      <span class="sr-only">Abrir menu</span>
+    </button>
+    <a class="logo" href="index.html" aria-label="PontoFit, página inicial">
+      <svg class="logo__marca" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M12 2.5C9 6.2 5 10.6 5 14.6a7 7 0 0 0 14 0c0-4-4-8.4-7-12.1Z" fill="#2E9D6A"/>
+        <path d="M12 20.2v-7.4m0 3.3 2.6-2.6" fill="none" stroke="#F7FBF8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>Ponto<strong>Fit</strong></span>
+    </a>
+    <span class="avatar avatar--sm" data-iniciais aria-hidden="true"></span>
+  </header>
+
+  <!-- ============ Menu lateral (gaveta no celular) ============ -->
+  <aside class="menu" id="menu-app" aria-label="Menu da área do paciente">
+    <div class="menu__cabecalho">
+      <a class="logo" href="index.html" aria-label="PontoFit, página inicial">
+        <svg class="logo__marca" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M12 2.5C9 6.2 5 10.6 5 14.6a7 7 0 0 0 14 0c0-4-4-8.4-7-12.1Z" fill="#2E9D6A"/>
+          <path d="M12 20.2v-7.4m0 3.3 2.6-2.6" fill="none" stroke="#F7FBF8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>Ponto<strong>Fit</strong></span>
+      </a>
+      <button class="menu__fechar" type="button" data-fechar-menu aria-label="Fechar menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="menu__perfil">
+      <span class="avatar" data-iniciais aria-hidden="true"></span>
+      <div class="menu__perfil-texto">
+        <p class="menu__nome" data-nome-usuario></p>
+        <p class="menu__email" data-email-usuario></p>
+      </div>
+    </div>
+
+    <nav class="menu__nav" aria-label="Seções">
+      <ul role="list">
+        <li>
+          <a class="menu__item" href="#receitas" data-link-secao="receitas">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg>
+            <span>Receitas</span>
+          </a>
+        </li>
+        <li>
+          <a class="menu__item" href="#cesta" data-link-secao="cesta">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 11-1 9M19 11l-4-7M2 11h20M3.5 11l1.6 7.4a2 2 0 0 0 2 1.6h9.8a2 2 0 0 0 2-1.6l1.7-7.4M4.5 15.5h15M5 11l4-7M9 11l1 9"/></svg>
+            <span>Cesta de compras</span>
+            <span class="badge menu__badge" data-badge-cesta aria-hidden="true" hidden></span>
+            <span class="sr-only" data-badge-cesta-leitor></span>
+          </a>
+        </li>
+        <li>
+          <a class="menu__item" href="#ficha" data-link-secao="ficha">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4M12 16h4M8 11h.01M8 16h.01"/></svg>
+            <span>Minha ficha</span>
+          </a>
+        </li>
+        <li>
+          <a class="menu__item" href="#evolucao" data-link-secao="evolucao">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+            <span>Minha evolução</span>
+          </a>
+        </li>
+        <li>
+          <a class="menu__item" href="#medicamentos" data-link-secao="medicamentos">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m18 2 4 4M17 7l3-3M19 9 8.7 19.3c-1 1-2.5 1-3.4 0l-.6-.6c-1-1-1-2.5 0-3.4L15 5M9 11l4 4M5 19l-3 3M14 4l6 6"/></svg>
+            <span>Medicamentos</span>
+            <!-- Dias para a próxima dose (js/medicamentos.js) -->
+            <span class="badge menu__badge" data-badge-medicamentos aria-hidden="true" hidden></span>
+            <span class="sr-only" data-badge-medicamentos-leitor></span>
+          </a>
+        </li>
+        <li>
+          <a class="menu__item" href="#plano" data-link-secao="plano">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+            <span>Meu plano</span>
+            <!-- Mensalidades atrasadas (js/plano.js) -->
+            <span class="badge badge--laranja menu__badge" data-badge-plano aria-hidden="true" hidden></span>
+            <span class="sr-only" data-badge-plano-leitor></span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <div class="menu__rodape">
+      <button class="menu__item menu__item--sair" type="button" data-sair>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>
+        <span>Sair</span>
+      </button>
+    </div>
+  </aside>
+
+  <div class="app__escurecer" data-fechar-menu aria-hidden="true"></div>
+
+  <!-- ============ Conteúdo ============ -->
+  <main class="app__conteudo" id="app-conteudo" tabindex="-1" data-inerte-com-gaveta>
+
+    <section class="secao-app" id="secao-receitas" data-secao="receitas" aria-labelledby="titulo-receitas">
+      <header class="secao-app__cabecalho">
+        <h1 id="titulo-receitas" tabindex="-1">Receitas</h1>
+        <p class="texto-sec">Seu livro de receitas para o dia a dia. Escolha uma categoria ou procure pelo que tem na geladeira.</p>
+      </header>
+
+      <div class="livro" data-receitas>
+        <!-- Capas das categorias (filtram a lista) -->
+        <div class="livro__capas" role="group" aria-label="Categorias de receitas" data-capas></div>
+
+        <div class="livro__busca campo">
+          <label class="campo__label" for="busca-receita">Buscar receita ou ingrediente</label>
+          <div class="livro__busca-campo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input class="input" id="busca-receita" type="search" placeholder="Ex.: banana, frango, abóbora" autocomplete="off" aria-describedby="busca-resultado">
+          </div>
+          <p class="campo__ajuda" id="busca-resultado" data-busca-resultado aria-live="polite"></p>
+        </div>
+
+        <!-- Índice: cards das receitas -->
+        <ul class="livro__indice" role="list" data-indice></ul>
+        <div class="card vazio" data-indice-vazio hidden>
+          <p class="vazio__titulo">Nenhuma receita encontrada</p>
+          <p class="texto-sec">Tente outro ingrediente ou volte para todas as categorias.</p>
+          <div><button class="btn btn--secundario" type="button" data-limpar-busca>Ver todas as receitas</button></div>
+        </div>
+      </div>
+
+      <!-- Leitor: a receita aberta como página de livro -->
+      <dialog class="leitor" data-leitor aria-labelledby="leitor-titulo">
+        <article class="leitor__pagina" data-leitor-pagina>
+          <header class="leitor__topo">
+            <p class="leitor__categoria" data-leitor-categoria></p>
+            <button class="leitor__fechar" type="button" data-leitor-fechar aria-label="Fechar receita">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </header>
+          <h2 class="leitor__titulo" id="leitor-titulo" data-leitor-titulo tabindex="-1"></h2>
+          <p class="leitor__meta" data-leitor-meta></p>
+
+          <div class="leitor__corpo">
+            <section class="leitor__ingredientes" aria-labelledby="leitor-t-ingredientes">
+              <h3 id="leitor-t-ingredientes">Ingredientes</h3>
+              <p class="texto-sm texto-sec">Marque o que você já separou.</p>
+              <ul class="leitor__lista" role="list" data-leitor-ingredientes></ul>
+              <button class="btn btn--sm btn--bloco leitor__cesta" type="button" data-leitor-cesta>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 11-1 9M19 11l-4-7M2 11h20M3.5 11l1.6 7.4a2 2 0 0 0 2 1.6h9.8a2 2 0 0 0 2-1.6l1.7-7.4M4.5 15.5h15M5 11l4-7M9 11l1 9"/></svg>
+                <span data-leitor-cesta-texto>Adicionar à cesta o que falta</span>
+              </button>
+            </section>
+            <section class="leitor__preparo" aria-labelledby="leitor-t-preparo">
+              <h3 id="leitor-t-preparo">Modo de preparo</h3>
+              <ol class="leitor__passos" data-leitor-passos></ol>
+              <p class="leitor__dica" data-leitor-dica></p>
+            </section>
+          </div>
+        </article>
+
+        <footer class="leitor__rodape">
+          <button class="btn btn--fantasma btn--sm" type="button" data-leitor-anterior>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6"/></svg>
+            <span>Anterior</span>
+          </button>
+          <p class="leitor__pagina-num" data-leitor-numero aria-live="polite"></p>
+          <button class="btn btn--fantasma btn--sm" type="button" data-leitor-proxima>
+            <span>Próxima</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+        </footer>
+      </dialog>
+    </section>
+
+    <section class="secao-app" id="secao-cesta" data-secao="cesta" aria-labelledby="titulo-cesta" hidden>
+      <header class="secao-app__cabecalho">
+        <h1 id="titulo-cesta" tabindex="-1">Cesta de compras</h1>
+        <p class="texto-sec">O que falta comprar para as receitas que você quer fazer. Marque conforme for colocando no carrinho.</p>
+      </header>
+
+      <div class="cesta" data-cesta>
+        <form class="card cesta__nova" id="form-cesta" novalidate>
+          <label class="campo__label" for="cesta-item">Adicionar item</label>
+          <div class="cesta__nova-linha">
+            <input class="input" id="cesta-item" name="item" type="text" placeholder="Ex.: 1 dúzia de ovos" autocomplete="off" aria-describedby="cesta-item-erro">
+            <button class="btn" type="submit"><span>Adicionar</span></button>
+          </div>
+          <p class="campo__erro" id="cesta-item-erro"></p>
+        </form>
+
+        <div class="cesta__barra" data-cesta-barra hidden>
+          <p class="cesta__resumo" data-cesta-resumo aria-live="polite"></p>
+          <div class="linha">
+            <button class="btn btn--secundario btn--sm" type="button" data-cesta-copiar>Copiar lista</button>
+            <button class="btn btn--fantasma btn--sm" type="button" data-cesta-limpar-comprados>Tirar os comprados</button>
+            <button class="btn btn--perigo btn--sm" type="button" data-cesta-esvaziar>Esvaziar cesta</button>
+          </div>
+        </div>
+
+        <div class="cesta__grupos" data-cesta-grupos></div>
+
+        <div class="card vazio" data-cesta-vazia>
+          <p class="vazio__titulo">Sua cesta está vazia</p>
+          <p class="texto-sec">Abra uma receita, deixe sem marcar o que você não tem em casa e toque em “Adicionar à cesta o que falta”.</p>
+          <div><a class="btn btn--secundario" href="#receitas">Ver receitas</a></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="secao-app" id="secao-ficha" data-secao="ficha" aria-labelledby="titulo-ficha" hidden>
+      <header class="secao-app__cabecalho">
+        <h1 id="titulo-ficha" tabindex="-1">Minha ficha</h1>
+        <p class="texto-sec">Seus dados pessoais, corporais e de saúde.</p>
+      </header>
+      <form class="ficha" id="form-ficha" data-modo="ver" novalidate>
+        <div class="ficha__barra">
+          <p class="texto-sec texto-sm" data-ficha-atualizado aria-live="polite"></p>
+          <button class="btn btn--secundario" type="button" data-ficha-editar>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21.17 6.81a1 1 0 0 0-3.98-3.98L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5Z"/><path d="m15 5 4 4"/></svg>
+            <span>Editar ficha</span>
+          </button>
+        </div>
+
+        <fieldset class="ficha__campos" disabled>
+          <legend class="sr-only">Dados da ficha</legend>
+
+          <!-- ===== Dados pessoais ===== -->
+          <section class="card ficha__card" aria-labelledby="ficha-t-pessoais">
+            <h2 class="ficha__titulo" id="ficha-t-pessoais">
+              <span class="ficha__icone" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></svg></span>
+              Dados pessoais
+            </h2>
+            <div class="ficha__grade">
+              <div class="campo ficha__largo">
+                <label class="campo__label" for="f-nome">Nome completo</label>
+                <input class="input" id="f-nome" name="nome" type="text" autocomplete="name" data-validar="nome" aria-describedby="f-nome-erro">
+                <p class="campo__erro" id="f-nome-erro"></p>
+              </div>
+
+              <div class="campo">
+                <label class="campo__label" for="f-nascimento">Data de nascimento</label>
+                <input class="input" id="f-nascimento" name="dataNascimento" type="date" data-campo-data autocomplete="bday" data-validar="nascimento" aria-describedby="f-idade f-nascimento-erro">
+                <p class="campo__ajuda" id="f-idade" data-idade aria-live="polite"></p>
+                <p class="campo__erro" id="f-nascimento-erro"></p>
+              </div>
+
+              <div class="campo">
+                <span class="campo__label" id="f-sexo-rotulo">Sexo</span>
+                <fieldset class="segmentado" style="--opcoes:2" aria-describedby="f-sexo-ajuda">
+                  <legend class="sr-only">Sexo</legend>
+                  <input type="radio" id="f-sexo-f" name="sexo" value="F">
+                  <label for="f-sexo-f">Feminino</label>
+                  <input type="radio" id="f-sexo-m" name="sexo" value="M">
+                  <label for="f-sexo-m">Masculino</label>
+                  <span class="segmentado__indicador" aria-hidden="true"></span>
+                </fieldset>
+                <p class="campo__ajuda" id="f-sexo-ajuda">Usado para sugerir o primeiro medicamento em “Medicamentos”.</p>
+              </div>
+
+              <div class="campo">
+                <label class="campo__label" for="f-telefone">Telefone / WhatsApp</label>
+                <input class="input" id="f-telefone" name="telefone" type="tel" autocomplete="tel-national" inputmode="tel" data-placeholder="(11) 98765-4321" data-validar="telefone" aria-describedby="f-telefone-erro">
+                <p class="campo__erro" id="f-telefone-erro"></p>
+              </div>
+
+              <div class="campo">
+                <label class="campo__label" for="f-email">E-mail</label>
+                <input class="input" id="f-email" name="email" type="email" readonly aria-describedby="f-email-ajuda">
+                <p class="campo__ajuda" id="f-email-ajuda">E-mail da sua conta (usado para entrar).</p>
+              </div>
+
+              <div class="campo">
+                <label class="campo__label" for="f-cidade">Cidade</label>
+                <input class="input" id="f-cidade" name="cidade" type="text" autocomplete="address-level2">
+              </div>
+
+              <div class="campo">
+                <label class="campo__label" for="f-estado">Estado</label>
+                <select class="input" id="f-estado" name="estado" autocomplete="address-level1">
+                  <option value="">Selecione</option>
+                  <option>AC</option><option>AL</option><option>AP</option><option>AM</option><option>BA</option><option>CE</option><option>DF</option><option>ES</option><option>GO</option><option>MA</option><option>MT</option><option>MS</option><option>MG</option><option>PA</option><option>PB</option><option>PR</option><option>PE</option><option>PI</option><option>RJ</option><option>RN</option><option>RS</option><option>RO</option><option>RR</option><option>SC</option><option>SP</option><option>SE</option><option>TO</option>
+                </select>
+              </div>
+            </div>
+          </section>
+
+          <!-- ===== Dados corporais ===== -->
+          <section class="card ficha__card" aria-labelledby="ficha-t-corporais">
+            <h2 class="ficha__titulo" id="ficha-t-corporais">
+              <span class="ficha__icone" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z"/><path d="m14.5 12.5 2-2M11.5 9.5l2-2M8.5 6.5l2-2M17.5 15.5l2-2"/></svg></span>
+              Dados corporais
+            </h2>
+            <div class="ficha__grade">
+              <div class="campo">
+                <label class="campo__label" for="f-altura">Altura <span class="opcional">(cm)</span></label>
+                <input class="input" id="f-altura" name="alturaCm" type="text" inputmode="decimal" data-placeholder="Ex.: 165" data-validar="altura" aria-describedby="f-altura-erro">
+                <p class="campo__erro" id="f-altura-erro"></p>
+              </div>
+
+              <div class="campo">
+                <label class="campo__label" for="f-cintura">Circunferência da cintura <span class="opcional">(cm, opcional)</span></label>
+                <input class="input" id="f-cintura" name="cinturaCm" type="text" inputmode="decimal" data-placeholder="Ex.: 88" data-validar="cintura" aria-describedby="f-cintura-erro">
+                <p class="campo__erro" id="f-cintura-erro"></p>
+              </div>
+
+              <div class="campo">
+                <label class="campo__label" for="f-peso">Peso inicial <span class="opcional">(kg)</span></label>
+                <input class="input" id="f-peso" name="pesoInicialKg" type="text" inputmode="decimal" data-placeholder="Ex.: 78,5" data-validar="peso" aria-describedby="f-peso-erro">
+                <p class="campo__erro" id="f-peso-erro"></p>
+              </div>
+
+              <div class="campo">
+                <label class="campo__label" for="f-peso-data">Data da medição</label>
+                <input class="input" id="f-peso-data" name="dataPesoInicial" type="date" data-campo-data data-validar="dataPeso" aria-describedby="f-peso-data-erro">
+                <p class="campo__erro" id="f-peso-data-erro"></p>
+              </div>
+
+              <div class="imc ficha__largo" data-imc aria-live="polite">
+                <div class="imc__topo">
+                  <div>
+                    <p class="imc__rotulo">IMC <span class="texto-sec">(com o peso inicial)</span></p>
+                    <p class="imc__valor" data-imc-valor></p>
+                  </div>
+                  <span class="badge imc__faixa" data-imc-faixa hidden></span>
+                </div>
+                <div class="imc__escala" aria-hidden="true">
+                  <span class="imc__marcador" data-imc-marcador hidden></span>
+                </div>
+                <div class="imc__legenda" aria-hidden="true">
+                  <span>18,5</span><span>25</span><span>30</span>
+                </div>
+                <p class="campo__ajuda" data-imc-ajuda>Preencha altura e peso inicial para calcular.</p>
+              </div>
+            </div>
+          </section>
+
+          <!-- ===== Saúde ===== -->
+          <section class="card ficha__card" aria-labelledby="ficha-t-saude">
+            <h2 class="ficha__titulo" id="ficha-t-saude">
+              <span class="ficha__icone" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/><path d="M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"/></svg></span>
+              Saúde
+            </h2>
+            <div class="ficha__grade">
+              <div class="campo">
+                <label class="campo__label" for="f-objetivo">Objetivo</label>
+                <select class="input" id="f-objetivo" name="objetivo">
+                  <option value="">Selecione</option>
+                  <option value="emagrecer">Emagrecer</option>
+                  <option value="ganhar-massa">Ganhar massa</option>
+                  <option value="manter">Manter peso</option>
+                  <option value="disposicao">Mais disposição</option>
+                </select>
+              </div>
+
+              <div class="campo">
+                <label class="campo__label" for="f-atividade">Nível de atividade física</label>
+                <select class="input" id="f-atividade" name="nivelAtividade">
+                  <option value="">Selecione</option>
+                  <option value="sedentario">Sedentário</option>
+                  <option value="leve">Leve</option>
+                  <option value="moderado">Moderado</option>
+                  <option value="intenso">Intenso</option>
+                </select>
+              </div>
+
+              <fieldset class="campo ficha__largo condicoes">
+                <legend class="campo__label">Condições de saúde</legend>
+                <div class="condicoes__lista">
+                  <label class="chip"><input type="checkbox" name="condicoesSaude" value="diabetes"><span>Diabetes</span></label>
+                  <label class="chip"><input type="checkbox" name="condicoesSaude" value="hipertensao"><span>Hipertensão</span></label>
+                  <label class="chip"><input type="checkbox" name="condicoesSaude" value="tireoide"><span>Tireoide</span></label>
+                  <label class="chip"><input type="checkbox" name="condicoesSaude" value="outras" data-condicao-outras><span>Outras</span></label>
+                </div>
+                <div class="campo" data-campo-outras hidden>
+                  <label class="campo__label" for="f-outras">Quais outras condições?</label>
+                  <input class="input" id="f-outras" name="condicoesOutras" type="text">
+                </div>
+              </fieldset>
+
+              <div class="campo">
+                <label class="campo__label" for="f-alergias">Alergias</label>
+                <textarea class="input" id="f-alergias" name="alergias" rows="2" data-placeholder="Ex.: dipirona, camarão"></textarea>
+              </div>
+
+              <div class="campo">
+                <label class="campo__label" for="f-medicamentos">Medicamentos em uso</label>
+                <textarea class="input" id="f-medicamentos" name="medicamentos" rows="2" data-placeholder="Nome e dose de cada um"></textarea>
+              </div>
+
+              <div class="campo">
+                <label class="campo__label" for="f-prof-nome">Profissional responsável</label>
+                <input class="input" id="f-prof-nome" name="profissionalNome" type="text" data-placeholder="Nome do médico ou nutricionista">
+              </div>
+
+              <div class="campo">
+                <label class="campo__label" for="f-prof-contato">Contato do profissional</label>
+                <input class="input" id="f-prof-contato" name="profissionalContato" type="text" data-placeholder="Telefone ou e-mail">
+              </div>
+
+              <div class="campo ficha__largo">
+                <label class="campo__label" for="f-obs">Observações</label>
+                <textarea class="input" id="f-obs" name="observacoes" rows="3"></textarea>
+              </div>
+            </div>
+          </section>
+        </fieldset>
+
+        <div class="ficha__acoes" data-ficha-acoes hidden>
+          <button class="btn btn--fantasma" type="button" data-ficha-cancelar>Cancelar</button>
+          <button class="btn" type="submit"><span>Salvar ficha</span></button>
+        </div>
+      </form>
+    </section>
+
+    <section class="secao-app" id="secao-evolucao" data-secao="evolucao" aria-labelledby="titulo-evolucao" hidden>
+      <header class="secao-app__cabecalho">
+        <h1 id="titulo-evolucao" tabindex="-1">Minha evolução</h1>
+        <p class="texto-sec">Seu peso ao longo do tempo e quanto falta para a meta.</p>
+      </header>
+      <div class="evo" data-evolucao>
+        <div class="card card--agua evo__aviso" data-evo-vazio hidden>
+          <p><strong>Ainda não há nenhum peso registrado.</strong> Informe seu peso inicial em <a href="#ficha">Minha ficha</a> ou registre o primeiro peso logo abaixo.</p>
+        </div>
+
+        <!-- Cards de resumo -->
+        <ul class="evo__resumo" role="list">
+          <li class="card resumo">
+            <p class="resumo__rotulo">Peso inicial</p>
+            <p class="resumo__valor" data-r="inicial"></p>
+            <p class="resumo__info" data-r="inicial-info"></p>
+          </li>
+          <li class="card resumo">
+            <p class="resumo__rotulo">Peso atual</p>
+            <p class="resumo__valor" data-r="atual"></p>
+            <p class="resumo__info" data-r="atual-info"></p>
+          </li>
+          <li class="card resumo" data-r-card="diferenca">
+            <p class="resumo__rotulo">Diferença</p>
+            <p class="resumo__valor" data-r="diferenca"></p>
+            <p class="resumo__info" data-r="diferenca-info"></p>
+          </li>
+          <li class="card resumo">
+            <p class="resumo__rotulo">Meta de peso</p>
+            <p class="resumo__valor" data-r="meta"></p>
+            <p class="resumo__info" data-r="meta-info"></p>
+          </li>
+          <li class="card resumo">
+            <p class="resumo__rotulo">Falta para a meta</p>
+            <p class="resumo__valor" data-r="falta"></p>
+            <p class="resumo__info" data-r="falta-info"></p>
+          </li>
+        </ul>
+
+        <!-- Progresso + IMC + ritmo -->
+        <section class="card evo__progresso" aria-labelledby="evo-t-progresso">
+          <div class="card__cabecalho">
+            <h2 class="evo__titulo" id="evo-t-progresso">Progresso até a meta</h2>
+            <p class="evo__pct" data-progresso-texto></p>
+          </div>
+          <div class="barra-meta" role="progressbar" aria-labelledby="evo-t-progresso" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" data-progresso-barra>
+            <span class="barra-meta__preenchido" data-progresso-preenchido></span>
+          </div>
+          <div class="barra-meta__extremos texto-sm texto-sec">
+            <span data-progresso-de></span>
+            <span data-progresso-ate></span>
+          </div>
+
+          <div class="evo__infos">
+            <div class="info">
+              <p class="info__rotulo">IMC inicial → atual</p>
+              <p class="info__valor" data-imc-comparacao></p>
+              <p class="info__extra texto-sm texto-sec" data-imc-extra></p>
+            </div>
+            <div class="info">
+              <p class="info__rotulo">Ritmo médio</p>
+              <p class="info__valor" data-ritmo></p>
+              <p class="info__extra texto-sm texto-sec" data-ritmo-extra></p>
+            </div>
+            <div class="info">
+              <p class="info__rotulo">Estimativa para a meta</p>
+              <p class="info__valor" data-estimativa></p>
+              <p class="info__extra texto-sm texto-sec" data-estimativa-extra></p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Gráfico -->
+        <section class="card evo__grafico" aria-labelledby="evo-t-grafico">
+          <div class="card__cabecalho evo__grafico-topo">
+            <h2 class="evo__titulo" id="evo-t-grafico">Peso ao longo do tempo</h2>
+            <fieldset class="segmentado segmentado--compacto" style="--opcoes:3">
+              <legend class="sr-only">Período do gráfico</legend>
+              <input type="radio" id="periodo-30" name="periodo" value="30">
+              <label for="periodo-30">30 dias</label>
+              <input type="radio" id="periodo-90" name="periodo" value="90">
+              <label for="periodo-90">90 dias</label>
+              <input type="radio" id="periodo-tudo" name="periodo" value="tudo" checked>
+              <label for="periodo-tudo">Tudo</label>
+              <span class="segmentado__indicador" aria-hidden="true"></span>
+            </fieldset>
+          </div>
+          <div class="grafico">
+            <canvas data-grafico role="img" aria-label="Gráfico do peso ao longo do tempo"></canvas>
+            <p class="grafico__vazio texto-sec" data-grafico-vazio hidden></p>
+          </div>
+          <ul class="grafico__legenda texto-sm" role="list" aria-hidden="true">
+            <li><span class="grafico__chave grafico__chave--peso"></span>Peso</li>
+            <li data-legenda-meta><span class="grafico__chave grafico__chave--meta"></span>Meta</li>
+          </ul>
+        </section>
+
+        <div class="evo__colunas">
+          <!-- Registrar peso -->
+          <section class="card" aria-labelledby="evo-t-registrar">
+            <h2 class="evo__titulo" id="evo-t-registrar">Registrar novo peso</h2>
+            <form class="evo__form" id="form-peso" novalidate>
+              <div class="campo">
+                <label class="campo__label" for="p-data">Data</label>
+                <input class="input" id="p-data" name="data" type="date" required aria-describedby="p-data-erro">
+                <p class="campo__erro" id="p-data-erro"></p>
+              </div>
+              <div class="campo">
+                <label class="campo__label" for="p-peso">Peso <span class="opcional">(kg)</span></label>
+                <input class="input" id="p-peso" name="peso" type="text" inputmode="decimal" placeholder="Ex.: 78,5" required aria-describedby="p-peso-erro">
+                <p class="campo__erro" id="p-peso-erro"></p>
+              </div>
+              <div class="campo">
+                <label class="campo__label" for="p-cintura">Cintura <span class="opcional">(cm, opcional)</span></label>
+                <input class="input" id="p-cintura" name="cintura" type="text" inputmode="decimal" placeholder="Ex.: 90" aria-describedby="p-cintura-erro">
+                <p class="campo__erro" id="p-cintura-erro"></p>
+              </div>
+              <button class="btn evo__form-botao" type="submit">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M5 12h14M12 5v14"/></svg>
+                <span>Registrar peso</span>
+              </button>
+            </form>
+          </section>
+
+          <!-- Meta -->
+          <section class="card" aria-labelledby="evo-t-meta">
+            <h2 class="evo__titulo" id="evo-t-meta">Minha meta</h2>
+            <form class="evo__form" id="form-meta" novalidate>
+              <div class="campo">
+                <label class="campo__label" for="m-peso">Meta de peso <span class="opcional">(kg)</span></label>
+                <input class="input" id="m-peso" name="metaPeso" type="text" inputmode="decimal" placeholder="Ex.: 68" required aria-describedby="m-peso-erro">
+                <p class="campo__erro" id="m-peso-erro"></p>
+              </div>
+              <div class="campo">
+                <label class="campo__label" for="m-data">Data desejada <span class="opcional">(opcional)</span></label>
+                <input class="input" id="m-data" name="metaData" type="date" aria-describedby="m-data-erro">
+                <p class="campo__erro" id="m-data-erro"></p>
+              </div>
+              <button class="btn btn--secundario evo__form-botao" type="submit"><span>Salvar meta</span></button>
+            </form>
+          </section>
+        </div>
+
+        <!-- Histórico -->
+        <section class="card evo__historico" aria-labelledby="evo-t-historico">
+          <h2 class="evo__titulo" id="evo-t-historico">Histórico</h2>
+          <p class="texto-sec" data-historico-vazio hidden>Nenhum registro ainda.</p>
+          <table class="tabela" data-historico>
+            <thead>
+              <tr>
+                <th scope="col">Data</th>
+                <th scope="col">Peso</th>
+                <th scope="col">Variação</th>
+                <th scope="col">Cintura</th>
+                <th scope="col"><span class="sr-only">Ações</span></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </section>
+      </div>
+    </section>
+
+    <section class="secao-app" id="secao-medicamentos" data-secao="medicamentos" aria-labelledby="titulo-medicamentos" hidden>
+      <header class="secao-app__cabecalho">
+        <h1 id="titulo-medicamentos" tabindex="-1">Medicamentos</h1>
+        <p class="texto-sec">Suas doses e quantos dias faltam para a próxima aplicação de cada medicamento.</p>
+      </header>
+
+      <div class="meds" data-medicamentos>
+        <!-- Abas com os medicamentos cadastrados -->
+        <div class="meds__abas" role="tablist" aria-label="Seus medicamentos" data-meds-abas></div>
+
+        <div class="card vazio" data-meds-vazio hidden>
+          <p class="vazio__titulo">Nenhum medicamento cadastrado</p>
+          <p class="texto-sec">Cadastre o seu, como Mounjaro ou Testosterona, ou crie outro com o nome que quiser.</p>
+          <div><button class="btn" type="button" data-meds-novo><span>Adicionar medicamento</span></button></div>
+        </div>
+
+        <div class="meds__conteudo" data-meds-conteudo role="tabpanel" hidden>
+          <!-- Contagem regressiva do medicamento selecionado -->
+          <section class="card dose" data-dose data-estado="configurar" aria-labelledby="dose-titulo" aria-live="polite">
+            <div class="dose__anel">
+              <svg viewBox="0 0 120 120" role="img" data-dose-anel-rotulo aria-label="">
+                <circle class="dose__trilho" cx="60" cy="60" r="52"/>
+                <circle class="dose__progresso" cx="60" cy="60" r="52" pathLength="100" data-dose-anel/>
+              </svg>
+              <div class="dose__centro" aria-hidden="true">
+                <span class="dose__numero" data-dose-numero></span>
+                <span class="dose__unidade" data-dose-unidade></span>
+              </div>
+            </div>
+            <div class="dose__texto">
+              <p class="dose__produto" data-dose-produto></p>
+              <h2 class="dose__titulo" id="dose-titulo" data-dose-titulo></h2>
+              <p class="dose__data" data-dose-data></p>
+              <button class="btn btn--laranja" type="button" data-registrar-aplicacao hidden><span>Registrar aplicação</span></button>
+            </div>
+          </section>
+
+          <div class="prod__colunas">
+            <!-- Cadastro / edição -->
+            <section class="card" aria-labelledby="med-form-titulo">
+              <div class="prod__cabecalho">
+                <span class="prod__icone" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 2 4 4M17 7l3-3M19 9 8.7 19.3c-1 1-2.5 1-3.4 0l-.6-.6c-1-1-1-2.5 0-3.4L15 5M9 11l4 4M5 19l-3 3M14 4l6 6"/></svg>
+                </span>
+                <h2 class="evo__titulo" id="med-form-titulo" data-med-form-titulo tabindex="-1">Dados do medicamento</h2>
+              </div>
+
+              <p class="prod__aviso" role="note">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4M12 17h.01"/></svg>
+                <span>Use somente conforme prescrição médica. O PontoFit apenas ajuda a lembrar suas doses.</span>
+              </p>
+
+              <form class="evo__form prod__form" id="form-medicamento" novalidate>
+                <div class="campo prod__largo">
+                  <label class="campo__label" for="med-nome">Medicamento</label>
+                  <select class="input" id="med-nome" name="nomeEscolhido" aria-describedby="med-nome-erro"></select>
+                  <p class="campo__erro" id="med-nome-erro"></p>
+                </div>
+                <div class="campo prod__largo" data-med-outro hidden>
+                  <label class="campo__label" for="med-outro">Nome do novo medicamento</label>
+                  <input class="input" id="med-outro" name="nomeOutro" type="text" placeholder="Ex.: Ozempic, vitamina D, insulina" aria-describedby="med-outro-erro">
+                  <p class="campo__erro" id="med-outro-erro"></p>
+                </div>
+
+                <div class="campo">
+                  <label class="campo__label" for="pr-ml">Quantos mL por aplicação?</label>
+                  <input class="input" id="pr-ml" name="doseMl" type="text" inputmode="decimal" placeholder="Ex.: 0,5" required aria-describedby="pr-ml-erro">
+                  <p class="campo__erro" id="pr-ml-erro"></p>
+                </div>
+
+                <fieldset class="campo prod__intervalo">
+                  <legend class="campo__label">Intervalo entre uma aplicação e outra</legend>
+                  <div class="prod__intervalo-linha">
+                    <label class="sr-only" for="pr-intervalo">Quantidade</label>
+                    <input class="input" id="pr-intervalo" name="intervaloValor" type="text" inputmode="numeric" placeholder="Ex.: 7" required aria-describedby="pr-intervalo-erro">
+                    <label class="sr-only" for="pr-unidade">Unidade</label>
+                    <select class="input" id="pr-unidade" name="intervaloUnidade">
+                      <option value="dias">dias</option>
+                      <option value="semanas">semanas</option>
+                    </select>
+                  </div>
+                  <p class="campo__erro" id="pr-intervalo-erro"></p>
+                </fieldset>
+
+                <div class="campo">
+                  <label class="campo__label" for="pr-ultima">Data da última aplicação</label>
+                  <input class="input" id="pr-ultima" name="dataUltimaAplicacao" type="date" required aria-describedby="pr-ultima-erro">
+                  <p class="campo__erro" id="pr-ultima-erro"></p>
+                </div>
+
+                <div class="campo">
+                  <label class="campo__label" for="pr-mg">Concentração ou dose <span class="opcional">(mg, opcional)</span></label>
+                  <input class="input" id="pr-mg" name="doseMg" type="text" inputmode="decimal" placeholder="Ex.: 2,5" aria-describedby="pr-mg-erro">
+                  <p class="campo__erro" id="pr-mg-erro"></p>
+                </div>
+
+                <div class="campo prod__largo">
+                  <label class="campo__label" for="pr-obs">Observações <span class="opcional">(opcional)</span></label>
+                  <textarea class="input" id="pr-obs" name="observacoes" rows="2" placeholder="Ex.: aplicar na barriga, alternando os lados"></textarea>
+                </div>
+
+                <div class="linha prod__largo meds__acoes">
+                  <button class="btn" type="submit"><span data-med-salvar-texto>Salvar</span></button>
+                  <button class="btn btn--fantasma" type="button" data-med-cancelar hidden>Cancelar</button>
+                  <button class="btn btn--perigo meds__excluir" type="button" data-med-excluir hidden>Excluir medicamento</button>
+                </div>
+              </form>
+            </section>
+
+            <!-- Histórico de aplicações -->
+            <section class="card prod__historico" aria-labelledby="prod-t-historico">
+              <h2 class="evo__titulo" id="prod-t-historico">Histórico de aplicações</h2>
+              <button class="btn btn--secundario btn--bloco" type="button" data-registrar-hoje>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"/></svg>
+                <span>Registrar aplicação de hoje</span>
+              </button>
+              <p class="texto-sec texto-sm" data-aplicacoes-vazio>Nenhuma aplicação registrada ainda.</p>
+              <ol class="aplicacoes" role="list" data-aplicacoes></ol>
+            </section>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="secao-app" id="secao-plano" data-secao="plano" aria-labelledby="titulo-plano" hidden>
+      <header class="secao-app__cabecalho">
+        <h1 id="titulo-plano" tabindex="-1">Meu plano</h1>
+        <p class="texto-sec">Acompanhe suas mensalidades e registre os pagamentos.</p>
+      </header>
+
+      <div class="plano-app" data-plano>
+        <!-- Resumo da assinatura -->
+        <section class="card assinatura" data-assinatura-estado="teste" aria-labelledby="assinatura-nome" aria-live="polite">
+          <div class="assinatura__plano">
+            <p class="assinatura__rotulo">Plano atual</p>
+            <h2 class="assinatura__nome" id="assinatura-nome" data-assinatura-nome></h2>
+            <p class="assinatura__preco" data-assinatura-preco></p>
+          </div>
+          <div class="assinatura__situacao">
+            <span class="badge" data-assinatura-badge></span>
+            <p data-assinatura-texto></p>
+            <p class="assinatura__proxima" data-assinatura-proxima></p>
+          </div>
+        </section>
+
+        <ul class="evo__resumo plano-app__numeros" role="list">
+          <li class="card resumo">
+            <p class="resumo__rotulo">Pagas</p>
+            <p class="resumo__valor" data-n="pagas">0</p>
+            <p class="resumo__info" data-n="pagas-info"></p>
+          </li>
+          <li class="card resumo">
+            <p class="resumo__rotulo">Total pago</p>
+            <p class="resumo__valor" data-n="total">R$ 0,00</p>
+            <p class="resumo__info" data-n="total-info"></p>
+          </li>
+          <li class="card resumo" data-n-card="aberto">
+            <p class="resumo__rotulo">Em aberto</p>
+            <p class="resumo__valor" data-n="aberto">R$ 0,00</p>
+            <p class="resumo__info" data-n="aberto-info"></p>
+          </li>
+        </ul>
+
+        <div class="plano-app__colunas">
+          <!-- Mensalidades -->
+          <section class="card" aria-labelledby="plano-t-cobrancas">
+            <h2 class="evo__titulo" id="plano-t-cobrancas" tabindex="-1">Mensalidades</h2>
+            <p class="plano-app__aviso texto-sm">O PontoFit ainda não processa pagamentos. Use esta lista para registrar o que você já pagou.</p>
+            <table class="tabela" data-cobrancas>
+              <thead>
+                <tr>
+                  <th scope="col">Vencimento</th>
+                  <th scope="col">Referente a</th>
+                  <th scope="col">Valor</th>
+                  <th scope="col">Situação</th>
+                  <th scope="col"><span class="sr-only">Ações</span></th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </section>
+
+          <!-- Trocar de plano -->
+          <section class="card" aria-labelledby="plano-t-trocar">
+            <h2 class="evo__titulo" id="plano-t-trocar">Trocar de plano</h2>
+            <form class="evo__form" id="form-plano" novalidate>
+              <fieldset class="segmentado plano-app__escolha" style="--opcoes:2" aria-describedby="plano-troca-ajuda">
+                <legend class="sr-only">Plano</legend>
+                <input type="radio" id="pl-mensal" name="plano" value="mensal">
+                <label for="pl-mensal">Mensal <span class="plano-app__preco">R$ 20,00/mês</span></label>
+                <input type="radio" id="pl-anual" name="plano" value="anual">
+                <label for="pl-anual">Anual <span class="plano-app__preco">R$ 199,99/ano</span></label>
+                <span class="segmentado__indicador" aria-hidden="true"></span>
+              </fieldset>
+              <p class="campo__ajuda" id="plano-troca-ajuda">A troca vale a partir da próxima cobrança em aberto. Mensalidades atrasadas continuam com o valor do plano anterior.</p>
+              <button class="btn btn--secundario evo__form-botao" type="submit"><span>Salvar plano</span></button>
+            </form>
+          </section>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/ui.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/receitas-dados.js"></script>
+  <script src="js/receitas.js"></script>
+  <script src="js/ficha.js"></script>
+  <!-- Gráfico: Chart.js via CDN (sem conexão, a seção mostra o histórico e um aviso) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <script src="js/evolucao.js"></script>
+  <script src="js/cesta.js"></script>
+  <script src="js/medicamentos.js"></script>
+  <script src="js/plano.js"></script>
+</body>
+</html>

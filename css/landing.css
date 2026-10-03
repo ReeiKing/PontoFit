@@ -1,0 +1,746 @@
+/* ==========================================================================
+   PontoFit — landing.css
+   Landing page (index.html). Mobile-first; breakpoints 640px e 1024px.
+   Os estados animados (copo, prato, contadores, balança…) são controlados
+   por variáveis CSS que js/scroll-animations.js atualiza na Fase 3.
+   ========================================================================== */
+
+.landing { --topo-h: 64px; --aviso-h: 40px; }
+html:has(.landing) { scroll-padding-top: 120px; } /* header + barra de aviso */
+@media (min-width: 1024px) { .landing { --topo-h: 76px; } }
+
+/* ---------- Header ---------- */
+.topo {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 100;
+  height: calc(var(--topo-h) + var(--aviso-h));
+  background: color-mix(in srgb, var(--fundo) 82%, transparent);
+  -webkit-backdrop-filter: saturate(1.4) blur(12px);
+  backdrop-filter: saturate(1.4) blur(12px);
+  border-bottom: 1px solid transparent;
+  transition: background-color var(--dur) ease, box-shadow var(--dur) ease,
+              border-color var(--dur) ease, transform var(--dur-lenta) var(--ease);
+}
+/* Estados aplicados pelo JS da Fase 3 */
+.topo.is-rolado {
+  background: var(--superficie);
+  border-bottom-color: var(--borda);
+  box-shadow: var(--sombra-1);
+}
+.topo.is-escondido { transform: translateY(-100%); }
+
+.topo__barra {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--esp-4);
+  height: var(--topo-h);
+}
+
+/* ---------- Barra de aviso (teste grátis e planos) ---------- */
+.aviso-topo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--esp-3);
+  height: var(--aviso-h);
+  padding-inline: var(--gutter);
+  background: linear-gradient(90deg, var(--verde-escuro), #1C6E9C);
+  color: #fff;
+  font-size: var(--fs-sm);
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.aviso-topo:hover { color: #fff; }
+.aviso-topo:hover .aviso-topo__acao { text-decoration: underline; text-underline-offset: .2em; }
+.aviso-topo:focus-visible { outline-offset: -3px; border-radius: 0; outline-color: #fff; }
+.aviso-topo__selo {
+  padding: .1rem .55rem;
+  border-radius: var(--raio-pill);
+  background: var(--laranja);
+  color: #1E2A24;
+  font-family: var(--fonte-titulo);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+.aviso-topo__texto { overflow: hidden; text-overflow: ellipsis; }
+.aviso-topo__longo { display: none; }
+.aviso-topo__acao { font-weight: 600; }
+@media (max-width: 420px) { .aviso-topo__acao { display: none; } }
+@media (min-width: 900px) {
+  .aviso-topo__longo { display: inline; }
+  .aviso-topo__curto { display: none; }
+}
+
+/* Botão hambúrguer */
+.topo__menu-btn {
+  display: grid;
+  place-items: center;
+  width: var(--toque-min);
+  height: var(--toque-min);
+  margin-right: -10px;
+  border-radius: 12px;
+  color: var(--texto);
+}
+.topo__menu-btn:hover { background: var(--superficie-2); }
+
+.hamburguer,
+.hamburguer::before,
+.hamburguer::after,
+.hamburguer > span {
+  display: block;
+  width: 22px;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+  transition: transform var(--dur) var(--ease), opacity var(--dur-rapida) ease;
+}
+.hamburguer { position: relative; background: transparent; }
+.hamburguer::before,
+.hamburguer::after { content: ""; position: absolute; left: 0; }
+.hamburguer::before { top: -7px; }
+.hamburguer::after { top: 7px; }
+.hamburguer > span { position: absolute; top: 0; left: 0; }
+[aria-expanded="true"] .hamburguer > span { opacity: 0; transform: scaleX(.3); }
+[aria-expanded="true"] .hamburguer::before { transform: translateY(7px) rotate(45deg); }
+[aria-expanded="true"] .hamburguer::after { transform: translateY(-7px) rotate(-45deg); }
+
+/* Menu: painel suspenso no celular */
+.topo__nav {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  display: grid;
+  gap: var(--esp-4);
+  padding: var(--esp-3) var(--gutter) var(--esp-5);
+  background: var(--superficie);
+  border-bottom: 1px solid var(--borda);
+  box-shadow: var(--sombra-2);
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(-8px);
+  transition: opacity var(--dur) ease, transform var(--dur) var(--ease), visibility 0s linear var(--dur);
+}
+.topo__nav.is-aberto {
+  visibility: visible;
+  opacity: 1;
+  transform: none;
+  transition: opacity var(--dur) ease, transform var(--dur) var(--ease), visibility 0s;
+}
+.topo__links { display: grid; }
+.topo__links a {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  padding-inline: var(--esp-2);
+  border-bottom: 1px solid var(--borda);
+  font-family: var(--fonte-titulo);
+  font-weight: 500;
+  color: var(--texto);
+  text-decoration: none;
+}
+.topo__links a:hover { color: var(--verde-escuro); }
+.topo__entrar { justify-self: stretch; }
+
+@media (min-width: 768px) {
+  .topo__menu-btn { display: none; }
+  .topo__nav {
+    position: static;
+    display: flex;
+    align-items: center;
+    gap: var(--esp-5);
+    padding: 0;
+    background: none;
+    border: 0;
+    box-shadow: none;
+    visibility: visible;
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .topo__links { display: flex; gap: var(--esp-1); }
+  .topo__links a {
+    min-height: var(--toque-min);
+    padding-inline: var(--esp-3);
+    border: 0;
+    border-radius: var(--raio-pill);
+    font-size: .9375rem;
+  }
+  .topo__links a:hover { background: var(--verde-suave); }
+}
+
+/* ---------- Hero ---------- */
+.hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  min-height: 88vh;
+  min-height: 88svh;
+  padding-block: calc(var(--topo-h) + var(--aviso-h) + var(--esp-7)) var(--esp-8);
+  color: #fff;
+}
+.hero__fundo {
+  --hero-foto: url("../assets/img/hero-1920.webp");
+  position: absolute;
+  inset: -12% 0 0; /* folga para o parallax */
+  z-index: -2;
+  background-color: var(--verde-escuro);
+  background-image:
+    /* sobreposição verde garante contraste do texto sobre a foto */
+    linear-gradient(160deg, rgba(20, 74, 50, .88) 0%, rgba(31, 110, 74, .78) 45%, rgba(28, 110, 156, .72) 100%),
+    var(--hero-foto, radial-gradient(circle at 75% 30%, #4FB3E8 0%, transparent 55%)),
+    linear-gradient(135deg, #2E9D6A, #1C6E9C);
+  background-size: cover;
+  background-position: center 40%;
+  will-change: transform;
+}
+@media (max-width: 960px) {
+  .hero__fundo { --hero-foto: url("../assets/img/hero-960.webp"); background-position: 30% center; }
+}
+.hero__conteudo > * { max-width: 46rem; }
+.hero h1 { color: #fff; }
+.hero__sub {
+  max-width: 36rem;
+  margin-top: var(--esp-5);
+  font-size: var(--fs-lead);
+  color: rgba(255, 255, 255, .92);
+}
+.hero__acoes { margin-top: var(--esp-6); --linha-esp: var(--esp-3); }
+@media (max-width: 639px) {
+  .hero__acoes .btn { flex: 1 1 100%; }
+}
+
+/* Folhas decorativas */
+.hero__folha {
+  position: absolute;
+  z-index: -1;
+  fill: rgba(255, 255, 255, .14);
+  stroke: none;
+  pointer-events: none;
+}
+.hero__folha .veio { fill: none; stroke: rgba(255, 255, 255, .22); stroke-width: 1.5; stroke-linecap: round; }
+.hero__folha--1 { width: clamp(90px, 18vw, 220px); right: -2%; top: 16%; transform: rotate(18deg); }
+.hero__folha--2 { width: clamp(60px, 10vw, 130px); right: 22%; bottom: 8%; transform: rotate(-30deg); }
+.hero__folha--3 { width: clamp(40px, 6vw, 80px); left: 55%; top: 14%; transform: rotate(80deg); opacity: .8; }
+@media (max-width: 639px) {
+  .hero__folha--3 { display: none; }
+  .hero__folha--1 { top: auto; bottom: 4%; right: -6%; }
+}
+
+/* ---------- Hidratação (copo d'água) ---------- */
+.hidratacao {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  min-height: 100vh;
+  min-height: 100svh;
+  background: linear-gradient(180deg, var(--fundo) 0%, var(--agua-suave) 100%);
+}
+.hidratacao__texto { position: relative; max-width: 38rem; }
+.hidratacao__texto .lead { color: var(--texto); }
+
+/* No celular o copo fica centralizado atrás do texto, bem suave */
+.hidratacao__copo {
+  --nivel: .55; /* 0 a 1 — o JS da Fase 3 controla */
+  position: absolute;
+  z-index: -1;
+  top: 50%;
+  left: 50%;
+  width: min(78vw, 340px);
+  transform: translate(-50%, -50%);
+  opacity: .3; /* atrás do texto: vidro quase transparente não atrapalha a leitura */
+  pointer-events: none;
+}
+@media (min-width: 640px) {
+  .hidratacao__copo { width: min(46vw, 400px); left: 62%; opacity: .45; }
+}
+@media (min-width: 1024px) {
+  .hidratacao__copo { left: auto; right: max(4vw, calc((100vw - var(--largura-max)) / 2)); transform: translateY(-50%); width: 400px; }
+}
+
+.copo {
+  /* cores do vidro que mudam com o tema (o resto vem dos degradês do SVG) */
+  --vidro-contorno: rgba(52, 104, 130, .55);
+  --vidro-contorno-interno: rgba(255, 255, 255, .7);
+  --vidro-boca: rgba(52, 104, 130, .5);
+  --vidro-sombra: rgba(20, 60, 80, .22);
+  width: 100%;
+  overflow: visible;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .copo {
+    --vidro-contorno: rgba(205, 232, 245, .55);
+    --vidro-contorno-interno: rgba(255, 255, 255, .22);
+    --vidro-boca: rgba(220, 240, 250, .7);
+    --vidro-sombra: rgba(0, 0, 0, .45);
+  }
+}
+.copo__sombra { fill: var(--vidro-sombra); }
+.copo__parede { fill: none; stroke: var(--vidro-contorno); stroke-width: 2; stroke-linejoin: round; }
+.copo__parede-interna { fill: none; stroke: var(--vidro-contorno-interno); stroke-width: 1; }
+.copo__boca-tras { fill: none; stroke: var(--vidro-boca); stroke-width: 1.2; opacity: .55; }
+.copo__boca-frente { fill: none; stroke: var(--vidro-boca); stroke-width: 2; }
+
+.copo__agua {
+  /* altura útil do copo = 240 unidades (superfície de y 24 a 264) */
+  transform: translateY(calc((1 - var(--nivel)) * 240px));
+  transition: transform 120ms linear;
+}
+.copo__superficie { stroke: rgba(255, 255, 255, .35); stroke-width: .8; }
+.copo__linha-agua { fill: none; stroke: rgba(255, 255, 255, .8); stroke-width: 1.2; } /* brilho na borda da frente */
+.copo__onda { fill: none; stroke: rgba(255, 255, 255, .5); stroke-width: 1.1; stroke-linecap: round; }
+.copo__onda--fina { stroke-width: .7; opacity: .6; }
+.copo__bolhas circle { fill: url(#bolha); stroke: rgba(255, 255, 255, .55); stroke-width: .5; opacity: 0; }
+
+.copo__nivel {
+  display: flex;
+  align-items: center;
+  gap: .3rem;
+  position: absolute;
+  top: 8%;
+  right: -4%;
+  font-family: var(--fonte-titulo);
+  font-weight: 700;
+  font-size: 1.5rem;
+  color: var(--agua-escuro);
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 1023px) { .copo__nivel { display: none; } }
+/* No desktop o copo fica ao lado do texto, então aparece por inteiro */
+@media (min-width: 1024px) {
+  .hidratacao__copo { opacity: 1; }
+}
+
+.dica {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--esp-3);
+  padding: var(--esp-4) var(--esp-5);
+  background: color-mix(in srgb, var(--agua-suave) 85%, transparent);
+  border: 1px solid color-mix(in srgb, var(--agua) 35%, transparent);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+.dica__icone { flex: none; width: 1.5rem; height: 1.5rem; margin-top: .1rem; color: var(--agua-escuro); }
+
+/* ---------- Benefícios dos legumes ---------- */
+.legumes__intro {
+  display: grid;
+  gap: var(--esp-5);
+  align-items: center;
+  margin-bottom: var(--esp-7);
+}
+.legumes__intro h2 { max-width: 18ch; }
+
+.legumes__foto {
+  aspect-ratio: 16 / 9;
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  border-radius: var(--raio-card);
+  background: linear-gradient(135deg, var(--verde), var(--agua)); /* enquanto carrega */
+  box-shadow: var(--sombra-2);
+}
+
+@media (min-width: 1024px) {
+  .legumes__intro { grid-template-columns: 1fr 1.1fr; gap: var(--esp-7); }
+  .legumes__foto { aspect-ratio: 16 / 10; }
+}
+
+.legumes__cards {
+  display: grid;
+  gap: var(--esp-4);
+  padding: 0;
+}
+@media (min-width: 640px) {
+  .legumes__cards { grid-template-columns: repeat(2, 1fr); gap: var(--esp-5); }
+  .legume:last-child { grid-column: 1 / -1; }
+}
+@media (min-width: 1024px) {
+  /* 3 em cima, 2 embaixo */
+  .legumes__cards { grid-template-columns: repeat(6, 1fr); }
+  .legume { grid-column: span 2; }
+  .legume:nth-child(n + 4) { grid-column: span 3; }
+  .legume:last-child { grid-column: span 3; }
+}
+.legume .card__icone svg { width: 2rem; height: 2rem; }
+
+/* ---------- Prato equilibrado ---------- */
+.prato { background: var(--superficie); }
+.prato__grade {
+  display: grid;
+  gap: var(--esp-7);
+  align-items: center;
+}
+/* No celular o texto vem antes do prato */
+.prato__texto { order: -1; }
+@media (min-width: 1024px) {
+  .prato__grade { grid-template-columns: 1fr 1fr; }
+  .prato__texto { order: 0; }
+}
+.prato__figura { display: grid; justify-items: center; gap: var(--esp-5); }
+.prato__visual { position: relative; width: min(100%, 380px); }
+.prato__svg { width: 100%; overflow: visible; }
+
+.prato__borda { fill: var(--superficie); stroke: var(--borda); stroke-width: 2; filter: drop-shadow(0 10px 18px rgba(30, 42, 36, .14)); }
+.prato__fundo { fill: var(--superficie-2); }
+
+.fatia {
+  fill: none;
+  stroke-width: 110;
+  stroke-dasharray: var(--tam) 100;
+  stroke-dashoffset: calc(var(--inicio) * -1);
+  transition: stroke-dasharray var(--dur-lenta) var(--ease);
+}
+.fatia--legumes { stroke: var(--verde); }
+.fatia--proteina { stroke: var(--laranja); }
+.fatia--carbo { stroke: #E9C46A; }
+.prato__divisorias path { fill: none; stroke: var(--superficie); stroke-width: 4; stroke-linecap: round; }
+
+.legume-cai {
+  position: absolute;
+  width: 16%;
+  filter: drop-shadow(0 4px 4px rgba(30, 42, 36, .2));
+}
+/* Legumes na metade verde; ovo nas proteínas; batata nos carboidratos */
+.legume-cai--cenoura { left: 55%; top: 20%; transform: rotate(-10deg); }
+.legume-cai--tomate { left: 69%; top: 38%; width: 14%; }
+.legume-cai--brocolis { left: 56%; top: 57%; }
+.legume-cai--ovo { left: 26%; top: 58%; width: 17%; }
+.legume-cai--batata { left: 25%; top: 26%; width: 17%; }
+
+.prato__legenda {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--esp-2) var(--esp-5);
+  padding: 0;
+  font-size: var(--fs-sm);
+}
+.prato__legenda li { display: flex; align-items: center; gap: var(--esp-2); }
+.marcador { width: .875rem; height: .875rem; border-radius: 4px; }
+.marcador--legumes { background: var(--verde); }
+.marcador--proteina { background: var(--laranja); }
+.marcador--carbo { background: #E9C46A; }
+
+/* ---------- Hábitos ---------- */
+.habitos__titulo { margin-bottom: var(--esp-7); max-width: 20ch; }
+.habitos__grade {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--esp-3);
+  padding: 0;
+}
+@media (min-width: 640px) { .habitos__grade { gap: var(--esp-5); } }
+@media (min-width: 1024px) { .habitos__grade { grid-template-columns: repeat(4, 1fr); } }
+
+.habito { display: flex; flex-direction: column; gap: var(--esp-1); padding: var(--esp-5) var(--esp-4); }
+@media (min-width: 640px) { .habito { padding: var(--esp-6); } }
+.habito__icone {
+  width: 2.5rem;
+  height: 2.5rem;
+  margin-bottom: var(--esp-3);
+  padding: .5rem;
+  border-radius: 12px;
+  background: var(--verde-suave);
+  color: var(--verde-escuro);
+}
+.habito:nth-child(4) .habito__icone { background: var(--agua-suave); color: var(--agua-escuro); }
+.habito__valor {
+  font-family: var(--fonte-titulo);
+  font-size: clamp(1.625rem, 1.2rem + 2.2vw, 2.75rem);
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--verde-escuro);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.habito__rotulo { font-size: var(--fs-sm); color: var(--texto-sec); line-height: 1.45; }
+@media (min-width: 640px) { .habito__rotulo { font-size: var(--fs-base); } }
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .habito__valor,
+  :root:not([data-theme="light"]) .habito__icone { color: #6FD3A4; }
+}
+
+/* ---------- CTA final ---------- */
+.cta__caixa {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  gap: var(--esp-6);
+  align-items: center;
+  padding: clamp(2rem, 1.2rem + 4vw, 4rem);
+  border-radius: calc(var(--raio-card) * 1.5);
+  background: linear-gradient(135deg, var(--verde-escuro) 0%, #1C6E9C 100%);
+  color: #fff;
+  box-shadow: var(--sombra-3);
+}
+.cta__texto h2 { color: #fff; max-width: 16ch; }
+.cta__texto p { font-size: var(--fs-lead); color: rgba(255, 255, 255, .92); max-width: 34rem; }
+@media (min-width: 1024px) {
+  .cta__caixa { grid-template-columns: 1.4fr 1fr; }
+}
+
+.balanca { --giro: 0deg; justify-self: center; width: min(60%, 240px); }
+@media (min-width: 1024px) { .balanca { width: min(100%, 280px); } }
+.balanca__corpo { fill: rgba(255, 255, 255, .14); stroke: rgba(255, 255, 255, .5); stroke-width: 2; }
+.balanca__visor { fill: rgba(255, 255, 255, .92); }
+.balanca__marcas path { stroke: var(--verde-escuro); stroke-width: 3; stroke-linecap: round; }
+.balanca__ponteiro {
+  transform-box: view-box;
+  transform-origin: 100px 104px;
+  transform: rotate(var(--giro));
+  transition: transform 150ms linear;
+}
+.balanca__ponteiro path { stroke: var(--laranja); stroke-width: 4; stroke-linecap: round; }
+.balanca__ponteiro circle { fill: var(--laranja); }
+.balanca__pe { fill: rgba(255, 255, 255, .2); }
+
+/* ---------- Rodapé ---------- */
+.rodape {
+  padding-top: var(--esp-7);
+  background: #16201B;
+  color: #C9D6CF;
+}
+.rodape a { color: #E6EFE9; }
+.rodape a:hover { color: #fff; }
+.logo--claro { color: #fff; }
+.logo--claro:hover { color: #fff; }
+.logo--claro strong { color: #5CCB98; }
+
+.rodape__grade {
+  display: grid;
+  gap: var(--esp-6);
+  padding-bottom: var(--esp-6);
+}
+@media (min-width: 640px) {
+  .rodape__grade { grid-template-columns: 2fr 1fr; align-items: start; }
+}
+.rodape__aviso { max-width: 34rem; font-size: var(--fs-sm); }
+.rodape__links { display: grid; gap: var(--esp-1); padding: 0; }
+.rodape__links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--toque-min);
+  text-decoration: none;
+}
+.rodape__links a:hover { text-decoration: underline; }
+@media (min-width: 640px) { .rodape__links { justify-items: end; } }
+
+.rodape__creditos { margin-top: var(--esp-1); font-size: var(--fs-xs); }
+.rodape__creditos a { color: inherit; }
+.rodape__base {
+  padding-block: var(--esp-5);
+  border-top: 1px solid rgba(255, 255, 255, .12);
+  font-size: var(--fs-sm);
+  color: #A9B9B0;
+}
+
+/* ==========================================================================
+   Animações de scroll (Fase 3)
+   Estados iniciais "escondidos" só existem com .anima no <html>, que o
+   js/scroll-animations.js adiciona — sem JS ou com movimento reduzido,
+   tudo aparece no estado final.
+   ========================================================================== */
+
+/* ---------- Barra de progresso de leitura ---------- */
+.topo__progresso {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 3px;
+  overflow: hidden;
+  pointer-events: none;
+}
+.topo__progresso span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--verde), var(--agua));
+  transform: scaleX(0);
+  transform-origin: left;
+}
+
+/* ---------- Voltar ao topo (anel de progresso) ---------- */
+.voltar-topo {
+  position: fixed;
+  z-index: 90;
+  right: max(var(--gutter), env(safe-area-inset-right));
+  bottom: max(var(--gutter), env(safe-area-inset-bottom));
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--superficie);
+  color: var(--verde-escuro);
+  box-shadow: var(--sombra-2);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(16px) scale(.9);
+  transition: opacity var(--dur) ease, transform var(--dur) var(--ease), visibility 0s linear var(--dur), box-shadow var(--dur) ease;
+}
+.voltar-topo.is-visivel {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition: opacity var(--dur) ease, transform var(--dur) var(--ease), visibility 0s, box-shadow var(--dur) ease;
+}
+.voltar-topo:hover { color: var(--verde-escuro); transform: translateY(-2px); box-shadow: var(--sombra-3); }
+.voltar-topo:focus-visible { border-radius: 50%; }
+.voltar-topo > svg { grid-area: 1 / 1; }
+.voltar-topo__anel { width: 52px; height: 52px; transform: rotate(-90deg); }
+.voltar-topo__trilho { fill: none; stroke: var(--borda); stroke-width: 3; }
+.voltar-topo__progresso {
+  fill: none;
+  stroke: var(--verde);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 100 100;
+  stroke-dashoffset: 100;
+}
+.voltar-topo__seta { width: 22px; height: 22px; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .voltar-topo { color: #6FD3A4; }
+}
+
+/* ---------- Hero: folhas flutuando ---------- */
+.anima .hero__folha--1 { animation: flutuar 9s ease-in-out infinite; }
+.anima .hero__folha--2 { animation: flutuar 11s ease-in-out -3s infinite reverse; }
+.anima .hero__folha--3 { animation: flutuar 7s ease-in-out -1s infinite; }
+@keyframes flutuar {
+  0%, 100% { translate: 0 0; rotate: 0deg; }
+  50% { translate: -12px -22px; rotate: 8deg; }
+}
+
+/* ---------- Copo: reflexos ondulando na superfície e bolhas ---------- */
+.anima .copo__onda { animation: onda 4s linear infinite; }
+.anima .copo__onda--fina { animation-duration: 6.5s; animation-direction: reverse; }
+@keyframes onda { to { transform: translateX(50px); } } /* = 1 comprimento de onda */
+
+.anima .copo__agua { transition: transform 140ms linear; }
+.anima .com-bolhas .copo__bolhas circle {
+  animation: bolha 2.6s ease-in infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.anima .com-bolhas .copo__bolhas circle:nth-child(2) { animation-delay: .5s; animation-duration: 3.1s; }
+.anima .com-bolhas .copo__bolhas circle:nth-child(3) { animation-delay: 1.1s; animation-duration: 2.3s; }
+.anima .com-bolhas .copo__bolhas circle:nth-child(4) { animation-delay: 1.6s; animation-duration: 3.4s; }
+.anima .com-bolhas .copo__bolhas circle:nth-child(5) { animation-delay: 2s; animation-duration: 2.8s; }
+@keyframes bolha { /* sobe do fundo até estourar na superfície */
+  0% { transform: translate(0, 0) scale(.5); opacity: 0; }
+  15% { opacity: .95; }
+  55% { transform: translate(3px, -55px) scale(.9); }
+  92% { opacity: .9; }
+  100% { transform: translate(-2px, -100px) scale(1.15); opacity: 0; }
+}
+
+/* ---------- Cards de legumes: fade + slide-up em cascata ---------- */
+.anima [data-revelar] {
+  opacity: 0;
+  transform: translateY(32px);
+  transition: opacity 600ms var(--ease), transform 600ms var(--ease), box-shadow var(--dur) var(--ease);
+}
+.anima [data-revelar].is-visivel { opacity: 1; transform: none; }
+.anima [data-revelar].is-visivel.card--interativo:hover { transform: translateY(-4px); }
+
+/* ---------- Prato: fatias desenhadas pelo JS (sem atraso) ---------- */
+.anima .fatia { transition: stroke-dasharray 90ms linear; }
+
+/* ---------- Legumes caindo e "pousando" no prato ---------- */
+.anima .legume-cai {
+  opacity: 0;
+  translate: 0 -220%;
+  transition: translate 0s linear .3s, opacity .3s ease;
+}
+.anima .is-pousado .legume-cai {
+  opacity: 1;
+  translate: 0 0;
+  transition: translate 750ms cubic-bezier(.34, 1.45, .64, 1), opacity 200ms ease;
+}
+.anima .is-pousado .legume-cai--brocolis { transition-delay: 150ms; }
+.anima .is-pousado .legume-cai--tomate { transition-delay: 300ms; }
+.anima .is-pousado .legume-cai--ovo { transition-delay: 450ms; }
+.anima .is-pousado .legume-cai--batata { transition-delay: 600ms; }
+
+/* ---------- Planos ---------- */
+.planos { background: var(--superficie); }
+.planos__cabecalho { margin-bottom: var(--esp-6); }
+.planos__cabecalho .lead { margin-top: var(--esp-2); }
+
+.teste-gratis {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--esp-3) var(--esp-5);
+  align-items: center;
+  margin-bottom: var(--esp-5);
+  padding: var(--esp-5);
+  border-radius: var(--raio-card);
+  background: var(--laranja-suave);
+  border: 1px solid color-mix(in srgb, var(--laranja) 40%, transparent);
+}
+.teste-gratis__numero {
+  font-family: var(--fonte-titulo);
+  font-size: clamp(2.75rem, 2rem + 3vw, 4rem);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--laranja-escuro);
+}
+.teste-gratis__titulo { font-family: var(--fonte-titulo); font-size: var(--fs-h3); font-weight: 600; }
+.teste-gratis__texto p:not(.teste-gratis__titulo) { color: var(--texto-sec); }
+.teste-gratis__botao { grid-column: 1 / -1; }
+@media (min-width: 768px) {
+  .teste-gratis { grid-template-columns: auto 1fr auto; }
+  .teste-gratis__botao { grid-column: auto; }
+}
+
+.planos__grade {
+  display: grid;
+  gap: var(--esp-5);
+  padding: 0;
+}
+@media (min-width: 768px) { .planos__grade { grid-template-columns: 1fr 1fr; } }
+
+.plano { display: flex; flex-direction: column; gap: var(--esp-3); }
+.plano--destaque { border: 2px solid var(--verde); box-shadow: var(--sombra-2); }
+.plano__selo { align-self: flex-start; }
+.plano__nome { font-size: var(--fs-h3); }
+.plano__preco { display: flex; align-items: baseline; gap: .25rem; }
+.plano__valor {
+  font-family: var(--fonte-titulo);
+  font-size: clamp(2rem, 1.6rem + 1.6vw, 2.75rem);
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.plano__periodo { color: var(--texto-sec); font-weight: 500; }
+.plano__detalhe { color: var(--texto-sec); font-size: var(--fs-sm); }
+.plano__itens { display: grid; gap: var(--esp-2); margin-block: var(--esp-2) var(--esp-3); padding: 0; }
+.plano > .btn { margin-top: auto; } /* botões alinhados na base dos dois cards */
+.plano__itens li { display: flex; gap: var(--esp-2); align-items: flex-start; }
+.plano__itens li::before {
+  content: "";
+  flex: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-top: .15rem;
+  border-radius: 50%;
+  background: var(--verde-suave) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231F6E4A' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") center / .8rem no-repeat;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .teste-gratis__numero { color: var(--laranja); }
+  :root:not([data-theme="light"]) .plano__itens li::before {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236FD3A4' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E");
+  }
+}
+
+.copo__gota { width: 1.4rem; height: 1.4rem; flex: none; }

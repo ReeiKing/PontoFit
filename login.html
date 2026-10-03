@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Entrar | PontoFit</title>
+  <meta name="description" content="Entre ou crie sua conta no PontoFit para acompanhar sua ficha, sua evolução e suas doses.">
+  <meta name="theme-color" content="#1F6E4A">
+  <link rel="icon" href="assets/svg/logo.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/auth.css">
+</head>
+<body class="auth" data-pagina-login>
+  <a class="pular-link" href="#auth-conteudo">Pular para o formulário</a>
+
+  <div class="auth__layout">
+    <main class="auth__painel" id="auth-conteudo">
+      <header class="auth__topo">
+        <a class="logo" href="index.html" aria-label="PontoFit, página inicial">
+          <svg class="logo__marca" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M12 2.5C9 6.2 5 10.6 5 14.6a7 7 0 0 0 14 0c0-4-4-8.4-7-12.1Z" fill="#2E9D6A"/>
+            <path d="M12 20.2v-7.4m0 3.3 2.6-2.6" fill="none" stroke="#F7FBF8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>Ponto<strong>Fit</strong></span>
+        </a>
+        <a class="auth__voltar" href="index.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6"/></svg>
+          Voltar ao site
+        </a>
+      </header>
+
+      <div class="auth__caixa">
+        <h1 class="auth__titulo" data-auth-titulo>Entre na sua conta</h1>
+        <p class="auth__sub">Acompanhe sua ficha, sua evolução e suas doses em um só lugar.</p>
+
+        <div class="abas" role="tablist" aria-label="Acesso" data-ativa="entrar">
+          <button class="abas__aba" type="button" role="tab" id="aba-entrar" aria-controls="painel-entrar" aria-selected="true"
+                  data-aba="entrar" data-titulo="Entre na sua conta">Entrar</button>
+          <button class="abas__aba" type="button" role="tab" id="aba-cadastro" aria-controls="painel-cadastro" aria-selected="false" tabindex="-1"
+                  data-aba="cadastro" data-titulo="Crie sua conta">Criar conta</button>
+          <span class="abas__indicador" aria-hidden="true"></span>
+        </div>
+
+        <!-- ============ Entrar ============ -->
+        <section class="painel" id="painel-entrar" role="tabpanel" aria-labelledby="aba-entrar" tabindex="-1">
+          <form id="form-entrar" class="form-auth" novalidate>
+            <div class="campo">
+              <label class="campo__label" for="entrar-email">E-mail</label>
+              <input class="input" id="entrar-email" name="email" type="email" autocomplete="email" inputmode="email"
+                     required data-regra="email" aria-describedby="entrar-email-erro">
+              <p class="campo__erro" id="entrar-email-erro" aria-live="polite"></p>
+            </div>
+
+            <div class="campo">
+              <label class="campo__label" for="entrar-senha">Senha</label>
+              <div class="senha">
+                <input class="input" id="entrar-senha" name="senha" type="password" autocomplete="current-password"
+                       required data-regra="senhaLogin" aria-describedby="entrar-senha-erro">
+                <button class="senha__toggle" type="button" data-mostrar-senha aria-controls="entrar-senha" aria-pressed="false" aria-label="Mostrar senha">
+                  <svg class="olho-aberto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/></svg>
+                  <svg class="olho-fechado" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c4.65 0 8.62 2.9 9.94 6.65a1 1 0 0 1 0 .7 10.8 10.8 0 0 1-1.44 2.49"/><path d="M14.08 14.16a3 3 0 0 1-4.24-4.24"/><path d="M17.48 17.5A10.75 10.75 0 0 1 2.06 12.35a1 1 0 0 1 0-.7 10.8 10.8 0 0 1 4.45-5.14"/><path d="m2 2 20 20"/></svg>
+                </button>
+              </div>
+              <p class="campo__erro" id="entrar-senha-erro" aria-live="polite"></p>
+            </div>
+
+            <div class="form-auth__linha">
+              <label class="check">
+                <input type="checkbox" name="lembrar">
+                <span>Lembrar de mim</span>
+              </label>
+              <button class="link-botao" type="button" data-esqueci-senha>Esqueci minha senha</button>
+            </div>
+
+            <button class="btn btn--lg btn--bloco" type="submit"><span>Entrar</span></button>
+
+          </form>
+        </section>
+
+        <!-- ============ Criar conta ============ -->
+        <section class="painel" id="painel-cadastro" role="tabpanel" aria-labelledby="aba-cadastro" tabindex="-1" hidden>
+          <form id="form-cadastro" class="form-auth" novalidate>
+            <div class="campo plano-escolha">
+              <span class="campo__label" aria-hidden="true">Plano</span>
+              <fieldset class="segmentado" style="--opcoes:2" aria-describedby="cad-plano-ajuda">
+                <legend class="sr-only">Plano</legend>
+                <input type="radio" id="cad-plano-mensal" name="plano" value="mensal" checked>
+                <label for="cad-plano-mensal">Mensal · R$ 20,00</label>
+                <input type="radio" id="cad-plano-anual" name="plano" value="anual">
+                <label for="cad-plano-anual">Anual · R$ 199,99</label>
+                <span class="segmentado__indicador" aria-hidden="true"></span>
+              </fieldset>
+              <p class="campo__ajuda" id="cad-plano-ajuda">Os primeiros 30 dias são grátis em qualquer plano.</p>
+            </div>
+
+            <div class="campo">
+              <label class="campo__label" for="cad-nome">Nome</label>
+              <input class="input" id="cad-nome" name="nome" type="text" autocomplete="name"
+                     required data-regra="nome" aria-describedby="cad-nome-erro">
+              <p class="campo__erro" id="cad-nome-erro" aria-live="polite"></p>
+            </div>
+
+            <div class="campo">
+              <label class="campo__label" for="cad-email">E-mail</label>
+              <input class="input" id="cad-email" name="email" type="email" autocomplete="email" inputmode="email"
+                     required data-regra="email" aria-describedby="cad-email-erro">
+              <p class="campo__erro" id="cad-email-erro" aria-live="polite"></p>
+            </div>
+
+            <div class="campo">
+              <label class="campo__label" for="cad-senha">Senha</label>
+              <div class="senha">
+                <input class="input" id="cad-senha" name="senha" type="password" autocomplete="new-password"
+                       required data-regra="senhaNova" aria-describedby="cad-senha-requisitos cad-senha-erro">
+                <button class="senha__toggle" type="button" data-mostrar-senha aria-controls="cad-senha" aria-pressed="false" aria-label="Mostrar senha">
+                  <svg class="olho-aberto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/></svg>
+                  <svg class="olho-fechado" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c4.65 0 8.62 2.9 9.94 6.65a1 1 0 0 1 0 .7 10.8 10.8 0 0 1-1.44 2.49"/><path d="M14.08 14.16a3 3 0 0 1-4.24-4.24"/><path d="M17.48 17.5A10.75 10.75 0 0 1 2.06 12.35a1 1 0 0 1 0-.7 10.8 10.8 0 0 1 4.45-5.14"/><path d="m2 2 20 20"/></svg>
+                </button>
+              </div>
+              <ul class="requisitos" id="cad-senha-requisitos" role="list">
+                <li data-requisito="tamanho">8 caracteres ou mais</li>
+                <li data-requisito="misto">Letras e números</li>
+              </ul>
+              <p class="campo__erro" id="cad-senha-erro" aria-live="polite"></p>
+            </div>
+
+            <div class="campo">
+              <label class="campo__label" for="cad-confirmar">Confirmar senha</label>
+              <input class="input" id="cad-confirmar" name="confirmar" type="password" autocomplete="new-password"
+                     required data-regra="confirmar" aria-describedby="cad-confirmar-erro">
+              <p class="campo__erro" id="cad-confirmar-erro" aria-live="polite"></p>
+            </div>
+
+            <div class="campo">
+              <label class="check aceite">
+                <input type="checkbox" id="cad-aceite" name="aceite" required data-regra="aceite" aria-describedby="cad-aceite-erro">
+                <span>Li e entendi que as informações do PontoFit têm caráter educativo e <strong>não substituem a orientação de um médico ou nutricionista</strong>.</span>
+              </label>
+              <p class="campo__erro" id="cad-aceite-erro" aria-live="polite"></p>
+            </div>
+
+            <button class="btn btn--lg btn--bloco" type="submit"><span>Criar minha conta</span></button>
+
+          </form>
+        </section>
+      </div>
+
+      <p class="auth__rodape">© 2026 PontoFit. Protótipo: seus dados ficam salvos apenas neste navegador.</p>
+    </main>
+
+    <!-- Imagem lateral (só no desktop) -->
+    <aside class="auth__lateral" aria-hidden="true">
+      <!-- Foto: Pablo Merchán Montes / Unsplash (decorativa) -->
+      <div class="auth__foto"></div>
+      <svg class="auth__folha auth__folha--1" viewBox="0 0 40 40" focusable="false"><path d="M4 36C4 18 16 6 36 4 34 24 22 36 4 36Z"/></svg>
+      <svg class="auth__folha auth__folha--2" viewBox="0 0 40 40" focusable="false"><path d="M4 36C4 18 16 6 36 4 34 24 22 36 4 36Z"/></svg>
+      <p class="auth__frase">Sua saúde começa no próximo ponto.</p>
+      <p class="auth__credito">Foto: Pablo Merchán Montes / Unsplash</p>
+    </aside>
+  </div>
+
+  <script src="js/ui.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/auth.js"></script>
+</body>
+</html>

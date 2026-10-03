@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PontoFit | Sua saúde começa no próximo ponto</title>
+  <meta name="description" content="Pequenas escolhas diárias, como um copo d'água, um prato colorido e uma caminhada, somam grandes resultados. O PontoFit ajuda você a acompanhar cada passo.">
+  <meta name="theme-color" content="#1F6E4A">
+  <link rel="icon" href="assets/svg/logo.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap">
+  <!-- Foto do hero: a única imagem sem lazy-load, pré-carregada -->
+  <link rel="preload" as="image" href="assets/img/hero-960.webp" media="(max-width: 960px)">
+  <link rel="preload" as="image" href="assets/img/hero-1920.webp" media="(min-width: 961px)">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/landing.css">
+</head>
+<body class="landing">
+  <a class="pular-link" href="#conteudo">Pular para o conteúdo</a>
+
+  <!-- ===================== Header ===================== -->
+  <header class="topo" data-topo>
+    <a class="aviso-topo" href="login.html#cadastro">
+      <span class="aviso-topo__selo">30 dias grátis</span>
+      <span class="aviso-topo__texto">
+        <span class="aviso-topo__longo">Teste o PontoFit sem custo. Depois, plano mensal de R$ 20,00 ou anual de R$ 199,99.</span>
+        <span class="aviso-topo__curto">Planos desde R$ 16,67/mês</span>
+      </span>
+      <span class="aviso-topo__acao">Criar conta <span aria-hidden="true">→</span></span>
+    </a>
+    <div class="container topo__barra">
+      <a class="logo" href="index.html" aria-label="PontoFit, página inicial">
+        <svg class="logo__marca" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M12 2.5C9 6.2 5 10.6 5 14.6a7 7 0 0 0 14 0c0-4-4-8.4-7-12.1Z" fill="#2E9D6A"/>
+          <path d="M12 20.2v-7.4m0 3.3 2.6-2.6" fill="none" stroke="#F7FBF8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>Ponto<strong>Fit</strong></span>
+      </a>
+
+      <button class="topo__menu-btn" type="button" data-menu-toggle aria-controls="menu-principal" aria-expanded="false">
+        <span class="sr-only">Abrir menu</span>
+        <span class="hamburguer" aria-hidden="true"><span></span></span>
+      </button>
+
+      <nav class="topo__nav" id="menu-principal" aria-label="Principal">
+        <ul class="topo__links" role="list">
+          <li><a href="#beneficios">Benefícios</a></li>
+          <li><a href="#legumes">Legumes</a></li>
+          <li><a href="#habitos">Hábitos</a></li>
+          <li><a href="#planos">Planos</a></li>
+        </ul>
+        <a class="btn btn--sm topo__entrar" href="login.html">Entrar</a>
+      </nav>
+    </div>
+    <div class="topo__progresso" aria-hidden="true"><span data-progresso-leitura></span></div>
+  </header>
+
+  <main id="conteudo">
+
+    <!-- ===================== Hero ===================== -->
+    <section class="hero" aria-labelledby="hero-titulo">
+      <!-- Foto: McCarthy Beckan / Unsplash, com sobreposição verde (css/landing.css) -->
+      <div class="hero__fundo" data-parallax aria-hidden="true"></div>
+
+      <svg class="hero__folha hero__folha--1" viewBox="0 0 40 40" aria-hidden="true" focusable="false"><path d="M4 36C4 18 16 6 36 4 34 24 22 36 4 36Z"/><path class="veio" d="M4 36 26 14"/></svg>
+      <svg class="hero__folha hero__folha--2" viewBox="0 0 40 40" aria-hidden="true" focusable="false"><path d="M4 36C4 18 16 6 36 4 34 24 22 36 4 36Z"/><path class="veio" d="M4 36 26 14"/></svg>
+      <svg class="hero__folha hero__folha--3" viewBox="0 0 40 40" aria-hidden="true" focusable="false"><path d="M4 36C4 18 16 6 36 4 34 24 22 36 4 36Z"/><path class="veio" d="M4 36 26 14"/></svg>
+
+      <div class="container hero__conteudo">
+        <h1 id="hero-titulo">Sua saúde começa no próximo ponto.</h1>
+        <p class="hero__sub">Pequenas escolhas diárias, como um copo d'água, um prato colorido e uma caminhada, somam grandes resultados. O PontoFit ajuda você a acompanhar cada passo.</p>
+        <div class="linha hero__acoes">
+          <a class="btn btn--claro btn--lg" href="login.html">Começar agora</a>
+          <a class="btn btn--contorno-claro btn--lg" href="#beneficios">Saiba mais</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== Hidratação ===================== -->
+    <section class="secao hidratacao" id="beneficios" aria-labelledby="agua-titulo" data-secao-copo>
+      <div class="hidratacao__copo" aria-hidden="true">
+        <svg class="copo" viewBox="0 0 200 300" focusable="false">
+          <defs>
+            <!-- espaço interno (onde fica a água) e silhueta externa do vidro -->
+            <clipPath id="copo-interior"><path d="M37 24 51 257q1 7 9 7h80q8 0 9-7l14-233Z"/></clipPath>
+            <!-- água: escura junto às paredes (refração), clara no centro -->
+            <linearGradient id="agua-lateral" x1="0" x2="1">
+              <stop offset="0" stop-color="#145f8f" stop-opacity=".95"/>
+              <stop offset=".16" stop-color="#2f8cc4" stop-opacity=".78"/>
+              <stop offset=".5" stop-color="#86cdf0" stop-opacity=".55"/>
+              <stop offset=".84" stop-color="#2f8cc4" stop-opacity=".78"/>
+              <stop offset="1" stop-color="#145f8f" stop-opacity=".95"/>
+            </linearGradient>
+            <linearGradient id="agua-profundidade" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#ffffff" stop-opacity=".18"/>
+              <stop offset=".35" stop-color="#ffffff" stop-opacity="0"/>
+              <stop offset="1" stop-color="#0b4468" stop-opacity=".55"/>
+            </linearGradient>
+            <radialGradient id="agua-superficie" cx=".42" cy=".35" r=".75">
+              <stop offset="0" stop-color="#eef9ff" stop-opacity=".95"/>
+              <stop offset=".55" stop-color="#a9dcf5" stop-opacity=".85"/>
+              <stop offset="1" stop-color="#4fa6d8" stop-opacity=".9"/>
+            </radialGradient>
+            <!-- vidro: mais "denso" nas bordas, quase invisível no meio -->
+            <linearGradient id="vidro-corpo" x1="0" x2="1">
+              <stop offset="0" stop-color="#ffffff" stop-opacity=".32"/>
+              <stop offset=".1" stop-color="#ffffff" stop-opacity=".07"/>
+              <stop offset=".5" stop-color="#ffffff" stop-opacity=".02"/>
+              <stop offset=".9" stop-color="#ffffff" stop-opacity=".09"/>
+              <stop offset="1" stop-color="#ffffff" stop-opacity=".34"/>
+            </linearGradient>
+            <linearGradient id="vidro-base" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#d8eef8" stop-opacity=".55"/>
+              <stop offset="1" stop-color="#9ccbe0" stop-opacity=".25"/>
+            </linearGradient>
+            <linearGradient id="brilho-vertical" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#ffffff" stop-opacity="0"/>
+              <stop offset=".12" stop-color="#ffffff" stop-opacity=".9"/>
+              <stop offset=".65" stop-color="#ffffff" stop-opacity=".45"/>
+              <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+            </linearGradient>
+            <radialGradient id="bolha" cx=".35" cy=".35" r=".65">
+              <stop offset="0" stop-color="#ffffff" stop-opacity=".95"/>
+              <stop offset=".3" stop-color="#ffffff" stop-opacity=".12"/>
+              <stop offset=".85" stop-color="#ffffff" stop-opacity=".08"/>
+              <stop offset="1" stop-color="#ffffff" stop-opacity=".75"/>
+            </radialGradient>
+            <filter id="desfoque-leve" x="-50%" y="-10%" width="200%" height="120%"><feGaussianBlur stdDeviation="1.3"/></filter>
+            <filter id="desfoque-sombra" x="-30%" y="-200%" width="160%" height="500%"><feGaussianBlur stdDeviation="5"/></filter>
+          </defs>
+
+          <!-- sombra do copo sobre a "mesa" -->
+          <ellipse class="copo__sombra" cx="100" cy="289" rx="64" ry="6" filter="url(#desfoque-sombra)"/>
+
+          <!-- corpo do vidro -->
+          <path d="M32 22 48 272q1 13 14 13h76q13 0 14-13l16-250Z" fill="url(#vidro-corpo)"/>
+
+          <!-- água: o grupo desce/sobe conforme --nivel (0 a 1) -->
+          <g clip-path="url(#copo-interior)">
+            <g class="copo__agua">
+              <rect x="20" y="24" width="160" height="290" fill="url(#agua-lateral)"/>
+              <rect x="20" y="24" width="160" height="290" fill="url(#agua-profundidade)"/>
+              <g class="copo__bolhas">
+                <circle cx="78" cy="128" r="3.2"/>
+                <circle cx="104" cy="136" r="2.2"/>
+                <circle cx="124" cy="120" r="3.8"/>
+                <circle cx="92" cy="112" r="1.8"/>
+                <circle cx="134" cy="138" r="2.4"/>
+              </g>
+              <!-- superfície (menisco): elipse cortada pelas paredes -->
+              <ellipse class="copo__superficie" cx="100" cy="24" rx="80" ry="7" fill="url(#agua-superficie)"/>
+              <g class="copo__reflexos">
+                <path class="copo__onda" d="M-100 23.5q12.5-2.2 25 0t25 0t25 0t25 0t25 0t25 0t25 0t25 0t25 0t25 0t25 0t25 0t25 0t25 0t25 0t25 0t25 0t25 0"/>
+                <path class="copo__onda copo__onda--fina" d="M-100 26.5q12.5-1.6 25 0t25 0t25 0t25 0t25 0t25 0t25 0t25 0t25 0t25 0t25 0t25 0t25 0t25 0t25 0t25 0t25 0t25 0"/>
+              </g>
+              <path class="copo__linha-agua" d="M20 24a80 7 0 0 0 160 0"/>
+            </g>
+          </g>
+
+          <!-- espessura do vidro: parede externa e interna -->
+          <path class="copo__parede" d="M32 22 48 272q1 13 14 13h76q13 0 14-13l16-250"/>
+          <path class="copo__parede-interna" d="M37 24 51 257q1 7 9 7h80q8 0 9-7l14-233"/>
+
+          <!-- fundo grosso -->
+          <path d="M50.5 262q1.5 2 9.5 2h80q8 0 9.5-2l2.5 10q-1 13-14 13H62q-13 0-14-13Z" fill="url(#vidro-base)"/>
+          <ellipse cx="100" cy="275" rx="38" ry="2.6" fill="#ffffff" opacity=".45" filter="url(#desfoque-leve)"/>
+
+          <!-- boca do copo: elipse (fundo mais fraco, frente mais forte) -->
+          <ellipse class="copo__boca-tras" cx="100" cy="22" rx="68" ry="7"/>
+          <path class="copo__boca-frente" d="M32 22a68 7 0 0 0 136 0"/>
+
+          <!-- reflexos de luz no vidro -->
+          <path d="M45 42 58 248" stroke="url(#brilho-vertical)" stroke-width="7" stroke-linecap="round" filter="url(#desfoque-leve)" opacity=".75"/>
+          <path d="M55 52 60 128" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" opacity=".55"/>
+          <path d="M157 46 145 246" stroke="url(#brilho-vertical)" stroke-width="3" stroke-linecap="round" filter="url(#desfoque-leve)" opacity=".5"/>
+        </svg>
+        <p class="copo__nivel"><svg class="copo__gota" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 2.5C9 6.2 5 10.6 5 14.6a7 7 0 0 0 14 0c0-4-4-8.4-7-12.1Z" fill="#4FB3E8"/><path d="M9 15.5a3 3 0 0 0 2.4 2.8" fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" opacity=".8"/></svg><span data-copo-nivel>0%</span></p>
+      </div>
+
+      <div class="container">
+        <div class="hidratacao__texto pilha" style="--pilha-esp: var(--esp-5)">
+          <h2 id="agua-titulo">Água: o hábito mais simples (e mais esquecido)</h2>
+          <p class="lead">Cerca de 60% do corpo é água. Ela regula a temperatura, ajuda na digestão, transporta nutrientes e mantém a energia em dia. Muitas vezes, aquela fome fora de hora ou o cansaço no meio da tarde são sinais de que você bebeu pouca água.</p>
+          <div class="card card--agua dica" role="note">
+            <svg class="dica__icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/></svg>
+            <p><strong>Dica:</strong> Deixe uma garrafa sempre à vista e beba um copo ao acordar e antes de cada refeição.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== Benefícios dos legumes ===================== -->
+    <section class="secao legumes" id="legumes" aria-labelledby="legumes-titulo">
+      <div class="container">
+        <div class="legumes__intro">
+          <h2 id="legumes-titulo">Por que colocar mais legumes no prato?</h2>
+          <img class="legumes__foto" src="assets/img/legumes-900.webp" width="900" height="600" loading="lazy" decoding="async"
+               alt="Legumes e frutas frescos, como tomate, cenoura, brócolis, pimentão e abobrinha, ao redor de uma tábua de madeira">
+        </div>
+
+        <ul class="legumes__cards" role="list">
+          <li class="card card--interativo legume" data-revelar>
+            <div class="card__icone" aria-hidden="true"><svg viewBox="0 0 48 48" aria-hidden="true" focusable="false"><path d="M20 26h8l3 17H17Z" fill="#E4F2D4" stroke="#7FB46A" stroke-width="1.5"/><circle cx="15" cy="21" r="9" fill="#5DB36A"/><circle cx="33" cy="21" r="9" fill="#5DB36A"/><circle cx="24" cy="14" r="10" fill="#2E9D6A"/><circle cx="21" cy="11" r="2" fill="#8FD18F"/><circle cx="29" cy="17" r="2" fill="#8FD18F"/><circle cx="13" cy="19" r="2" fill="#8FD18F"/></svg></div>
+            <h3 class="card__titulo">Fibras que dão saciedade</h3>
+            <p class="card__texto">Ajudam você a se sentir satisfeito por mais tempo e a manter o intestino regulado.</p>
+          </li>
+          <li class="card card--interativo legume" data-revelar>
+            <div class="card__icone" aria-hidden="true"><svg viewBox="0 0 48 48" aria-hidden="true" focusable="false"><path d="M9 41c-2-2-1-5 2-8l16-16c3-3 8-3 9 0 1 3-1 6-4 8L15 39c-2 2-4 3-6 2Z" fill="#F08A24"/><path d="M17 31l4 3M22 25l4 3M14 36l2 1.5" stroke="#C96A10" stroke-width="2" stroke-linecap="round"/><path d="M33 15c0-6 3-9 8-10M35 17c4-3 8-3 10-1M32 14c-2-4-2-7 0-10" fill="none" stroke="#2E9D6A" stroke-width="3" stroke-linecap="round"/></svg></div>
+            <h3 class="card__titulo">Vitaminas e minerais</h3>
+            <p class="card__texto">Vitamina A, C, potássio e ferro que fortalecem a imunidade e a disposição.</p>
+          </li>
+          <li class="card card--interativo legume" data-revelar>
+            <div class="card__icone" aria-hidden="true"><svg viewBox="0 0 48 48" aria-hidden="true" focusable="false"><circle cx="24" cy="28" r="16" fill="#E5533D"/><path d="M16 22c2-3 5-4 8-4" fill="none" stroke="#F58C7A" stroke-width="3" stroke-linecap="round"/><path d="M24 9l3 5 6-1-4 4 5 3h-7l-3 4-3-4h-7l5-3-4-4 6 1Z" fill="#2E9D6A"/></svg></div>
+            <h3 class="card__titulo">Antioxidantes</h3>
+            <p class="card__texto">Os legumes coloridos ajudam a proteger as células do desgaste do dia a dia.</p>
+          </li>
+          <li class="card card--interativo legume" data-revelar>
+            <div class="card__icone" aria-hidden="true"><svg viewBox="0 0 48 48" aria-hidden="true" focusable="false"><rect x="6" y="18" width="36" height="13" rx="6.5" transform="rotate(-35 24 24)" fill="#4E9A43"/><rect x="9" y="20.5" width="30" height="4" rx="2" transform="rotate(-35 24 24)" fill="#7CC36E"/><circle cx="17" cy="31" r="1.2" fill="#C8E9BF"/><circle cx="24" cy="24.5" r="1.2" fill="#C8E9BF"/><circle cx="31" cy="19" r="1.2" fill="#C8E9BF"/><circle cx="21" cy="30" r="1" fill="#C8E9BF"/><circle cx="28" cy="24" r="1" fill="#C8E9BF"/></svg></div>
+            <h3 class="card__titulo">Poucas calorias, muito volume</h3>
+            <p class="card__texto">Você come bem, com o prato cheio, sem exagerar nas calorias.</p>
+          </li>
+          <li class="card card--interativo legume" data-revelar>
+            <div class="card__icone" aria-hidden="true"><svg viewBox="0 0 48 48" aria-hidden="true" focusable="false"><path d="M24 41s-15-8.6-15-20.2C9 15 13.2 11 18.2 11c2.9 0 4.8 1.4 5.8 3.1 1-1.7 2.9-3.1 5.8-3.1C34.8 11 39 15 39 20.8 39 32.4 24 41 24 41Z" fill="#E5533D"/><path d="M15 19c0-2.4 1.6-4 3.8-4.2" fill="none" stroke="#F7A597" stroke-width="2.4" stroke-linecap="round"/></svg></div>
+            <h3 class="card__titulo">Coração mais saudável</h3>
+            <p class="card__texto">Uma alimentação rica em vegetais está associada a melhor controle da pressão e do colesterol.</p>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ===================== Prato equilibrado ===================== -->
+    <section class="secao prato" id="prato" aria-labelledby="prato-titulo" data-secao-prato>
+      <div class="container prato__grade">
+        <figure class="prato__figura">
+          <div class="prato__visual">
+            <svg class="prato__svg" viewBox="0 0 300 300" role="img" aria-labelledby="prato-desc">
+              <title id="prato-desc">Prato dividido: metade legumes e verduras, um quarto proteínas, um quarto carboidratos.</title>
+              <circle class="prato__borda" cx="150" cy="150" r="146"/>
+              <circle class="prato__fundo" cx="150" cy="150" r="118"/>
+              <!-- Fatias: círculos com traço = raio*2 (pathLength 100 → % direto) -->
+              <g transform="rotate(-90 150 150)">
+                <circle class="fatia fatia--legumes" cx="150" cy="150" r="55" pathLength="100"
+                        style="--tam: 50; --inicio: 0"/>
+                <circle class="fatia fatia--proteina" cx="150" cy="150" r="55" pathLength="100"
+                        style="--tam: 25; --inicio: 50"/>
+                <circle class="fatia fatia--carbo" cx="150" cy="150" r="55" pathLength="100"
+                        style="--tam: 25; --inicio: 75"/>
+              </g>
+              <!-- divisórias entre as fatias -->
+              <g class="prato__divisorias">
+                <path d="M150 150V40M150 150V260M150 150H40"/>
+              </g>
+            </svg>
+
+            <!-- Legumes que "caem" no prato (animados na Fase 3) -->
+            <svg class="legume-cai legume-cai--cenoura" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+              <path d="M9 41c-2-2-1-5 2-8l16-16c3-3 8-3 9 0 1 3-1 6-4 8L15 39c-2 2-4 3-6 2Z" fill="#F08A24"/>
+              <path d="M17 31l4 3M22 25l4 3M14 36l2 1.5" stroke="#C96A10" stroke-width="2" stroke-linecap="round"/>
+              <path d="M33 15c0-6 3-9 8-10M35 17c4-3 8-3 10-1M32 14c-2-4-2-7 0-10" fill="none" stroke="#2E9D6A" stroke-width="3" stroke-linecap="round"/>
+            </svg>
+            <svg class="legume-cai legume-cai--brocolis" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+              <path d="M20 26h8l3 17H17Z" fill="#E4F2D4" stroke="#B9D9A4" stroke-width="1"/>
+              <circle cx="15" cy="21" r="9" fill="#8FD18F" stroke="#5BAA63" stroke-width="1.2"/>
+              <circle cx="33" cy="21" r="9" fill="#8FD18F" stroke="#5BAA63" stroke-width="1.2"/>
+              <circle cx="24" cy="14" r="10" fill="#A9DE9F" stroke="#5BAA63" stroke-width="1.2"/>
+              <circle cx="21" cy="11" r="2" fill="#D3F0C9"/><circle cx="29" cy="17" r="2" fill="#D3F0C9"/><circle cx="13" cy="19" r="2" fill="#D3F0C9"/>
+            </svg>
+            <svg class="legume-cai legume-cai--tomate" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+              <circle cx="24" cy="28" r="16" fill="#E5533D"/>
+              <path d="M16 22c2-3 5-4 8-4" fill="none" stroke="#F58C7A" stroke-width="3" stroke-linecap="round"/>
+              <path d="M24 9l3 5 6-1-4 4 5 3h-7l-3 4-3-4h-7l5-3-4-4 6 1Z" fill="#2E9D6A"/>
+            </svg>
+            <!-- Proteína: ovo frito -->
+            <svg class="legume-cai legume-cai--ovo" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+              <path d="M24 5c8 0 12 5 16 9s7 11 3 18-11 11-19 11S8 39 5 32 4 19 9 13 16 5 24 5Z" fill="#FBFAF4" stroke="#E6DFCB" stroke-width="1.2"/>
+              <circle cx="25" cy="24" r="8.5" fill="#F2B233"/>
+              <circle cx="25" cy="24" r="8.5" fill="none" stroke="#DB9A1E" stroke-width="1"/>
+              <circle cx="22" cy="21" r="2.6" fill="#FFE39A"/>
+            </svg>
+            <!-- Carboidrato: batata -->
+            <svg class="legume-cai legume-cai--batata" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+              <path d="M9 31c-3-8 2-17 12-20s20-2 23 6-1 17-11 21-21 1-24-7Z" fill="#C9995A" stroke="#A97A3E" stroke-width="1.2"/>
+              <path d="M15 22c3-4 8-6 13-6" fill="none" stroke="#E2BE85" stroke-width="2.4" stroke-linecap="round"/>
+              <circle cx="19" cy="29" r="1.3" fill="#8A6131"/><circle cx="31" cy="18" r="1.3" fill="#8A6131"/>
+              <circle cx="35" cy="30" r="1.3" fill="#8A6131"/><circle cx="25" cy="35" r="1.1" fill="#8A6131"/>
+            </svg>
+          </div>
+
+          <figcaption>
+            <ul class="prato__legenda" role="list">
+              <li><span class="marcador marcador--legumes" aria-hidden="true"></span>Legumes e verduras <strong>50%</strong></li>
+              <li><span class="marcador marcador--proteina" aria-hidden="true"></span>Proteínas <strong>25%</strong></li>
+              <li><span class="marcador marcador--carbo" aria-hidden="true"></span>Carboidratos <strong>25%</strong></li>
+            </ul>
+          </figcaption>
+        </figure>
+
+        <div class="prato__texto pilha" style="--pilha-esp: var(--esp-5)">
+          <h2 id="prato-titulo">Monte um prato que trabalha por você</h2>
+          <p class="lead">Uma forma prática de equilibrar as refeições: <strong>metade do prato com legumes e verduras</strong>, <strong>um quarto com proteína</strong> (frango, peixe, ovos, feijão) e <strong>um quarto com carboidrato</strong>, de preferência integral (arroz, batata, mandioca).</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== Hábitos simples ===================== -->
+    <section class="secao habitos" id="habitos" aria-labelledby="habitos-titulo">
+      <div class="container">
+        <h2 id="habitos-titulo" class="habitos__titulo">Pequenos números, grandes mudanças</h2>
+
+        <ul class="habitos__grade" role="list">
+          <li class="card habito">
+            <svg class="habito__icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.37 2 10 3.8 10 5.5c0 3.11-2 5.66-2 8.68V16a2 2 0 1 1-4 0Z"/><path d="M20 20v-2.38c0-2.12 1.03-3.12 1-5.62-.03-2.72-1.49-6-4.5-6C14.63 6 14 7.8 14 9.5c0 3.11 2 5.66 2 8.68V20a2 2 0 1 0 4 0Z"/><path d="M16 17h4"/><path d="M4 13h4"/></svg>
+            <p class="habito__valor"><span data-contar="30">30</span> min</p>
+            <p class="habito__rotulo">de caminhada por dia</p>
+          </li>
+          <li class="card habito">
+            <svg class="habito__icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+            <p class="habito__valor"><span data-contar="7">7</span> a <span data-contar="9">9</span> h</p>
+            <p class="habito__rotulo">de sono por noite</p>
+          </li>
+          <li class="card habito">
+            <svg class="habito__icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.93 0 1.65-.75 1.65-1.69 0-.44-.18-.84-.44-1.12-.29-.29-.44-.65-.44-1.13a1.64 1.64 0 0 1 1.67-1.67h2c3.05 0 5.55-2.5 5.55-5.55C21.97 6.01 17.46 2 12 2Z"/></svg>
+            <p class="habito__valor"><span data-contar="5">5</span> cores</p>
+            <p class="habito__rotulo">diferentes no prato</p>
+          </li>
+          <li class="card habito">
+            <svg class="habito__icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/></svg>
+            <p class="habito__valor"><span data-contar="2">2</span> L</p>
+            <p class="habito__rotulo">de água como referência diária (varia de pessoa para pessoa)</p>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ===================== Planos ===================== -->
+    <section class="secao planos" id="planos" aria-labelledby="planos-titulo">
+      <div class="container">
+        <div class="planos__cabecalho">
+          <h2 id="planos-titulo">Planos</h2>
+          <p class="lead">Os primeiros 30 dias são grátis em qualquer plano.</p>
+        </div>
+
+        <div class="teste-gratis" data-revelar>
+          <span class="teste-gratis__numero" aria-hidden="true">30</span>
+          <div class="teste-gratis__texto">
+            <p class="teste-gratis__titulo">Teste grátis por 30 dias</p>
+            <p>Crie sua conta e use tudo: o livro de receitas, a evolução com gráfico, as metas e o lembrete de dose.</p>
+          </div>
+          <a class="btn btn--laranja teste-gratis__botao" href="login.html#cadastro">Começar teste grátis</a>
+        </div>
+
+        <ul class="planos__grade" role="list">
+          <li class="card plano" data-revelar>
+            <h3 class="plano__nome">Mensal</h3>
+            <p class="plano__preco"><span class="plano__valor">R$ 20,00</span><span class="plano__periodo">/mês</span></p>
+            <p class="plano__detalhe">Cobrado todo mês, depois do teste grátis.</p>
+            <ul class="plano__itens" role="list">
+              <li>Livro com 18 receitas: salgadas, doces, sucos e vitaminas</li>
+              <li>Ficha completa com idade e IMC automáticos</li>
+              <li>Gráfico de evolução do peso e metas</li>
+              <li>Lembrete de dose com contagem regressiva</li>
+            </ul>
+            <a class="btn btn--secundario btn--bloco" href="login.html?plano=mensal#cadastro" aria-label="Começar teste grátis no plano mensal">Começar teste grátis</a>
+          </li>
+          <li class="card plano plano--destaque" data-revelar>
+            <span class="badge badge--laranja plano__selo">Mais econômico</span>
+            <h3 class="plano__nome">Anual</h3>
+            <p class="plano__preco"><span class="plano__valor">R$ 199,99</span><span class="plano__periodo">/ano</span></p>
+            <p class="plano__detalhe">Equivale a R$ 16,67 por mês: você economiza R$ 40,01 por ano em relação ao mensal.</p>
+            <ul class="plano__itens" role="list">
+              <li>Livro com 18 receitas: salgadas, doces, sucos e vitaminas</li>
+              <li>Ficha completa com idade e IMC automáticos</li>
+              <li>Gráfico de evolução do peso e metas</li>
+              <li>Lembrete de dose com contagem regressiva</li>
+            </ul>
+            <a class="btn btn--bloco" href="login.html?plano=anual#cadastro" aria-label="Começar teste grátis no plano anual">Começar teste grátis</a>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ===================== CTA final ===================== -->
+    <section class="secao cta" aria-labelledby="cta-titulo" data-secao-balanca>
+      <div class="container">
+        <div class="cta__caixa">
+          <div class="cta__texto pilha" style="--pilha-esp: var(--esp-4)">
+            <h2 id="cta-titulo">Acompanhe sua evolução de perto</h2>
+            <p>Registre seus dados, acompanhe seu peso e nunca mais esqueça uma dose. Tudo em um só lugar.</p>
+            <div><a class="btn btn--claro btn--lg" href="login.html#cadastro">Criar minha conta</a></div>
+          </div>
+
+          <!-- Balança: o ponteiro gira com o scroll (Fase 3) via --giro -->
+          <svg class="balanca" viewBox="0 0 200 200" aria-hidden="true" focusable="false">
+            <rect class="balanca__corpo" x="10" y="10" width="180" height="180" rx="44"/>
+            <path class="balanca__visor" d="M42 104a58 58 0 0 1 116 0Z"/>
+            <g class="balanca__marcas">
+              <path d="M100 52v10" transform="rotate(-75 100 104)"/>
+              <path d="M100 52v7" transform="rotate(-56 100 104)"/>
+              <path d="M100 52v10" transform="rotate(-37 100 104)"/>
+              <path d="M100 52v7" transform="rotate(-19 100 104)"/>
+              <path d="M100 52v12"/>
+              <path d="M100 52v7" transform="rotate(19 100 104)"/>
+              <path d="M100 52v10" transform="rotate(37 100 104)"/>
+              <path d="M100 52v7" transform="rotate(56 100 104)"/>
+              <path d="M100 52v10" transform="rotate(75 100 104)"/>
+            </g>
+            <g class="balanca__ponteiro">
+              <path d="M100 104V60"/>
+              <circle cx="100" cy="104" r="6"/>
+            </g>
+            <rect class="balanca__pe" x="44" y="132" width="44" height="34" rx="14"/>
+            <rect class="balanca__pe" x="112" y="132" width="44" height="34" rx="14"/>
+          </svg>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===================== Rodapé ===================== -->
+  <footer class="rodape">
+    <div class="container rodape__grade">
+      <div class="pilha" style="--pilha-esp: var(--esp-3)">
+        <a class="logo logo--claro" href="index.html" aria-label="PontoFit, página inicial">
+          <svg class="logo__marca" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M12 2.5C9 6.2 5 10.6 5 14.6a7 7 0 0 0 14 0c0-4-4-8.4-7-12.1Z" fill="#3CB57B"/>
+            <path d="M12 20.2v-7.4m0 3.3 2.6-2.6" fill="none" stroke="#1E2A24" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>Ponto<strong>Fit</strong></span>
+        </a>
+        <p class="rodape__aviso"><em>As informações deste site têm caráter educativo e não substituem a orientação de um médico ou nutricionista.</em></p>
+      </div>
+
+      <nav aria-label="Rodapé">
+        <ul class="rodape__links" role="list">
+          <li><a href="#beneficios">Benefícios</a></li>
+          <li><a href="#legumes">Legumes</a></li>
+          <li><a href="#habitos">Hábitos</a></li>
+          <li><a href="#planos">Planos</a></li>
+          <li><a href="login.html">Entrar</a></li>
+        </ul>
+      </nav>
+    </div>
+    <div class="container rodape__base">
+      <p>© 2026 PontoFit. Todos os direitos reservados.</p>
+      <p class="rodape__creditos">Fotos: <a href="https://unsplash.com/@mccarthybeckan?utm_source=pontofit&amp;utm_medium=referral">McCarthy Beckan</a> e <a href="https://unsplash.com/@enginakyurt?utm_source=pontofit&amp;utm_medium=referral">engin akyurt</a> no <a href="https://unsplash.com/?utm_source=pontofit&amp;utm_medium=referral">Unsplash</a>.</p>
+    </div>
+
+    <a class="voltar-topo" href="#conteudo" aria-label="Voltar ao topo" data-voltar-topo>
+      <svg class="voltar-topo__anel" viewBox="0 0 52 52" aria-hidden="true" focusable="false">
+        <circle class="voltar-topo__trilho" cx="26" cy="26" r="23"/>
+        <circle class="voltar-topo__progresso" cx="26" cy="26" r="23" pathLength="100"/>
+      </svg>
+      <svg class="voltar-topo__seta" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m18 15-6-6-6 6"/></svg>
+    </a>
+  </footer>
+
+
+  <script src="js/ui.js"></script>
+  <script src="js/scroll-animations.js"></script>
+</body>
+</html>

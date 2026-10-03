@@ -1,0 +1,238 @@
+/* ==========================================================================
+   PontoFit — auth.css
+   Login e cadastro (login.html). Mobile-first; imagem lateral só ≥ 1024px.
+   ========================================================================== */
+
+.auth { background: var(--superficie); }
+
+.auth__layout {
+  display: grid;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+@media (min-width: 1024px) {
+  .auth__layout { grid-template-columns: minmax(480px, 1fr) 1.1fr; }
+}
+
+/* ---------- Painel do formulário ---------- */
+.auth__painel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-6);
+  padding: var(--esp-4) var(--gutter) var(--esp-5);
+}
+@media (min-width: 640px) {
+  .auth__painel { padding: var(--esp-5) var(--esp-7) var(--esp-6); }
+}
+
+.auth__topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--esp-3);
+}
+.auth__voltar {
+  display: inline-flex;
+  align-items: center;
+  gap: .25rem;
+  min-height: var(--toque-min);
+  padding-inline: var(--esp-2);
+  border-radius: var(--raio-pill);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--texto-sec);
+  text-decoration: none;
+}
+.auth__voltar:hover { color: var(--verde-escuro); background: var(--verde-suave); }
+.auth__voltar svg { width: 1.1rem; height: 1.1rem; }
+
+.auth__caixa {
+  width: 100%;
+  max-width: 440px;
+  margin: auto;
+}
+.auth__titulo { font-size: clamp(1.625rem, 1.3rem + 1.5vw, 2.125rem); }
+.auth__sub { margin-top: var(--esp-2); color: var(--texto-sec); }
+
+.auth__rodape {
+  text-align: center;
+  font-size: var(--fs-xs);
+  color: var(--texto-sec);
+}
+
+/* ---------- Abas animadas ---------- */
+.abas {
+  --pad: 4px;
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin-block: var(--esp-6) var(--esp-5);
+  padding: var(--pad);
+  border-radius: var(--raio-pill);
+  background: var(--superficie-2);
+  border: 1px solid var(--borda);
+}
+.abas__aba {
+  position: relative;
+  z-index: 1;
+  min-height: var(--toque-min);
+  border-radius: var(--raio-pill);
+  font-family: var(--fonte-titulo);
+  font-weight: 500;
+  color: var(--texto-sec);
+  transition: color var(--dur) var(--ease);
+}
+.abas__aba[aria-selected="true"] { color: #fff; font-weight: 600; }
+.abas__aba:focus-visible { outline-offset: 2px; border-radius: var(--raio-pill); }
+.abas__indicador {
+  position: absolute;
+  top: var(--pad);
+  bottom: var(--pad);
+  left: var(--pad);
+  width: calc(50% - var(--pad));
+  border-radius: var(--raio-pill);
+  background: var(--verde-escuro);
+  box-shadow: var(--sombra-1);
+  transition: transform var(--dur-lenta) var(--ease);
+}
+.abas[data-ativa="cadastro"] .abas__indicador { transform: translateX(100%); }
+
+.painel:focus { outline: none; }
+.painel.is-entrando { animation: painel-entra var(--dur-lenta) var(--ease); }
+@keyframes painel-entra {
+  from { opacity: 0; transform: translateY(10px); }
+}
+
+/* ---------- Formulário ---------- */
+.form-auth { display: grid; gap: var(--esp-4); }
+.form-auth .btn--bloco { margin-top: var(--esp-2); }
+
+.form-auth__linha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0 var(--esp-3);
+}
+.form-auth__linha .check { padding-block: 0; align-items: center; }
+.form-auth__linha .check input { margin-top: 0; }
+
+.link-botao {
+  min-height: var(--toque-min);
+  padding: 0;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--verde-escuro);
+  text-decoration: underline;
+  text-underline-offset: .2em;
+}
+.link-botao:hover { color: var(--verde-hover); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .link-botao,
+  :root:not([data-theme="light"]) .link-botao:hover { color: #6FD3A4; }
+}
+
+
+.aceite { font-size: var(--fs-sm); line-height: 1.5; color: var(--texto-sec); }
+.aceite strong { color: var(--texto); font-weight: 600; }
+
+/* Senha com botão mostrar/ocultar */
+.senha { position: relative; }
+.senha .input { padding-right: 3.25rem; }
+.senha__toggle {
+  position: absolute;
+  top: 50%;
+  right: 2px;
+  display: grid;
+  place-items: center;
+  width: var(--toque-min);
+  height: var(--toque-min);
+  transform: translateY(-50%);
+  border-radius: 10px;
+  color: var(--texto-sec);
+}
+.senha__toggle:hover { color: var(--texto); }
+.senha__toggle svg { width: 1.25rem; height: 1.25rem; }
+.senha__toggle .olho-fechado,
+.senha__toggle[aria-pressed="true"] .olho-aberto { display: none; }
+.senha__toggle[aria-pressed="true"] .olho-fechado { display: block; }
+
+/* Requisitos da senha que se marcam enquanto digita */
+.requisitos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--esp-1) var(--esp-4);
+  padding: 0;
+  font-size: var(--fs-sm);
+  color: var(--texto-sec);
+}
+.requisitos li {
+  display: flex;
+  align-items: center;
+  gap: .375rem;
+  transition: color var(--dur) ease;
+}
+.requisitos li::before {
+  content: "";
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  border: 1.5px solid var(--cinza);
+  background: center / .7rem no-repeat;
+  transition: background-color var(--dur) ease, border-color var(--dur) ease;
+}
+.requisitos li.is-ok { color: var(--verde-escuro); }
+.requisitos li.is-ok::before {
+  border-color: var(--verde-escuro);
+  background-color: var(--verde-escuro);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E");
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .requisitos li.is-ok { color: #6FD3A4; }
+}
+
+/* ---------- Imagem lateral (desktop) ---------- */
+.auth__lateral { display: none; }
+@media (min-width: 1024px) {
+  .auth__lateral {
+    position: sticky;
+    top: 0;
+    display: flex;
+    align-items: flex-end;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    isolation: isolate;
+    padding: var(--esp-7);
+    color: #fff;
+  }
+}
+.auth__foto {
+  --auth-foto: url("../assets/img/login-900.webp");
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background-color: var(--verde-escuro);
+  background-image:
+    linear-gradient(180deg, rgba(20, 74, 50, .15) 30%, rgba(20, 74, 50, .85) 100%),
+    var(--auth-foto, radial-gradient(circle at 70% 25%, #4FB3E8 0%, transparent 55%)),
+    linear-gradient(150deg, #2E9D6A, #1C6E9C);
+  background-size: cover;
+  background-position: 70% center;
+}
+.auth__folha { position: absolute; z-index: -1; fill: rgba(255, 255, 255, .14); }
+.auth__lateral { flex-direction: column; justify-content: flex-end; align-items: flex-start; gap: var(--esp-4); }
+.auth__credito { font-size: var(--fs-xs); opacity: .85; }
+.auth__folha--1 { width: 220px; top: 10%; right: 8%; transform: rotate(20deg); }
+.auth__folha--2 { width: 120px; top: 42%; left: 12%; transform: rotate(-35deg); }
+.auth__frase {
+  max-width: 16ch;
+  font-family: var(--fonte-titulo);
+  font-size: clamp(2rem, 1rem + 2vw, 3rem);
+  font-weight: 700;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+/* Escolha do plano no cadastro */
+.plano-escolha .segmentado label { padding-inline: .5rem; font-size: .875rem; white-space: nowrap; }

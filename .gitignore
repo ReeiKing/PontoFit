@@ -1,0 +1,15 @@
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Segredos e configuração local (a Fase 11 usa variáveis de ambiente)
+.env
+.env.*
+!.env.example
+
+# Vercel
+.vercel/
+
+# Dependências e logs
+node_modules/
+npm-debug.log*
