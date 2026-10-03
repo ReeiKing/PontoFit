@@ -1,435 +1,485 @@
 /* ==========================================================================
    PontoFit — storage.js
-   ÚNICA camada de dados do site. Todo o resto chama PF.storage.* e nunca
-   toca no localStorage diretamente.
+   ÚNICA camada de dados do site. O resto do código chama PF.storage.* e não
+   sabe onde os dados moram.
 
-   Hoje:   localStorage / sessionStorage do navegador.
-   Amanhã: fetch('/api/...') (Fase 11). Por isso TODAS as funções já
-           retornam Promise, como uma API real — quem usa sempre faz `await`.
-           Para migrar, basta reescrever o corpo de cada função aqui.
+   Agora: Supabase.
+   - Login, senha e sessão: Supabase Auth (a senha é guardada com hash pelo
+     serviço e nunca passa pelas nossas tabelas).
+   - Dados de cada cliente: tabelas do schema public, protegidas por RLS
+     (cada pessoa só lê e altera o que é dela). Ver supabase/migrations/.
 
-   ⚠️  PROTÓTIPO — NÃO É SEGURO.
-   Login com localStorage serve só para demonstrar o fluxo: os dados ficam
-   no próprio navegador e qualquer pessoa com acesso ao dispositivo consegue
-   lê-los ou alterá-los. O hash de senha abaixo NÃO protege nada de verdade.
-   Na fase da Vercel, trocar por autenticação real (Auth.js, Supabase Auth
-   ou Clerk), com a senha guardada como hash (bcrypt/argon2) NO SERVIDOR e a
-   sessão em cookie httpOnly. Dados de saúde são sensíveis pela LGPD.
+   Precisa, antes deste arquivo:
+     js/vendor/supabase.js  (cópia de @supabase/supabase-js, feita pelo build)
+     js/config.js           (URL e chave publicável, geradas do .env pelo build)
+   Rode `npm run build` depois de clonar ou de mudar o .env.
+
+   Todas as funções retornam Promise e mantêm os mesmos nomes e formatos
+   (camelCase) da versão anterior, que usava localStorage.
    ========================================================================== */
 (function () {
   'use strict';
 
   var PF = (window.PF = window.PF || {});
 
-  var CHAVE_USUARIOS = 'pf:usuarios';
-  var CHAVE_SESSAO = 'pf:sessao';
-  var PREFIXO_DADOS = 'pf:dados:';
+  /* ---------- UUID v4 (formato das chaves no banco) ---------- */
+  PF.uuid = function () {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    var b = new Uint8Array(16);
+    crypto.getRandomValues(b);
+    b[6] = (b[6] & 0x0f) | 0x40;
+    b[8] = (b[8] & 0x3f) | 0x80;
+    var h = Array.prototype.map.call(b, function (x) { return x.toString(16).padStart(2, '0'); }).join('');
+    return h.slice(0, 8) + '-' + h.slice(8, 12) + '-' + h.slice(12, 16) + '-' + h.slice(16, 20) + '-' + h.slice(20);
+  };
 
-  /* ---------- Utilitários internos ---------- */
-  function ler(armazem, chave, padrao) {
-    try {
-      var v = armazem.getItem(chave);
-      return v ? JSON.parse(v) : padrao;
-    } catch (e) {
-      return padrao;
+  /* ---------- Configuração ---------- */
+  var cfg = window.PF_CONFIG;
+  if (!cfg || !cfg.supabaseUrl || !cfg.supabaseKey || !window.supabase) {
+    var aviso = 'Configuração da Supabase ausente. Rode "npm run build" (ele lê o .env e gera js/config.js).';
+    console.error(aviso);
+    PF.storage = null;
+    PF.storageErro = aviso;
+    document.addEventListener('DOMContentLoaded', function () {
+      var faixa = document.createElement('p');
+      faixa.setAttribute('role', 'alert');
+      faixa.style.cssText = 'position:fixed;inset:auto 0 0 0;z-index:9999;margin:0;padding:12px 16px;background:#B03A32;color:#fff;font:600 14px/1.4 system-ui';
+      faixa.textContent = aviso;
+      document.body.appendChild(faixa);
+    });
+    return;
+  }
+
+  // O link de "esqueci minha senha" volta com #...type=recovery; a Supabase
+  // apaga o hash ao ler, então guardamos a informação antes de criar o cliente.
+  PF.recuperacaoDeSenha = /(^|[#&])type=recovery(&|$)/.test(location.hash);
+
+  /* ---------- Sessão: "Lembrar de mim" ----------
+     Marcado: sessão no localStorage (continua ao fechar o navegador).
+     Desmarcado: sessionStorage (termina ao fechar a aba). */
+  var CHAVE_LEMBRAR = 'pf:lembrar';
+  function lembrar() {
+    try { return localStorage.getItem(CHAVE_LEMBRAR) === '1'; } catch (e) { return false; }
+  }
+  function definirLembrar(valor) {
+    try { localStorage.setItem(CHAVE_LEMBRAR, valor ? '1' : '0'); } catch (e) { /* bloqueado */ }
+  }
+  var armazenamentoSessao = {
+    getItem: function (k) {
+      try { return sessionStorage.getItem(k) || localStorage.getItem(k); } catch (e) { return null; }
+    },
+    setItem: function (k, v) {
+      try {
+        if (lembrar()) { localStorage.setItem(k, v); sessionStorage.removeItem(k); }
+        else { sessionStorage.setItem(k, v); localStorage.removeItem(k); }
+      } catch (e) { /* bloqueado */ }
+    },
+    removeItem: function (k) {
+      try { sessionStorage.removeItem(k); localStorage.removeItem(k); } catch (e) { /* bloqueado */ }
     }
-  }
-  function gravar(armazem, chave, valor) {
-    armazem.setItem(chave, JSON.stringify(valor));
-  }
-  function remover(armazem, chave) {
-    try { armazem.removeItem(chave); } catch (e) { /* armazenamento bloqueado */ }
-  }
+  };
 
-  function erro(codigo, mensagem) {
+  var sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseKey, {
+    auth: {
+      storage: armazenamentoSessao,
+      storageKey: 'pontofit-auth',
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true
+    }
+  });
+  PF.supabase = sb;
+
+  /* ---------- Utilitários ---------- */
+  function erro(codigo, mensagem, original) {
     var e = new Error(mensagem);
     e.codigo = codigo;
+    if (original) e.original = original;
     return e;
   }
 
-  // Simula a latência de uma requisição, para os estados de "carregando"
-  // se comportarem como vão se comportar com a API. Remover na Fase 11.
-  function latencia(ms) {
-    return new Promise(function (r) { setTimeout(r, ms || 350); });
+  // Erros da Supabase em português, com código estável para as telas.
+  var ERROS_AUTH = {
+    invalid_credentials: ['CREDENCIAIS', 'E-mail ou senha incorretos.'],
+    email_not_confirmed: ['EMAIL_NAO_CONFIRMADO', 'Confirme seu e-mail antes de entrar. Procure o link que enviamos para a sua caixa de entrada.'],
+    user_already_exists: ['EMAIL_EM_USO', 'Já existe uma conta com este e-mail.'],
+    email_exists: ['EMAIL_EM_USO', 'Já existe uma conta com este e-mail.'],
+    weak_password: ['SENHA_FRACA', 'Essa senha é fraca demais. Use pelo menos 8 caracteres, com letras e números.'],
+    over_email_send_rate_limit: ['LIMITE_EMAIL', 'Muitos e-mails enviados em pouco tempo. Espere alguns minutos e tente de novo.'],
+    over_request_rate_limit: ['LIMITE', 'Muitas tentativas em pouco tempo. Espere um pouco e tente de novo.'],
+    email_address_invalid: ['EMAIL_INVALIDO', 'Esse e-mail não foi aceito. Confira se está certo.'],
+    signup_disabled: ['CADASTRO_FECHADO', 'Novos cadastros estão desativados no momento.'],
+    same_password: ['SENHA_IGUAL', 'A nova senha precisa ser diferente da atual.']
+  };
+
+  function traduzirAuth(e) {
+    var m = e && e.code && ERROS_AUTH[e.code];
+    if (m) return erro(m[0], m[1], e);
+    if (e && /Invalid login credentials/i.test(e.message)) return erro('CREDENCIAIS', ERROS_AUTH.invalid_credentials[1], e);
+    if (e && /Email not confirmed/i.test(e.message)) return erro('EMAIL_NAO_CONFIRMADO', ERROS_AUTH.email_not_confirmed[1], e);
+    if (e && /fetch|network/i.test(e.message)) return erro('REDE', 'Sem conexão com o servidor. Verifique sua internet e tente de novo.', e);
+    return erro('AUTH', 'Não foi possível concluir. Tente de novo em instantes.', e);
   }
 
-  function gerarId() {
-    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
-    return Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+  function traduzirDados(e) {
+    if (!e) return erro('DADOS', 'Não foi possível salvar. Tente de novo.');
+    if (e.code === '23505') return erro('DUPLICADO', 'Esse registro já existe.', e);
+    if (e.code === '42501' || e.code === 'PGRST301') return erro('SEM_PERMISSAO', 'Sua sessão expirou. Entre novamente.', e);
+    if (/fetch|network/i.test(e.message || '')) return erro('REDE', 'Sem conexão com o servidor. Verifique sua internet e tente de novo.', e);
+    return erro('DADOS', 'Não foi possível salvar. Tente de novo.', e);
   }
 
-  function gerarSalt() {
-    var bytes = new Uint8Array(16);
-    crypto.getRandomValues(bytes);
-    return paraHex(bytes);
+  /** Executa uma consulta da Supabase e devolve só os dados (ou lança erro em português). */
+  async function q(promessa) {
+    var r = await promessa;
+    if (r.error) throw traduzirDados(r.error);
+    return r.data;
   }
 
-  function paraHex(bytes) {
-    return Array.prototype.map.call(bytes, function (b) {
-      return b.toString(16).padStart(2, '0');
-    }).join('');
+  async function uid() {
+    var r = await sb.auth.getSession();
+    var id = r.data && r.data.session && r.data.session.user && r.data.session.user.id;
+    if (!id) throw erro('SEM_SESSAO', 'Sua sessão expirou. Entre novamente.');
+    return id;
   }
 
-  // Só para não guardar a senha em texto puro no protótipo (ver aviso no topo).
-  async function hashSenha(senha, salt) {
-    var texto = salt + ':' + senha;
-    if (window.crypto && crypto.subtle) {
-      var buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(texto));
-      return paraHex(new Uint8Array(buf));
-    }
-    // Navegadores sem crypto.subtle (contexto não seguro): hash simples FNV-1a.
-    var h = 0x811c9dc5;
-    for (var i = 0; i < texto.length; i++) {
-      h ^= texto.charCodeAt(i);
-      h = Math.imul(h, 0x01000193) >>> 0;
-    }
-    return 'fnv-' + h.toString(16);
+  function vazioParaNulo(v) {
+    return v === '' || v === undefined ? null : v;
+  }
+  function num(v) {
+    return v === null || v === undefined || v === '' ? null : Number(v);
   }
 
-  /** Data local 'AAAA-MM-DD' daqui a N dias. */
-  function diasAFrente(n) {
-    var d = new Date();
-    d.setDate(d.getDate() + n);
-    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  function urlDe(pagina) {
+    // Em file:// não há origem válida; a Supabase usa então a Site URL do projeto.
+    return location.protocol.indexOf('http') === 0 ? location.origin + location.pathname.replace(/[^/]*$/, '') + pagina : undefined;
   }
 
-  function normalizarEmail(email) {
-    return String(email || '').trim().toLowerCase();
-  }
+  /* ---------- Conversão entre o banco (snake_case) e o app (camelCase) ---------- */
+  // [campo no app, coluna no banco, tipo]
+  var CAMPOS_FICHA = [
+    ['nome', 'nome'], ['dataNascimento', 'data_nascimento'], ['sexo', 'sexo'], ['telefone', 'telefone'],
+    ['cidade', 'cidade'], ['estado', 'estado'], ['alturaCm', 'altura_cm', 'n'], ['pesoInicialKg', 'peso_inicial_kg', 'n'],
+    ['dataPesoInicial', 'data_peso_inicial'], ['cinturaCm', 'cintura_cm', 'n'], ['objetivo', 'objetivo'],
+    ['nivelAtividade', 'nivel_atividade'], ['condicoesSaude', 'condicoes_saude', 'a'], ['condicoesOutras', 'condicoes_outras'],
+    ['alergias', 'alergias'], ['medicamentos', 'medicamentos_em_uso'], ['profissionalNome', 'profissional_nome'],
+    ['profissionalContato', 'profissional_contato'], ['observacoes', 'observacoes'], ['metaPesoKg', 'meta_peso_kg', 'n'],
+    ['metaData', 'meta_data'], ['marcosVistos', 'marcos_vistos', 'a'], ['atualizadoEm', 'atualizado_em']
+  ];
+  var CAMPOS_MED = [
+    ['nome', 'nome'], ['doseMl', 'dose_ml', 'n'], ['doseMg', 'dose_mg', 'n'], ['intervaloValor', 'intervalo_valor', 'n'],
+    ['intervaloUnidade', 'intervalo_unidade'], ['intervaloDias', 'intervalo_dias', 'n'],
+    ['dataUltimaAplicacao', 'data_ultima_aplicacao'], ['observacoes', 'observacoes'], ['criadoEm', 'criado_em']
+  ];
 
-  function usuarioPublico(u) {
-    return { id: u.id, nome: u.nome, email: u.email, criadoEm: u.criadoEm, plano: u.plano || null, testeGratisAte: u.testeGratisAte || null };
-  }
-
-  function lerUsuarios() { return ler(localStorage, CHAVE_USUARIOS, []); }
-
-  function lerSessao() {
-    return ler(sessionStorage, CHAVE_SESSAO, null) || ler(localStorage, CHAVE_SESSAO, null);
-  }
-
-  function criarSessao(usuarioId, lembrar) {
-    remover(sessionStorage, CHAVE_SESSAO);
-    remover(localStorage, CHAVE_SESSAO);
-    // "Lembrar de mim" → continua logado ao fechar o navegador.
-    gravar(lembrar ? localStorage : sessionStorage, CHAVE_SESSAO, {
-      usuarioId: usuarioId,
-      criadaEm: new Date().toISOString()
+  function doBanco(linha, campos) {
+    var o = {};
+    if (!linha) return o;
+    campos.forEach(function (c) {
+      var v = linha[c[1]];
+      if (c[2] === 'n') o[c[0]] = num(v);
+      else if (c[2] === 'a') o[c[0]] = v || [];
+      else o[c[0]] = v === null ? '' : v;
     });
+    return o;
   }
 
-  function usuarioAtualId() {
-    var s = lerSessao();
-    if (!s) throw erro('SEM_SESSAO', 'Sua sessão expirou. Entre novamente.');
-    return s.usuarioId;
+  /** Só os campos enviados viram colunas (atualização parcial). */
+  function paraBanco(objeto, campos) {
+    var linha = {};
+    campos.forEach(function (c) {
+      if (!Object.prototype.hasOwnProperty.call(objeto, c[0]) || c[0] === 'atualizadoEm' || c[0] === 'criadoEm') return;
+      var v = objeto[c[0]];
+      if (c[2] === 'n') linha[c[1]] = num(v);
+      else if (c[2] === 'a') linha[c[1]] = Array.isArray(v) ? v : [];
+      else linha[c[1]] = vazioParaNulo(typeof v === 'string' ? v.trim() : v);
+    });
+    return linha;
   }
 
-  // Dados do paciente logado: { ficha, pesos, medicamentos, aplicacoes, cesta, assinatura }
-  function lerDados() {
-    var id = usuarioAtualId();
-    return ler(localStorage, PREFIXO_DADOS + id, { ficha: {}, pesos: [], medicamentos: [], nomesMedicamentos: [], aplicacoes: [], cesta: [] });
+  function medDoBanco(l) {
+    var m = doBanco(l, CAMPOS_MED);
+    m.id = l.id;
+    return m;
   }
-  function gravarDados(dados) {
-    gravar(localStorage, PREFIXO_DADOS + usuarioAtualId(), dados);
+  function aplicacaoDoBanco(l) {
+    return { id: l.id, medicamentoId: l.medicamento_id, data: l.data, doseMl: num(l.dose_ml) };
+  }
+  function pesoDoBanco(l) {
+    return { id: l.id, data: l.data, pesoKg: num(l.peso_kg), cinturaCm: num(l.cintura_cm) };
+  }
+  function itemCestaDoBanco(l) {
+    return { id: l.id, texto: l.texto, receitaId: l.receita_id, receitaTitulo: l.receita_titulo || '', comprado: !!l.comprado, criadoEm: l.criado_em };
+  }
+  function cobrancaDoBanco(l) {
+    return { id: l.id, numero: l.numero, offsetMeses: l.offset_meses, vencimento: l.vencimento, plano: l.plano, valor: num(l.valor), pagoEm: l.pago_em };
   }
 
-  function porData(a, b) { return a.data < b.data ? -1 : a.data > b.data ? 1 : 0; }
-
-  /* ---------- Medicamentos: nomes padrão e migração ----------
-     Versões anteriores guardavam um único "produto". Na primeira leitura
-     ele vira o primeiro medicamento e as aplicações passam a apontar
-     para ele. */
   var NOMES_PADRAO = ['Mounjaro', 'Testosterona'];
 
-  function migrarMedicamentos(dados) {
-    if (Array.isArray(dados.medicamentos)) {
-      dados.nomesMedicamentos = dados.nomesMedicamentos || [];
-      return dados;
-    }
-    dados.medicamentos = [];
-    dados.nomesMedicamentos = [];
-    dados.aplicacoes = dados.aplicacoes || [];
-    var p = dados.produto;
-    if (p && p.intervaloDias) {
-      var med = Object.assign({ id: gerarId(), criadoEm: new Date().toISOString() }, p, { nome: p.nome || 'Mounjaro' });
-      dados.medicamentos.push(med);
-      dados.aplicacoes.forEach(function (a) { if (!a.medicamentoId) a.medicamentoId = med.id; });
-    }
-    delete dados.produto;
-    gravarDados(dados);
-    return dados;
-  }
-
-  /* ---------- Conta de teste (só em ambiente local) ----------
-     admin@admin.com / admin, criada direto aqui porque a senha não passa
-     na regra do cadastro (8+ caracteres com letras e números). Nunca é
-     criada em domínio público, onde uma senha fixa seria uma porta aberta. */
-  var CONTA_TESTE = { nome: 'Administrador', email: 'admin@admin.com', senha: 'admin' };
-
-  function ambienteLocal() {
-    var h = location.hostname;
-    return location.protocol === 'file:' || h === 'localhost' || h === '127.0.0.1' || h === '[::1]';
-  }
-
-  async function garantirContaTeste() {
-    if (!ambienteLocal()) return;
-    var usuarios = lerUsuarios();
-    if (usuarios.some(function (u) { return u.email === CONTA_TESTE.email; })) return;
-    var salt = gerarSalt();
-    var usuario = {
-      id: gerarId(),
-      nome: CONTA_TESTE.nome,
-      email: CONTA_TESTE.email,
-      senhaHash: await hashSenha(CONTA_TESTE.senha, salt),
-      salt: salt,
-      criadoEm: new Date().toISOString(),
-      aceiteAvisoSaude: true
-    };
-    usuarios.push(usuario);
-    gravar(localStorage, CHAVE_USUARIOS, usuarios);
-    gravar(localStorage, PREFIXO_DADOS + usuario.id, {
-      ficha: { nome: usuario.nome, email: usuario.email }, pesos: [], medicamentos: [], nomesMedicamentos: [], aplicacoes: [], cesta: []
-    });
-  }
-
-  // Login e cadastro esperam a conta de teste existir antes de consultar.
-  var contaTestePronta = garantirContaTeste().catch(function () { /* armazenamento bloqueado */ });
-
   /* ======================================================================
-     API pública — os nomes espelham os endpoints previstos em /api
+     API pública
      ====================================================================== */
   PF.storage = {
 
-    /* ---------- Autenticação (POST /api/auth/...) ---------- */
+    /* ---------- Autenticação ---------- */
 
-    /** Cria a conta e já inicia a sessão. → usuário */
+    /**
+     * Cria a conta. → { usuario, precisaConfirmar }
+     * Com a confirmação de e-mail ligada no projeto, a pessoa só entra
+     * depois de clicar no link (precisaConfirmar = true).
+     */
     cadastrar: async function (dados) {
-      await latencia();
-      await contaTestePronta;
-      var nome = String(dados.nome || '').trim();
-      var email = normalizarEmail(dados.email);
-      var senha = String(dados.senha || '');
-      if (!nome || !email || !senha) throw erro('DADOS_INVALIDOS', 'Preencha todos os campos.');
-
-      var usuarios = lerUsuarios();
-      if (usuarios.some(function (u) { return u.email === email; })) {
-        throw erro('EMAIL_EM_USO', 'Já existe uma conta com este e-mail.');
+      definirLembrar(false);
+      var r = await sb.auth.signUp({
+        email: String(dados.email || '').trim().toLowerCase(),
+        password: String(dados.senha || ''),
+        options: {
+          // Só preenche o perfil (nome e plano); não é usado para autorização.
+          data: { nome: String(dados.nome || '').trim(), plano: dados.plano === 'anual' ? 'anual' : 'mensal', aceite_aviso_saude: !!dados.aceiteAvisoSaude },
+          emailRedirectTo: urlDe('app.html')
+        }
+      });
+      if (r.error) throw traduzirAuth(r.error);
+      var user = r.data.user;
+      // Com confirmação ligada, e-mail já cadastrado volta sem erro e sem identidades.
+      if (user && Array.isArray(user.identities) && user.identities.length === 0) {
+        throw erro('EMAIL_EM_USO', ERROS_AUTH.user_already_exists[1]);
       }
-
-      var salt = gerarSalt();
-      var usuario = {
-        id: gerarId(),
-        nome: nome,
-        email: email,
-        senhaHash: await hashSenha(senha, salt),
-        salt: salt,
-        criadoEm: new Date().toISOString(),
-        aceiteAvisoSaude: !!dados.aceiteAvisoSaude,
-        plano: dados.plano === 'anual' ? 'anual' : 'mensal',
-        testeGratisAte: diasAFrente(30) // teste grátis de 30 dias
+      return {
+        usuario: user ? { id: user.id, nome: String(dados.nome || '').trim(), email: user.email } : null,
+        precisaConfirmar: !r.data.session
       };
-      usuarios.push(usuario);
-      gravar(localStorage, CHAVE_USUARIOS, usuarios);
+    },
 
-      criarSessao(usuario.id, false);
-      gravarDados({ ficha: { nome: nome, email: email }, pesos: [], medicamentos: [], nomesMedicamentos: [], aplicacoes: [], cesta: [] });
-      return usuarioPublico(usuario);
+    /** Reenvia o e-mail de confirmação do cadastro. */
+    reenviarConfirmacao: async function (email) {
+      var r = await sb.auth.resend({ type: 'signup', email: String(email || '').trim().toLowerCase(), options: { emailRedirectTo: urlDe('app.html') } });
+      if (r.error) throw traduzirAuth(r.error);
     },
 
     /** Faz login. → usuário. Erro com codigo 'CREDENCIAIS' se não bater. */
-    entrar: async function (email, senha, lembrar) {
-      await latencia();
-      await contaTestePronta;
-      var alvo = normalizarEmail(email);
-      var usuario = lerUsuarios().find(function (u) { return u.email === alvo; });
-      // Mesma mensagem para e-mail inexistente e senha errada (não revela quem tem conta).
-      if (!usuario || (await hashSenha(String(senha || ''), usuario.salt)) !== usuario.senhaHash) {
-        throw erro('CREDENCIAIS', 'E-mail ou senha incorretos.');
-      }
-      criarSessao(usuario.id, !!lembrar);
-      return usuarioPublico(usuario);
+    entrar: async function (email, senha, lembrarDeMim) {
+      definirLembrar(!!lembrarDeMim);
+      var r = await sb.auth.signInWithPassword({ email: String(email || '').trim().toLowerCase(), password: String(senha || '') });
+      if (r.error) throw traduzirAuth(r.error);
+      return PF.storage.getUser();
+    },
+
+    /** Envia o link para criar uma nova senha (não revela se o e-mail existe). */
+    recuperarSenha: async function (email) {
+      var r = await sb.auth.resetPasswordForEmail(String(email || '').trim().toLowerCase(), { redirectTo: urlDe('login.html') });
+      if (r.error && r.error.code !== 'user_not_found') throw traduzirAuth(r.error);
+    },
+
+    /** Define a nova senha (depois de abrir o link de recuperação). */
+    definirNovaSenha: async function (senha) {
+      var r = await sb.auth.updateUser({ password: String(senha || '') });
+      if (r.error) throw traduzirAuth(r.error);
     },
 
     sair: async function () {
-      remover(sessionStorage, CHAVE_SESSAO);
-      remover(localStorage, CHAVE_SESSAO);
+      await sb.auth.signOut();
     },
 
-    /** Usuário logado ou null. */
+    /** Usuário logado ou null. → { id, nome, email, plano, testeGratisAte, criadoEm } */
     getUser: async function () {
-      var s = lerSessao();
-      if (!s) return null;
-      var usuario = lerUsuarios().find(function (u) { return u.id === s.usuarioId; });
-      if (!usuario) { await PF.storage.sair(); return null; }
-      return usuarioPublico(usuario);
+      var r = await sb.auth.getSession();
+      var user = r.data && r.data.session && r.data.session.user;
+      if (!user) return null;
+      var perfil = null;
+      try {
+        var p = await sb.from('perfis').select('nome, plano, teste_gratis_ate, criado_em').eq('id', user.id).maybeSingle();
+        perfil = p.data;
+      } catch (e) { perfil = null; }
+      var meta = user.user_metadata || {};
+      return {
+        id: user.id,
+        nome: (perfil && perfil.nome) || meta.nome || user.email,
+        email: user.email,
+        plano: (perfil && perfil.plano) || meta.plano || 'mensal',
+        testeGratisAte: perfil ? perfil.teste_gratis_ate : null,
+        criadoEm: (perfil && perfil.criado_em) || user.created_at
+      };
     },
 
-    /* ---------- Ficha (GET/PUT /api/ficha) ---------- */
+    /** Avisa quando a sessão muda (ex.: saiu em outra aba). */
+    aoMudarSessao: function (callback) {
+      sb.auth.onAuthStateChange(function (evento, sessao) { callback(evento, sessao); });
+    },
+
+    /* ---------- Ficha ---------- */
 
     getFicha: async function () {
-      return lerDados().ficha || {};
+      var id = await uid();
+      var linha = await q(sb.from('fichas').select('*').eq('usuario_id', id).maybeSingle());
+      return doBanco(linha, CAMPOS_FICHA);
     },
 
-    /** Mescla os campos enviados com a ficha atual. → ficha completa */
+    /** Grava só os campos enviados. → ficha completa */
     saveFicha: async function (campos) {
-      await latencia();
-      var dados = lerDados();
-      dados.ficha = Object.assign({}, dados.ficha, campos, { atualizadoEm: new Date().toISOString() });
-      gravarDados(dados);
-
-      // Mantém o nome do usuário em dia com a ficha.
-      if (campos.nome) {
-        var id = usuarioAtualId();
-        var usuarios = lerUsuarios();
-        usuarios.forEach(function (u) { if (u.id === id) u.nome = String(campos.nome).trim(); });
-        gravar(localStorage, CHAVE_USUARIOS, usuarios);
+      var id = await uid();
+      var linha = paraBanco(campos, CAMPOS_FICHA);
+      linha.usuario_id = id;
+      var salva = await q(sb.from('fichas').upsert(linha, { onConflict: 'usuario_id' }).select('*').single());
+      // O nome também aparece no perfil (menu, saudação).
+      if (Object.prototype.hasOwnProperty.call(campos, 'nome') && String(campos.nome || '').trim()) {
+        await q(sb.from('perfis').update({ nome: String(campos.nome).trim() }).eq('id', id));
       }
-      return dados.ficha;
+      return doBanco(salva, CAMPOS_FICHA);
     },
 
-    /* ---------- Peso (GET/POST/DELETE /api/peso) ---------- */
+    /* ---------- Peso ---------- */
 
-    /** Registros em ordem de data: [{ id, data:'AAAA-MM-DD', pesoKg, cinturaCm }] */
     getPesos: async function () {
-      return lerDados().pesos.slice().sort(porData);
+      var linhas = await q(sb.from('registros_peso').select('id, data, peso_kg, cintura_cm').order('data', { ascending: true }));
+      return linhas.map(pesoDoBanco);
     },
 
     addPeso: async function (registro) {
-      var dados = lerDados();
-      var novo = {
-        id: gerarId(),
+      var id = await uid();
+      var l = await q(sb.from('registros_peso').insert({
+        usuario_id: id,
         data: registro.data,
-        pesoKg: Number(registro.pesoKg),
-        cinturaCm: registro.cinturaCm == null || registro.cinturaCm === '' ? null : Number(registro.cinturaCm)
-      };
-      dados.pesos.push(novo);
-      gravarDados(dados);
-      return novo;
+        peso_kg: num(registro.pesoKg),
+        cintura_cm: num(registro.cinturaCm)
+      }).select('id, data, peso_kg, cintura_cm').single());
+      return pesoDoBanco(l);
     },
 
-    removePeso: async function (id) {
-      var dados = lerDados();
-      dados.pesos = dados.pesos.filter(function (p) { return p.id !== id; });
-      gravarDados(dados);
+    removePeso: async function (idRegistro) {
+      await q(sb.from('registros_peso').delete().eq('id', idRegistro));
     },
 
-    /* ---------- Medicamentos (GET/PUT/DELETE /api/medicamentos) ----------
-       [{ id, nome, doseMl, doseMg, intervaloValor, intervaloUnidade,
-          intervaloDias, dataUltimaAplicacao, observacoes, criadoEm }] */
+    /* ---------- Medicamentos ---------- */
+
     getMedicamentos: async function () {
-      return migrarMedicamentos(lerDados()).medicamentos.slice();
+      var linhas = await q(sb.from('medicamentos').select('*').order('criado_em', { ascending: true }));
+      return linhas.map(medDoBanco);
     },
 
-    /** Cria (sem id) ou atualiza (com id). → medicamento salvo */
+    /** Cria (sem id) ou atualiza só os campos enviados (com id). → medicamento salvo */
     saveMedicamento: async function (med) {
-      await latencia();
-      var dados = migrarMedicamentos(lerDados());
+      var id = await uid();
+      var linha = paraBanco(med, CAMPOS_MED);
       var salvo;
-      if (med.id) {
-        dados.medicamentos = dados.medicamentos.map(function (m) {
-          if (m.id !== med.id) return m;
-          salvo = Object.assign({}, m, med);
-          return salvo;
-        });
+      try {
+        if (med.id) {
+          salvo = await q(sb.from('medicamentos').update(linha).eq('id', med.id).select('*').single());
+        } else {
+          linha.usuario_id = id;
+          salvo = await q(sb.from('medicamentos').insert(linha).select('*').single());
+        }
+      } catch (e) {
+        if (e.codigo === 'DUPLICADO') throw erro('NOME_REPETIDO', 'Você já tem ' + med.nome + ' cadastrado.', e.original);
+        throw e;
       }
-      if (!salvo) {
-        salvo = Object.assign({ id: gerarId(), criadoEm: new Date().toISOString() }, med);
-        dados.medicamentos.push(salvo);
-      }
-      // Nomes criados pela pessoa ficam disponíveis para os próximos cadastros.
+      // Nome criado pela pessoa vira opção nos próximos cadastros.
       var nome = String(salvo.nome || '').trim();
-      if (nome && NOMES_PADRAO.indexOf(nome) < 0 && dados.nomesMedicamentos.indexOf(nome) < 0) {
-        dados.nomesMedicamentos.push(nome);
+      if (nome && NOMES_PADRAO.indexOf(nome) < 0) {
+        await q(sb.from('nomes_medicamentos').upsert({ usuario_id: id, nome: nome }, { onConflict: 'usuario_id,nome', ignoreDuplicates: true }));
       }
-      gravarDados(dados);
-      return salvo;
+      return medDoBanco(salvo);
     },
 
     /** Remove o medicamento e as aplicações dele. → { medicamento, aplicacoes } (para desfazer) */
-    removeMedicamento: async function (id) {
-      var dados = migrarMedicamentos(lerDados());
-      var removido = {
-        medicamento: dados.medicamentos.find(function (m) { return m.id === id; }) || null,
-        aplicacoes: dados.aplicacoes.filter(function (a) { return a.medicamentoId === id; })
-      };
-      dados.medicamentos = dados.medicamentos.filter(function (m) { return m.id !== id; });
-      dados.aplicacoes = dados.aplicacoes.filter(function (a) { return a.medicamentoId !== id; });
-      gravarDados(dados);
-      return removido;
+    removeMedicamento: async function (idMed) {
+      var med = await q(sb.from('medicamentos').select('*').eq('id', idMed).maybeSingle());
+      var apl = await q(sb.from('aplicacoes').select('*').eq('medicamento_id', idMed));
+      await q(sb.from('medicamentos').delete().eq('id', idMed)); // aplicações saem em cascata
+      return { medicamento: med, aplicacoes: apl };
     },
 
-    /** Desfaz removeMedicamento. */
+    /** Desfaz removeMedicamento (recria com os mesmos ids). */
     restaurarMedicamento: async function (removido) {
-      var dados = migrarMedicamentos(lerDados());
-      if (removido.medicamento) dados.medicamentos.push(removido.medicamento);
-      dados.aplicacoes = dados.aplicacoes.concat(removido.aplicacoes || []);
-      gravarDados(dados);
+      if (!removido || !removido.medicamento) return;
+      await q(sb.from('medicamentos').insert(removido.medicamento));
+      if (removido.aplicacoes && removido.aplicacoes.length) {
+        await q(sb.from('aplicacoes').insert(removido.aplicacoes));
+      }
     },
 
     /** Nomes para escolher: os padrão e os que a pessoa já criou. */
     getNomesMedicamentos: async function () {
-      return NOMES_PADRAO.concat(migrarMedicamentos(lerDados()).nomesMedicamentos);
+      var linhas = await q(sb.from('nomes_medicamentos').select('nome').order('criado_em', { ascending: true }));
+      return NOMES_PADRAO.concat(linhas.map(function (l) { return l.nome; }).filter(function (n) { return NOMES_PADRAO.indexOf(n) < 0; }));
     },
 
-    /* ---------- Aplicações (GET/POST/DELETE /api/aplicacoes) ---------- */
+    /* ---------- Aplicações ---------- */
 
-    /** [{ id, medicamentoId, data:'AAAA-MM-DD', doseMl }] em ordem de data */
     getAplicacoes: async function (medicamentoId) {
-      return migrarMedicamentos(lerDados()).aplicacoes.filter(function (a) {
-        return !medicamentoId || a.medicamentoId === medicamentoId;
-      }).sort(porData);
+      var consulta = sb.from('aplicacoes').select('id, medicamento_id, data, dose_ml').order('data', { ascending: true });
+      if (medicamentoId) consulta = consulta.eq('medicamento_id', medicamentoId);
+      var linhas = await q(consulta);
+      return linhas.map(aplicacaoDoBanco);
     },
 
     addAplicacao: async function (aplicacao) {
-      var dados = migrarMedicamentos(lerDados());
-      var nova = { id: gerarId(), medicamentoId: aplicacao.medicamentoId, data: aplicacao.data, doseMl: Number(aplicacao.doseMl) };
-      dados.aplicacoes.push(nova);
-      gravarDados(dados);
-      return nova;
+      var id = await uid();
+      var l = await q(sb.from('aplicacoes').insert({
+        usuario_id: id,
+        medicamento_id: aplicacao.medicamentoId,
+        data: aplicacao.data,
+        dose_ml: num(aplicacao.doseMl)
+      }).select('id, medicamento_id, data, dose_ml').single());
+      return aplicacaoDoBanco(l);
     },
 
-    removeAplicacao: async function (id) {
-      var dados = migrarMedicamentos(lerDados());
-      dados.aplicacoes = dados.aplicacoes.filter(function (a) { return a.id !== id; });
-      gravarDados(dados);
+    removeAplicacao: async function (idAplicacao) {
+      await q(sb.from('aplicacoes').delete().eq('id', idAplicacao));
     },
 
-    /* ---------- Cesta de compras (GET/PUT /api/cesta) ----------
-       [{ id, texto, receitaId, receitaTitulo, comprado, criadoEm }] */
+    /* ---------- Cesta de compras ---------- */
+
     getCesta: async function () {
-      return (lerDados().cesta || []).slice();
+      var linhas = await q(sb.from('cesta_itens').select('*').order('posicao', { ascending: true }).order('criado_em', { ascending: true }));
+      return linhas.map(itemCestaDoBanco);
     },
 
+    /** Grava a lista inteira (ordem incluída): atualiza/insere os itens e apaga os que saíram. */
     saveCesta: async function (itens) {
-      var dados = lerDados();
-      dados.cesta = itens;
-      gravarDados(dados);
+      var id = await uid();
+      var linhas = itens.map(function (i, pos) {
+        return {
+          id: i.id, usuario_id: id, texto: i.texto, receita_id: i.receitaId || null,
+          receita_titulo: i.receitaTitulo || null, comprado: !!i.comprado, posicao: pos
+        };
+      });
+      if (linhas.length) await q(sb.from('cesta_itens').upsert(linhas, { onConflict: 'id' }));
+      var apagar = sb.from('cesta_itens').delete().eq('usuario_id', id);
+      if (linhas.length) apagar = apagar.not('id', 'in', '(' + linhas.map(function (l) { return l.id; }).join(',') + ')');
+      await q(apagar);
       return itens;
     },
 
-    /* ---------- Assinatura (GET/PUT /api/assinatura) ----------
-       { plano: 'mensal'|'anual', testeGratisAte: 'AAAA-MM-DD',
-         cobrancas: [{ id, numero, offsetMeses, vencimento, plano, valor, pagoEm }] }
-       Contas antigas (sem plano) começam no mensal, com teste de 30 dias
-       contado da criação da conta. */
+    /* ---------- Assinatura e mensalidades ---------- */
+
+    /** { plano, testeGratisAte, cobrancas: [...] } */
     getAssinatura: async function () {
-      var dados = lerDados();
-      if (dados.assinatura) return dados.assinatura;
-      var id = usuarioAtualId();
-      var u = lerUsuarios().find(function (x) { return x.id === id; }) || {};
-      var criada = u.criadoEm ? new Date(u.criadoEm) : new Date();
-      criada.setDate(criada.getDate() + 30);
-      return {
-        plano: u.plano === 'anual' ? 'anual' : 'mensal',
-        testeGratisAte: u.testeGratisAte || (criada.getFullYear() + '-' + String(criada.getMonth() + 1).padStart(2, '0') + '-' + String(criada.getDate()).padStart(2, '0')),
-        cobrancas: []
-      };
+      var id = await uid();
+      var perfil = await q(sb.from('perfis').select('plano, teste_gratis_ate').eq('id', id).maybeSingle());
+      var linhas = await q(sb.from('cobrancas').select('*').order('numero', { ascending: true }));
+      var teste = perfil && perfil.teste_gratis_ate;
+      if (!teste) {
+        var d = new Date();
+        d.setDate(d.getDate() + 30);
+        teste = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      }
+      return { plano: (perfil && perfil.plano) || 'mensal', testeGratisAte: teste, cobrancas: linhas.map(cobrancaDoBanco) };
     },
 
-    saveAssinatura: async function (assinatura) {
-      var dados = lerDados();
-      dados.assinatura = assinatura;
-      gravarDados(dados);
-      return assinatura;
+    saveAssinatura: async function (a) {
+      var id = await uid();
+      await q(sb.from('perfis').update({ plano: a.plano === 'anual' ? 'anual' : 'mensal' }).eq('id', id));
+      if (a.cobrancas && a.cobrancas.length) {
+        await q(sb.from('cobrancas').upsert(a.cobrancas.map(function (c) {
+          return {
+            id: c.id, usuario_id: id, numero: c.numero, offset_meses: c.offsetMeses, vencimento: c.vencimento,
+            plano: c.plano, valor: c.valor, pago_em: c.pagoEm || null
+          };
+        }), { onConflict: 'id' }));
+      }
+      return a;
     }
   };
 })();

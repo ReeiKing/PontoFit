@@ -146,9 +146,49 @@
 
           </form>
         </section>
+
+        <!-- ============ Cadastro feito: confirmar e-mail ============ -->
+        <section class="painel painel--aviso" id="painel-confirmar" data-titulo="Confira seu e-mail" tabindex="-1" hidden aria-live="polite">
+          <div class="card card--verde confirmar">
+            <p class="confirmar__titulo" data-foco-inicial tabindex="-1">Quase lá!</p>
+            <p>Enviamos um link de confirmação para <strong data-email-confirmar></strong>. Abra o e-mail e toque no link para entrar na sua conta.</p>
+            <p class="texto-sm texto-sec">Não chegou em alguns minutos? Confira a caixa de spam ou peça outro envio.</p>
+            <div class="linha">
+              <button class="btn btn--secundario" type="button" data-reenviar><span>Reenviar e-mail</span></button>
+              <button class="btn btn--fantasma" type="button" data-voltar-entrar>Já confirmei, quero entrar</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ Nova senha (veio do link do e-mail) ============ -->
+        <section class="painel" id="painel-nova-senha" data-titulo="Crie uma nova senha" tabindex="-1" hidden>
+          <form id="form-nova-senha" class="form-auth" novalidate>
+            <div class="campo">
+              <label class="campo__label" for="nova-senha">Nova senha</label>
+              <div class="senha">
+                <input class="input" id="nova-senha" name="senha" type="password" autocomplete="new-password" required data-regra="senhaNova" data-foco-inicial aria-describedby="nova-senha-requisitos nova-senha-erro">
+                <button class="senha__toggle" type="button" data-mostrar-senha aria-controls="nova-senha" aria-pressed="false" aria-label="Mostrar senha">
+                  <svg class="olho-aberto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/></svg>
+                  <svg class="olho-fechado" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c4.65 0 8.62 2.9 9.94 6.65a1 1 0 0 1 0 .7 10.8 10.8 0 0 1-1.44 2.49"/><path d="M14.08 14.16a3 3 0 0 1-4.24-4.24"/><path d="M17.48 17.5A10.75 10.75 0 0 1 2.06 12.35a1 1 0 0 1 0-.7 10.8 10.8 0 0 1 4.45-5.14"/><path d="m2 2 20 20"/></svg>
+                </button>
+              </div>
+              <ul class="requisitos" id="nova-senha-requisitos" role="list">
+                <li data-requisito="tamanho">8 caracteres ou mais</li>
+                <li data-requisito="misto">Letras e números</li>
+              </ul>
+              <p class="campo__erro" id="nova-senha-erro" aria-live="polite"></p>
+            </div>
+            <div class="campo">
+              <label class="campo__label" for="nova-confirmar">Confirmar nova senha</label>
+              <input class="input" id="nova-confirmar" name="confirmar" type="password" autocomplete="new-password" required data-regra="confirmar" aria-describedby="nova-confirmar-erro">
+              <p class="campo__erro" id="nova-confirmar-erro" aria-live="polite"></p>
+            </div>
+            <button class="btn btn--lg btn--bloco" type="submit"><span>Salvar nova senha</span></button>
+          </form>
+        </section>
       </div>
 
-      <p class="auth__rodape">© 2026 PontoFit. Protótipo: seus dados ficam salvos apenas neste navegador.</p>
+      <p class="auth__rodape">© 2026 PontoFit. Seus dados ficam guardados na sua conta, e você acessa de qualquer aparelho.</p>
     </main>
 
     <!-- Imagem lateral (só no desktop) -->
@@ -163,6 +203,9 @@
   </div>
 
   <script src="js/ui.js"></script>
+  <!-- Supabase: biblioteca e configuração geradas por "npm run build" -->
+  <script src="js/vendor/supabase.js"></script>
+  <script src="js/config.js"></script>
   <script src="js/storage.js"></script>
   <script src="js/auth.js"></script>
 </body>

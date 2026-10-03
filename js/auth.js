@@ -4,12 +4,9 @@
      sessão; sem sessão → login.html.
    - Botões [data-sair] encerram a sessão.
    - Página de login (body[data-pagina-login]): abas, validação em tempo
-     real, mostrar/ocultar senha, envio.
-   Depende de js/storage.js (e js/ui.js para toast/carregando).
-
-   ⚠️ PROTÓTIPO: ver aviso em js/storage.js — este login NÃO é seguro.
-   Na Fase 11 (Vercel), a verificação passa a ser feita no servidor
-   (Auth.js, Supabase Auth ou Clerk) e este arquivo só chama a API.
+     real, mostrar/ocultar senha, cadastro com confirmação por e-mail,
+     recuperação de senha.
+   Depende de js/storage.js (Supabase Auth) e de js/ui.js (toast/carregando).
    ========================================================================== */
 (function () {
   'use strict';
@@ -25,6 +22,7 @@
      */
     protegerPagina: async function () {
       raiz.classList.add('verificando-sessao');
+      if (!S) { raiz.classList.remove('verificando-sessao'); return null; } // sem configuração: faixa de erro do storage.js
       var usuario = null;
       try { usuario = await S.getUser(); } catch (e) { usuario = null; }
       if (!usuario) {
@@ -32,6 +30,10 @@
         return null;
       }
       raiz.classList.remove('verificando-sessao');
+      // Saiu em outra aba (ou a sessão expirou de vez): volta para o login.
+      S.aoMudarSessao(function (evento) {
+        if (evento === 'SIGNED_OUT') location.replace('login.html');
+      });
       return usuario;
     },
 
@@ -59,24 +61,115 @@
      Página de login / cadastro
      ====================================================================== */
   function iniciarLogin() {
-    // Já está logado? Vai direto para a área do paciente.
-    S.getUser().then(function (u) { if (u) location.replace('app.html'); });
+    if (!S) return; // sem configuração: o storage.js já mostra a faixa de erro
 
     iniciarAbas();
     iniciarMostrarSenha();
     iniciarFormEntrar();
     iniciarFormCadastro();
+    iniciarEsqueciSenha();
+    iniciarNovaSenha();
 
-    var esqueci = document.querySelector('[data-esqueci-senha]');
-    if (esqueci) {
-      esqueci.addEventListener('click', function () {
-        PF.toast('A recuperação de senha ainda não está disponível nesta versão do PontoFit.', {
-          tipo: 'info',
-          titulo: 'Esqueceu sua senha?',
-          duracao: 7000
-        });
-      });
+    if (PF.recuperacaoDeSenha) {
+      // Veio do link "esqueci minha senha": mostra o formulário de nova senha.
+      mostrarSo('painel-nova-senha');
+      return;
     }
+    // Já está logado? Vai direto para a área do paciente.
+    S.getUser().then(function (u) { if (u) location.replace('app.html'); });
+  }
+
+  /** Mostra só um dos painéis (entrar, cadastro, confirmação ou nova senha). */
+  function mostrarSo(idPainel) {
+    var abas = document.querySelector('[role="tablist"]');
+    var titulo = document.querySelector('[data-auth-titulo]');
+    var sub = document.querySelector('.auth__sub');
+    var extra = idPainel === 'painel-confirmar' || idPainel === 'painel-nova-senha';
+    abas.hidden = extra;
+    document.querySelectorAll('.painel').forEach(function (p) { p.hidden = p.id !== idPainel; });
+    if (extra) {
+      var painel = document.getElementById(idPainel);
+      titulo.textContent = painel.dataset.titulo;
+      sub.hidden = true;
+      var foco = painel.querySelector('[data-foco-inicial]');
+      if (foco) foco.focus();
+    } else {
+      sub.hidden = false;
+    }
+  }
+
+  /* ---------- Esqueci minha senha ---------- */
+  function iniciarEsqueciSenha() {
+    var botao = document.querySelector('[data-esqueci-senha]');
+    if (!botao) return;
+    var form = document.getElementById('form-entrar');
+    botao.addEventListener('click', async function () {
+      var email = form.email;
+      email.dataset.tocado = '1';
+      if (!validar(email)) {
+        caixaErro(email).textContent = 'Digite seu e-mail acima para receber o link de nova senha.';
+        email.focus();
+        return;
+      }
+      PF.setLoading(botao, true, 'Enviando…');
+      try {
+        await S.recuperarSenha(email.value);
+        PF.toast('Se existir uma conta com ' + email.value.trim() + ', enviamos um link para criar uma nova senha. Confira também a caixa de spam.', {
+          tipo: 'info', titulo: 'Confira seu e-mail', duracao: 9000
+        });
+      } catch (err) {
+        PF.toast(err.message, { tipo: 'erro' });
+      } finally {
+        PF.setLoading(botao, false);
+      }
+    });
+  }
+
+  /* ---------- Nova senha (depois do link do e-mail) ---------- */
+  function iniciarNovaSenha() {
+    var form = document.getElementById('form-nova-senha');
+    if (!form) return;
+    var validarTudo = ligarValidacao(form);
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      if (!validarTudo()) return;
+      var botao = form.querySelector('[type="submit"]');
+      PF.setLoading(botao, true, 'Salvando…');
+      try {
+        await S.definirNovaSenha(form.senha.value);
+        PF.toast('Senha alterada. Entrando na sua conta…', { titulo: 'Tudo certo' });
+        setTimeout(function () { location.replace('app.html'); }, 1200);
+      } catch (err) {
+        PF.setLoading(botao, false);
+        PF.toast(err.codigo === 'SEM_SESSAO' || err.codigo === 'AUTH'
+          ? 'O link expirou ou já foi usado. Peça um novo em “Esqueci minha senha”.'
+          : err.message, { tipo: 'erro' });
+      }
+    });
+  }
+
+  /* ---------- Cadastro feito: falta confirmar o e-mail ---------- */
+  function mostrarConfirmacao(email) {
+    var painel = document.getElementById('painel-confirmar');
+    painel.querySelector('[data-email-confirmar]').textContent = email;
+    mostrarSo('painel-confirmar');
+    var reenviar = painel.querySelector('[data-reenviar]');
+    reenviar.onclick = async function () {
+      PF.setLoading(reenviar, true, 'Reenviando…');
+      try {
+        await S.reenviarConfirmacao(email);
+        PF.toast('Enviamos o link de novo para ' + email + '.', { titulo: 'E-mail reenviado' });
+      } catch (err) {
+        PF.toast(err.message, { tipo: 'erro' });
+      } finally {
+        PF.setLoading(reenviar, false);
+      }
+    };
+    painel.querySelector('[data-voltar-entrar]').onclick = function () {
+      mostrarSo('painel-entrar');
+      document.querySelector('[role="tablist"] [data-aba="entrar"]').click();
+      document.getElementById('entrar-email').value = email;
+    };
   }
 
   /* ---------- Abas: Entrar | Criar conta ---------- */
@@ -258,6 +351,18 @@
         location.replace('app.html');
       } catch (err) {
         PF.setLoading(botao, false);
+        if (err && err.codigo === 'EMAIL_NAO_CONFIRMADO') {
+          var email = form.email.value;
+          PF.toast(err.message, {
+            tipo: 'aviso', titulo: 'Falta confirmar o e-mail', duracao: 0,
+            acao: { texto: 'Reenviar e-mail', onClick: function () {
+              S.reenviarConfirmacao(email)
+                .then(function () { PF.toast('Enviamos o link de novo para ' + email + '.', { titulo: 'E-mail reenviado' }); })
+                .catch(function (e2) { PF.toast(e2.message, { tipo: 'erro' }); });
+            } }
+          });
+          return;
+        }
         mostrarErroServidor(form, err);
         if (err && err.codigo === 'CREDENCIAIS') form.senha.select();
       }
@@ -275,13 +380,18 @@
       var botao = form.querySelector('[type="submit"]');
       PF.setLoading(botao, true, 'Criando sua conta…');
       try {
-        await S.cadastrar({
+        var resultado = await S.cadastrar({
           nome: form.nome.value,
           email: form.email.value,
           senha: form.senha.value,
           aceiteAvisoSaude: form.aceite.checked,
           plano: form.plano.value
         });
+        if (resultado.precisaConfirmar) {
+          PF.setLoading(botao, false);
+          mostrarConfirmacao(form.email.value.trim().toLowerCase());
+          return;
+        }
         location.replace('app.html');
       } catch (err) {
         PF.setLoading(botao, false);

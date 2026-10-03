@@ -31,9 +31,7 @@
     return Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   }
 
-  function gerarId() {
-    return window.crypto && crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2);
-  }
+  function gerarId() { return PF.uuid(); } // UUID v4 (formato exigido pelo banco)
 
   /** Soma meses mantendo o dia (31/01 + 1 mês = 28/02 ou 29/02). */
   function somarMeses(iso, meses) {

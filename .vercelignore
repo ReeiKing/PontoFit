@@ -1,9 +1,17 @@
-# Fica no GitHub, mas não vai para o site publicado.
+# Fica no GitHub, mas não é enviado para o build da Vercel.
 
-# Funções serverless ainda inativas (Fase 11). Ao ativar o backend,
-# remova esta linha para a Vercel montar as funções de /api.
+# Pasta reservada para futuras funções serverless (vazia por enquanto).
 api/
 
-# Documentos internos do projeto
+# Documentos e SQL do projeto (o banco é aplicado no painel da Supabase)
 CLAUDE.md
 schema.sql
+supabase/
+
+# Gerados localmente (a Vercel gera os dela no build)
+node_modules/
+dist/
+js/config.js
+js/vendor/
+.env
+.env.local

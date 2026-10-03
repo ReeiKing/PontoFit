@@ -19,9 +19,7 @@
   var itens = [];
   var carregado = null;
 
-  function gerarId() {
-    return window.crypto && crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2);
-  }
+  function gerarId() { return PF.uuid(); } // UUID v4 (formato exigido pelo banco)
   function carregar() {
     if (!carregado) carregado = S.getCesta().then(function (lista) { itens = lista; });
     return carregado;

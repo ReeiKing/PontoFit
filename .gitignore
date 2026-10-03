@@ -13,3 +13,8 @@ Thumbs.db
 # Dependências e logs
 node_modules/
 npm-debug.log*
+
+# Gerados por "npm run build" (a partir do .env e do node_modules)
+js/config.js
+js/vendor/
+dist/

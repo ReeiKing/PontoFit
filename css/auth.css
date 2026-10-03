@@ -236,3 +236,10 @@
 
 /* Escolha do plano no cadastro */
 .plano-escolha .segmentado label { padding-inline: .5rem; font-size: .875rem; white-space: nowrap; }
+
+/* Cadastro feito: confirmar e-mail */
+.confirmar { display: grid; gap: var(--esp-3); margin-top: var(--esp-6); }
+.confirmar__titulo { font-family: var(--fonte-titulo); font-size: var(--fs-h3); font-weight: 600; }
+.confirmar__titulo:focus { outline: none; }
+.auth__sub[hidden] + .abas[hidden] + .painel { margin-top: var(--esp-6); }
+#painel-nova-senha { margin-top: var(--esp-6); }
