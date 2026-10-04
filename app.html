@@ -191,6 +191,7 @@
 
         <!-- Próximas aplicações (um destaque por medicamento, o mais urgente primeiro) -->
         <div class="painel-doses" data-painel-doses aria-live="polite"></div>
+        <p class="painel-doses__mais"><button class="link-seta" type="button" data-painel-novo-med>+ Adicionar medicamento</button></p>
 
         <!-- Números -->
         <ul class="painel-numeros" role="list">
@@ -919,6 +920,18 @@
               <ol class="aplicacoes" role="list" data-aplicacoes></ol>
             </section>
           </div>
+
+          <!-- Mais de um medicamento -->
+          <section class="card meds__mais" data-meds-mais hidden aria-labelledby="meds-mais-titulo">
+            <div>
+              <h2 class="evo__titulo" id="meds-mais-titulo">Usa mais de um medicamento?</h2>
+              <p class="texto-sec">Cadastre o próximo: cada um tem a própria dose, intervalo e contagem, e aparece no seu painel.</p>
+            </div>
+            <button class="btn" type="button" data-meds-novo>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg>
+              <span>Adicionar outro medicamento</span>
+            </button>
+          </section>
         </div>
       </div>
     </section>

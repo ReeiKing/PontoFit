@@ -1144,7 +1144,8 @@
 .meds__aba:hover, .meds__adicionar:hover { border-color: var(--verde); }
 .meds__aba[aria-selected="true"] { background: var(--verde-escuro); border-color: var(--verde-escuro); color: #fff; font-weight: 600; }
 .meds__aba[aria-selected="true"] .meds__aba-badge:not(.badge--laranja) { background: rgba(255, 255, 255, .2); color: #fff; }
-.meds__adicionar { border-style: dashed; color: var(--verde-escuro); }
+.meds__adicionar { border-style: dashed; border-color: var(--verde); background: var(--verde-suave); color: var(--verde-escuro); font-weight: 600; }
+.meds__adicionar:hover { background: var(--superficie); }
 .meds__adicionar.is-ativo { background: var(--verde-suave); border-style: solid; }
 .meds__adicionar svg { width: 1.1rem; height: 1.1rem; }
 @media (prefers-color-scheme: dark) {
@@ -1594,3 +1595,9 @@
   .painel-dose--hoje { animation: none; }
   .painel-dose__progresso { transition: none; }
 }
+
+/* Mais de um medicamento */
+.meds__mais { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--esp-4); margin-top: var(--esp-5); border: 2px dashed var(--verde); background: linear-gradient(135deg, var(--verde-suave), var(--superficie) 70%); }
+.meds__mais .btn svg { width: 1.1rem; height: 1.1rem; }
+.painel-doses__mais { margin-top: calc(-1 * var(--esp-2)); }
+.painel-doses__mais .link-seta { margin-top: 0; background: none; border: 0; padding: 0; cursor: pointer; font: inherit; font-weight: 600; }

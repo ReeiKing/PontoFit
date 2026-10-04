@@ -227,6 +227,7 @@
   function renderDoses() {
     var caixa = $('[data-painel-doses]');
     caixa.textContent = '';
+    $('[data-painel-novo-med]').textContent = dados.meds.length ? '+ Adicionar outro medicamento' : '+ Cadastrar um medicamento para lembrar das doses';
     (dados.doses || []).slice(0, 3).forEach(function (d) {
       var m = d.med;
       var card = el('section', 'card painel-dose');
@@ -525,6 +526,16 @@
     dados.dose = proximaDose(meds, porMed);
     dados.doses = proximasDoses(meds, porMed);
   }
+
+  /* ---------- Adicionar medicamento → abre o cadastro em Medicamentos ---------- */
+  $('[data-painel-novo-med]').addEventListener('click', function () {
+    location.hash = '#medicamentos';
+    document.addEventListener('pf:secao', function abrir(e) {
+      if (e.detail.secao !== 'medicamentos') return;
+      document.removeEventListener('pf:secao', abrir);
+      setTimeout(function () { if (PF.medicamentos && PF.medicamentos.abrirNovo) PF.medicamentos.abrirNovo(); }, 300);
+    });
+  });
 
   /* ---------- Receita do dia → abre no livro ---------- */
   $('[data-receita-abrir]').addEventListener('click', function () {

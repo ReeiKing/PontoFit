@@ -156,7 +156,7 @@
       novo.type = 'button';
       novo.className = 'meds__adicionar' + (estado.novo ? ' is-ativo' : '');
       novo.dataset.medsNovo = '';
-      novo.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg><span>Adicionar medicamento</span>';
+      novo.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg><span>Adicionar outro medicamento</span>';
       caixa.appendChild(novo);
     }
     caixa.hidden = estado.meds.length === 0;
@@ -305,6 +305,9 @@
     conteudo.hidden = !temMeds && !estado.novo;
     if (!estado.novo && estado.selecionado) conteudo.setAttribute('aria-labelledby', 'aba-med-' + estado.selecionado);
     else conteudo.removeAttribute('aria-labelledby');
+
+    var mais = $('[data-meds-mais]');
+    if (mais) mais.hidden = !temMeds || estado.novo;
 
     renderAbas();
     renderDose(estado.novo ? null : medSelecionado(), animarEntrada);
@@ -560,5 +563,6 @@
     if ((await primeiraSecao) !== 'medicamentos') avisarAoAbrir();
   });
 
-  PF.medicamentos = { calcularDose: calcularDose };
+  // abrirNovo: o painel (Início) abre direto o cadastro de outro medicamento.
+  PF.medicamentos = { calcularDose: calcularDose, abrirNovo: function () { abrirNovo(); } };
 })();
