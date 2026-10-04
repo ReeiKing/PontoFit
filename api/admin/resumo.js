@@ -1,6 +1,7 @@
 // GET /api/admin/resumo — painel de administração (só administradores).
-// Assinantes com a situação do acesso, números do negócio e pagamentos
-// recentes. Contas de administrador ficam fora das contagens.
+// Assinantes com a situação do acesso, números do negócio, pagamentos
+// recentes e liberações manuais de dias. Contas de administrador ficam fora
+// das contagens.
 // CPF sai mascarado (***.456.789-**).
 'use strict';
 
@@ -41,14 +42,15 @@ module.exports = async function handler(req, res) {
     if (!admin) return responder(res, 403, { erro: 'Acesso restrito à administração.' });
 
     const db = supabaseAdmin();
-    const [usuariosAuth, perfis, pix, cartao] = await Promise.all([
+    const [usuariosAuth, perfis, pix, cartao, liberacoes] = await Promise.all([
       db.auth.admin.listUsers({ page: 1, perPage: 1000 }).then(function (r) {
         if (r.error) throw r.error;
         return r.data.users;
       }),
       todos(db.from('perfis').select('id, nome, email, cpf, plano, acesso_ate, criado_em')),
       todos(db.from('pagamentos_pix').select('id, usuario_id, plano, valor, status, com_desconto, criado_em, aprovado_em')),
-      todos(db.from('pagamentos_cartao').select('id, usuario_id, plano, valor, status, com_desconto, criado_em, aprovado_em'))
+      todos(db.from('pagamentos_cartao').select('id, usuario_id, plano, valor, status, com_desconto, criado_em, aprovado_em')),
+      todos(db.from('admin_liberacoes').select('admin_id, usuario_id, dias, motivo, acesso_antes, acesso_depois, criado_em').order('criado_em', { ascending: false }))
     ]);
 
     const admins = new Set(usuariosAuth.filter(ehAdmin).map(function (u) { return u.id; }));
@@ -71,13 +73,20 @@ module.exports = async function handler(req, res) {
       if (!u.ultimo || p.aprovado_em > u.ultimo.aprovado_em) u.ultimo = p;
     });
 
+    const liberadosPor = {};
+    liberacoes.forEach(function (l) {
+      const u = (liberadosPor[l.usuario_id] = liberadosPor[l.usuario_id] || { dias: 0, vezes: 0 });
+      u.dias += l.dias;
+      u.vezes += 1;
+    });
+
     const nomes = {};
     const assinantes = perfis.filter(function (p) { return !admins.has(p.id); }).map(function (p) {
       nomes[p.id] = p.nome || p.email;
       const pagou = porUsuario[p.id];
       const ativo = p.acesso_ate && p.acesso_ate >= hoje;
       let situacao;
-      if (ativo && !pagou) situacao = 'teste';
+      if (ativo && !pagou) situacao = liberadosPor[p.id] ? 'cortesia' : 'teste';
       else if (ativo && p.acesso_ate <= limiteAVencer) situacao = 'a-vencer';
       else if (ativo) situacao = 'ativo';
       else if (pagou) situacao = 'vencido';
@@ -93,6 +102,7 @@ module.exports = async function handler(req, res) {
         diasRestantes: p.acesso_ate ? diasEntre(hoje, p.acesso_ate) : null,
         situacao: situacao,
         bloqueado: !ativo,
+        diasLiberados: liberadosPor[p.id] ? liberadosPor[p.id].dias : 0,
         totalPago: pagou ? Math.round(pagou.total * 100) / 100 : 0,
         pagamentos: pagou ? pagou.qtd : 0,
         ultimoPagamento: pagou ? { data: dataSP(pagou.ultimo.aprovado_em), valor: Number(pagou.ultimo.valor), meio: pagou.ultimo.meio, plano: pagou.ultimo.plano } : null,
@@ -122,6 +132,7 @@ module.exports = async function handler(req, res) {
       vencidos: contar('vencido'),
       semPagamento: contar('sem-pagamento'),
       emTeste: contar('teste'),
+      cortesia: contar('cortesia'),
       bloqueados: assinantes.filter(function (a) { return a.bloqueado; }).length,
       receitaTotal: soma(aprovadosClientes),
       receitaMes: soma(aprovadosClientes.filter(function (p) { return dataSP(p.aprovado_em).slice(0, 7) === mesAtual; })),
@@ -149,11 +160,26 @@ module.exports = async function handler(req, res) {
       });
 
     assinantes.sort(function (a, b) {
-      const ordem = { 'a-vencer': 0, vencido: 1, ativo: 2, teste: 3, 'sem-pagamento': 4 };
+      const ordem = { 'a-vencer': 0, vencido: 1, ativo: 2, cortesia: 3, teste: 4, 'sem-pagamento': 5 };
       return ordem[a.situacao] - ordem[b.situacao] || String(a.acessoAte || '').localeCompare(String(b.acessoAte || ''));
     });
 
-    return responder(res, 200, { geradoEm: new Date().toISOString(), hoje: hoje, numeros: numeros, assinantes: assinantes, pagamentos: recentes });
+    const historicoLiberacoes = liberacoes.slice(0, 30).map(function (l) {
+      return {
+        data: dataSP(l.criado_em),
+        cliente: nomes[l.usuario_id] || '—',
+        admin: nomes[l.admin_id] || 'Administração',
+        dias: l.dias,
+        motivo: l.motivo,
+        acessoAntes: l.acesso_antes,
+        acessoDepois: l.acesso_depois
+      };
+    });
+
+    return responder(res, 200, {
+      geradoEm: new Date().toISOString(), hoje: hoje, numeros: numeros,
+      assinantes: assinantes, pagamentos: recentes, liberacoes: historicoLiberacoes
+    });
   } catch (err) {
     console.error('[admin/resumo]', err.message || err);
     return responder(res, 500, { erro: 'Não foi possível carregar o painel agora.' });

@@ -2,7 +2,8 @@
    PontoFit — admin.js
    Página de administração (admin.html): visão geral do negócio, lista de
    assinantes com a situação do acesso (ativo, a vencer, vencido, nunca pagou,
-   em teste) e pagamentos recentes.
+   cortesia, em teste), pagamentos recentes, liberação manual de dias
+   (/api/admin/liberar) e exportação em planilha (CSV para Excel/Sheets).
    Os dados vêm de /api/admin/resumo, que só responde para contas com
    app_metadata.role = 'admin'. Aqui não há nenhuma decisão de permissão.
    ========================================================================== */
@@ -23,6 +24,7 @@
     'a-vencer': { nome: 'A vencer', classe: 'badge--laranja' },
     vencido: { nome: 'Vencido', classe: 'badge--vermelho' },
     ativo: { nome: 'Ativo', classe: '' },
+    cortesia: { nome: 'Cortesia', classe: 'badge--agua' },
     teste: { nome: 'Em teste', classe: 'badge--agua' },
     'sem-pagamento': { nome: 'Nunca pagou', classe: 'badge--vermelho' }
   };
@@ -110,6 +112,7 @@
       { nome: 'A vencer', valor: n.aVencer, texto: String(n.aVencer), cor: 'laranja' },
       { nome: 'Vencidos', valor: n.vencidos, texto: String(n.vencidos), cor: 'vermelho' },
       { nome: 'Nunca pagaram', valor: n.semPagamento, texto: String(n.semPagamento), cor: 'cinza' },
+      { nome: 'Cortesia', valor: n.cortesia || 0, texto: String(n.cortesia || 0), cor: 'agua' },
       { nome: 'Em teste', valor: n.emTeste, texto: String(n.emTeste), cor: 'agua' }
     ]);
     barras($('[data-admin-planos]'), Object.keys(n.porPlano).map(function (k) {
@@ -151,7 +154,7 @@
       contagem[a.situacao] = (contagem[a.situacao] || 0) + 1;
       if (a.bloqueado) contagem.bloqueados++;
     });
-    [['todos', 'Todos'], ['ativo', 'Ativos'], ['a-vencer', 'A vencer'], ['vencido', 'Vencidos'], ['bloqueados', 'Bloqueados'], ['sem-pagamento', 'Nunca pagaram'], ['teste', 'Em teste']]
+    [['todos', 'Todos'], ['ativo', 'Ativos'], ['a-vencer', 'A vencer'], ['vencido', 'Vencidos'], ['bloqueados', 'Bloqueados'], ['sem-pagamento', 'Nunca pagaram'], ['cortesia', 'Cortesia'], ['teste', 'Em teste']]
       .forEach(function (f) {
         var b = el('button', 'filtro', f[1] + ' (' + (contagem[f[0]] || 0) + ')');
         b.type = 'button';
@@ -161,13 +164,18 @@
       });
   }
 
-  function renderAssinantes() {
+  /** Assinantes com o filtro e a busca da tela (também usado na planilha). */
+  function assinantesFiltrados() {
     var termo = normalizar(filtro.busca);
-    var lista = dados.assinantes.filter(function (a) {
+    return dados.assinantes.filter(function (a) {
       if (filtro.situacao === 'bloqueados' && !a.bloqueado) return false;
       if (filtro.situacao !== 'todos' && filtro.situacao !== 'bloqueados' && a.situacao !== filtro.situacao) return false;
       return !termo || normalizar([a.nome, a.email, a.cpf].join(' ')).indexOf(termo) >= 0;
     });
+  }
+
+  function renderAssinantes() {
+    var lista = assinantesFiltrados();
     var corpo = $('[data-admin-assinantes] tbody');
     corpo.textContent = '';
     lista.forEach(function (a) {
@@ -187,6 +195,13 @@
         : '—'));
       tr.appendChild(celula('Total pago', reais(a.totalPago) + (a.pagamentos > 1 ? ' (' + a.pagamentos + 'x)' : '')));
       tr.appendChild(celula('Conta criada', data(a.criadoEm)));
+      var acao = el('td', 'tabela__acao');
+      var botao = el('button', 'btn btn--sm btn--secundario', 'Liberar dias');
+      botao.type = 'button';
+      botao.dataset.liberarId = a.id;
+      botao.setAttribute('aria-label', 'Liberar dias de acesso para ' + (a.nome || a.email));
+      acao.appendChild(botao);
+      tr.appendChild(acao);
       corpo.appendChild(tr);
     });
     $('[data-admin-assinantes-vazio]').hidden = lista.length > 0;
@@ -212,6 +227,136 @@
     $('[data-admin-pagamentos]').hidden = dados.pagamentos.length === 0;
   }
 
+  /* ---------- Liberações manuais (histórico) ---------- */
+  function renderLiberacoes() {
+    var lista = dados.liberacoes || [];
+    var corpo = $('[data-admin-liberacoes] tbody');
+    corpo.textContent = '';
+    lista.forEach(function (l) {
+      var tr = el('tr');
+      tr.appendChild(celula('Data', data(l.data)));
+      tr.appendChild(celula('Cliente', l.cliente));
+      tr.appendChild(celula('Dias', '+' + l.dias));
+      tr.appendChild(celula('Acesso', (l.acessoAntes ? data(l.acessoAntes) : '—') + ' → ' + data(l.acessoDepois)));
+      tr.appendChild(celula('Motivo', l.motivo));
+      tr.appendChild(celula('Por', l.admin));
+      corpo.appendChild(tr);
+    });
+    $('[data-admin-liberacoes-vazio]').hidden = lista.length > 0;
+    $('[data-admin-liberacoes]').hidden = lista.length === 0;
+  }
+
+  /* ---------- Liberar dias ---------- */
+  var dialogo = $('[data-liberar]');
+  var formLib = $('[data-liberar-form]');
+  var alvo = null;
+
+  function diasEscolhidos() {
+    var opcao = formLib.querySelector('[name="opcao"]:checked').value;
+    return opcao === 'outro' ? Number(formLib.dias.value) : Number(opcao);
+  }
+
+  function previaLiberacao() {
+    var outro = formLib.querySelector('[name="opcao"]:checked').value === 'outro';
+    $('[data-liberar-outro]').hidden = !outro;
+    var dias = diasEscolhidos();
+    var previa = $('[data-liberar-previa]');
+    if (!alvo || !Number.isInteger(dias) || dias < 1 || dias > 365) { previa.textContent = ''; return; }
+    var base = alvo.acessoAte && alvo.acessoAte >= dados.hoje ? alvo.acessoAte : F.somarDias(dados.hoje, -1);
+    previa.textContent = 'O acesso passa a valer até ' + F.dataExtenso(F.somarDias(base, dias), true) + '.';
+  }
+
+  function abrirLiberar(id) {
+    alvo = dados.assinantes.find(function (a) { return a.id === id; });
+    if (!alvo) return;
+    formLib.reset();
+    $('[data-liberar-erro]').textContent = '';
+    $('[data-liberar-nome]').textContent = alvo.nome || alvo.email;
+    $('[data-liberar-atual]').textContent = alvo.acessoAte && alvo.acessoAte >= dados.hoje
+      ? 'Acesso atual até ' + data(alvo.acessoAte) + '. Os dias são somados a partir dessa data.'
+      : 'Sem acesso ativo hoje. Os dias contam a partir de hoje.';
+    previaLiberacao();
+    if (typeof dialogo.showModal === 'function') dialogo.showModal();
+  }
+
+  formLib.addEventListener('change', previaLiberacao);
+  formLib.addEventListener('input', previaLiberacao);
+  document.querySelectorAll('[data-liberar-fechar]').forEach(function (b) {
+    b.addEventListener('click', function () { dialogo.close(); });
+  });
+
+  formLib.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var erro = $('[data-liberar-erro]');
+    var dias = diasEscolhidos();
+    var motivo = formLib.motivo.value.trim();
+    erro.textContent = '';
+    if (!Number.isInteger(dias) || dias < 1 || dias > 365) { erro.textContent = 'Escolha de 1 a 365 dias.'; return; }
+    if (motivo.length < 3) { erro.textContent = 'Escreva o motivo da liberação.'; formLib.motivo.focus(); return; }
+    var botao = formLib.querySelector('[type="submit"]');
+    PF.setLoading(botao, true, 'Liberando…');
+    try {
+      var r = await S.liberarDiasAdmin(alvo.id, dias, motivo);
+      dialogo.close();
+      PF.toast((alvo.nome || alvo.email) + ' agora tem acesso até ' + data(r.acessoAte) + '.', { titulo: dias + ' ' + F.plural(dias, 'dia liberado', 'dias liberados') });
+      await carregar();
+    } catch (err) {
+      erro.textContent = err.message || 'Não foi possível liberar agora.';
+    } finally {
+      PF.setLoading(botao, false);
+    }
+  });
+
+  /* ---------- Exportar planilha (CSV com ; e BOM, abre direto no Excel) ---------- */
+  function csv(linhas) {
+    return '\uFEFF' + linhas.map(function (l) {
+      return l.map(function (v) {
+        var t = v == null ? '' : String(v);
+        return /[";\n\r]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t;
+      }).join(';');
+    }).join('\r\n');
+  }
+  function decimalBR(v) { return Number(v || 0).toFixed(2).replace('.', ','); }
+
+  function baixar(nome, conteudo) {
+    var blob = new Blob([conteudo], { type: 'text/csv;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = nome;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+
+  function exportar(tipo) {
+    if (!dados) return;
+    var linhas;
+    if (tipo === 'assinantes') {
+      linhas = [['Nome', 'E-mail', 'CPF', 'E-mail confirmado', 'Situação', 'Bloqueado', 'Acesso até', 'Plano preferido',
+        'Último pagamento', 'Valor do último pagamento', 'Forma', 'Total pago (R$)', 'Nº de pagamentos', 'Dias liberados manualmente', 'Conta criada']];
+      assinantesFiltrados().forEach(function (a) {
+        var u = a.ultimoPagamento;
+        linhas.push([a.nome, a.email, a.cpf || '', a.emailConfirmado ? 'sim' : 'não', SITUACOES[a.situacao].nome, a.bloqueado ? 'sim' : 'não',
+          a.acessoAte ? data(a.acessoAte) : '', PLANOS[a.plano] || a.plano, u ? data(u.data) : '', u ? decimalBR(u.valor) : '',
+          u ? (u.meio === 'pix' ? 'Pix' : 'Cartão') : '', decimalBR(a.totalPago), a.pagamentos, a.diasLiberados || 0, data(a.criadoEm)]);
+      });
+    } else {
+      linhas = [['Data', 'Cliente', 'Plano', 'Desconto 50%', 'Forma', 'Valor (R$)', 'Situação']];
+      dados.pagamentos.forEach(function (p) {
+        linhas.push([data(p.data), p.cliente, PLANOS[p.plano] || p.plano, p.comDesconto ? 'sim' : 'não', p.meio === 'pix' ? 'Pix' : 'Cartão',
+          decimalBR(p.valor), (STATUS[p.status] || { nome: p.status }).nome]);
+      });
+    }
+    baixar('pontofit-' + tipo + '-' + dados.hoje + '.csv', csv(linhas));
+    PF.toast('Planilha com ' + (linhas.length - 1) + ' ' + F.plural(linhas.length - 1, 'linha', 'linhas') + ' baixada.', { tipo: 'info' });
+  }
+
+  document.querySelectorAll('[data-exportar]').forEach(function (b) {
+    b.addEventListener('click', function () { exportar(b.dataset.exportar); });
+  });
+
   /* ---------- Carregar ---------- */
   async function carregar() {
     var botao = $('[data-admin-atualizar]');
@@ -222,6 +367,7 @@
       renderFiltros();
       renderAssinantes();
       renderPagamentos();
+      renderLiberacoes();
       raiz.setAttribute('aria-busy', 'false');
     } catch (err) {
       raiz.setAttribute('aria-busy', 'false');
@@ -236,6 +382,11 @@
       PF.setLoading(botao, false);
     }
   }
+
+  $('[data-admin-assinantes]').addEventListener('click', function (e) {
+    var b = e.target instanceof Element ? e.target.closest('[data-liberar-id]') : null;
+    if (b) abrirLiberar(b.dataset.liberarId);
+  });
 
   $('[data-admin-filtros]').addEventListener('click', function (e) {
     var b = e.target instanceof Element ? e.target.closest('[data-filtro]') : null;

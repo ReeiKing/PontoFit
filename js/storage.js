@@ -566,9 +566,14 @@
       }
     },
 
-    /** Painel de administração. → { numeros, assinantes, pagamentos, hoje } */
+    /** Painel de administração. → { numeros, assinantes, pagamentos, liberacoes, hoje } */
     getPainelAdmin: function () {
       return chamarApi('/api/admin/resumo');
+    },
+
+    /** Soma dias de acesso a um assinante. → { acessoAte } */
+    liberarDiasAdmin: function (usuarioId, dias, motivo) {
+      return chamarApi('/api/admin/liberar', { method: 'POST', body: JSON.stringify({ usuarioId: usuarioId, dias: dias, motivo: motivo }) });
     },
 
     /** Volta do Checkout Pro: confere no Mercado Pago. → { status } */

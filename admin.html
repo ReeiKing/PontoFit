@@ -97,6 +97,7 @@
           <h1 id="t-assinantes" tabindex="-1">Assinantes</h1>
           <p class="texto-sec" data-admin-contagem></p>
         </div>
+        <button class="btn btn--sm btn--secundario" type="button" data-exportar="assinantes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h8M12 11v8"/></svg><span>Exportar planilha</span></button>
       </header>
       <div class="admin-filtros">
         <div class="livro__filtros" role="group" aria-label="Filtrar por situação" data-admin-filtros></div>
@@ -113,6 +114,7 @@
               <th scope="col">Último pagamento</th>
               <th scope="col">Total pago</th>
               <th scope="col">Conta criada</th>
+              <th scope="col"><span class="sr-only">Ações</span></th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -128,6 +130,7 @@
           <h1 id="t-pagamentos" tabindex="-1">Pagamentos</h1>
           <p class="texto-sec">Os 30 pagamentos mais recentes (Pix e cartão).</p>
         </div>
+        <button class="btn btn--sm btn--secundario" type="button" data-exportar="pagamentos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h8M12 11v8"/></svg><span>Exportar planilha</span></button>
       </header>
       <div class="card admin-tabela-card">
         <table class="tabela admin-tabela" data-admin-pagamentos>
@@ -145,8 +148,66 @@
         </table>
         <p class="texto-sec admin-vazio" data-admin-pagamentos-vazio hidden>Nenhum pagamento ainda.</p>
       </div>
+
+      <section class="card admin-tabela-card" aria-labelledby="t-liberacoes">
+        <h2 class="evo__titulo" id="t-liberacoes">Dias liberados manualmente</h2>
+        <p class="texto-sm texto-sec">Histórico das liberações feitas pela administração (as 30 mais recentes).</p>
+        <table class="tabela admin-tabela" data-admin-liberacoes>
+          <thead>
+            <tr>
+              <th scope="col">Data</th>
+              <th scope="col">Cliente</th>
+              <th scope="col">Dias</th>
+              <th scope="col">Acesso</th>
+              <th scope="col">Motivo</th>
+              <th scope="col">Por</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <p class="texto-sec admin-vazio" data-admin-liberacoes-vazio hidden>Nenhuma liberação manual até agora.</p>
+      </section>
     </section>
   </main>
+
+  <!-- Liberar dias (js/admin.js) -->
+  <dialog class="relatorio admin-dialogo" data-liberar aria-labelledby="liberar-titulo">
+    <form class="admin-dialogo__form" data-liberar-form novalidate>
+      <header class="relatorio__topo">
+        <h2 id="liberar-titulo">Liberar dias de acesso</h2>
+        <button class="leitor__fechar" type="button" data-liberar-fechar aria-label="Fechar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </header>
+      <div class="admin-dialogo__corpo">
+        <p><strong data-liberar-nome></strong><br><span class="texto-sm texto-sec" data-liberar-atual></span></p>
+        <p class="campo__label" aria-hidden="true">Quantos dias?</p>
+        <fieldset class="segmentado" style="--opcoes:4">
+          <legend class="sr-only">Quantos dias?</legend>
+          <input type="radio" id="lib-7" name="opcao" value="7" checked><label for="lib-7">7</label>
+          <input type="radio" id="lib-30" name="opcao" value="30"><label for="lib-30">30</label>
+          <input type="radio" id="lib-180" name="opcao" value="180"><label for="lib-180">180</label>
+          <input type="radio" id="lib-outro" name="opcao" value="outro"><label for="lib-outro">Outro</label>
+          <span class="segmentado__indicador" aria-hidden="true"></span>
+        </fieldset>
+        <div class="campo" data-liberar-outro hidden>
+          <label class="campo__label" for="lib-dias">Número de dias (1 a 365)</label>
+          <input class="input" id="lib-dias" name="dias" type="number" min="1" max="365" inputmode="numeric">
+        </div>
+        <div class="campo">
+          <label class="campo__label" for="lib-motivo">Motivo</label>
+          <input class="input" id="lib-motivo" name="motivo" type="text" maxlength="200" placeholder="Ex.: cortesia, compensação, pagamento por fora" required>
+          <p class="campo__ajuda">Fica registrado no histórico de liberações.</p>
+        </div>
+        <p class="admin-dialogo__previa" data-liberar-previa aria-live="polite"></p>
+        <p class="campo__erro" data-liberar-erro aria-live="polite"></p>
+      </div>
+      <footer class="admin-dialogo__acoes">
+        <button class="btn btn--secundario" type="button" data-liberar-fechar><span>Cancelar</span></button>
+        <button class="btn" type="submit"><span>Liberar</span></button>
+      </footer>
+    </form>
+  </dialog>
 
   <script src="js/ui.js"></script>
   <script src="js/admin.js"></script>
