@@ -42,7 +42,7 @@
       ]
     },
     {
-      "source": "/(app|login).html",
+      "source": "/(app|login|admin).html",
       "headers": [
         {
           "key": "X-Robots-Tag",

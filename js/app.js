@@ -212,6 +212,11 @@
     var usuario = resultado[0];
     if (!usuario) return; // redirecionando para o login
     mostrarUsuario(usuario);
+    // Link para a administração: só aparece se o servidor confirmar (api/admin/eu).
+    PF.storage.souAdmin().then(function (admin) {
+      var item = document.querySelector('[data-menu-admin]');
+      if (item) item.hidden = !admin;
+    });
     return PF.storage.getAcessoAte().then(definirBloqueio, function () { /* sem rede: o banco decide */ })
       .then(function () {
         mostrarSecao(secaoNormalizada(), false);

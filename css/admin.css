@@ -1,0 +1,87 @@
+/* ==========================================================================
+   PontoFit — admin.css
+   Página de administração (admin.html). Usa os componentes de base.css e
+   app.css (card, tabela, badge, filtro) com layout próprio: barra escura no
+   topo, abas e conteúdo centralizado.
+   ========================================================================== */
+body.admin { background: var(--fundo); min-height: 100dvh; }
+
+.admin-topo { position: sticky; top: 0; z-index: 20; background: linear-gradient(120deg, #123B2A, #1F6E4A); color: #fff; box-shadow: var(--sombra-1); }
+.admin-topo__barra {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--esp-3); flex-wrap: wrap;
+  max-width: 1240px; margin: 0 auto; padding: var(--esp-3) var(--esp-4);
+}
+.admin-topo .logo { color: #fff; }
+.admin-topo__selo {
+  margin-left: var(--esp-2); padding: .15rem .6rem; border-radius: 999px;
+  background: rgb(255 255 255 / .15); font-size: var(--fs-xs); font-weight: 600; letter-spacing: .03em;
+}
+.admin-topo__acoes { display: flex; gap: var(--esp-2); }
+.admin-abas { display: flex; gap: var(--esp-1); max-width: 1240px; margin: 0 auto; padding: 0 var(--esp-4); overflow-x: auto; }
+.admin-aba {
+  padding: var(--esp-2) var(--esp-4); border-bottom: 3px solid transparent;
+  color: rgb(255 255 255 / .8); font-weight: 600; text-decoration: none; white-space: nowrap;
+  transition: color .2s, border-color .2s;
+}
+.admin-aba:hover { color: #fff; }
+.admin-aba[aria-current="page"] { color: #fff; border-bottom-color: #7CE0AE; }
+.admin-aba:focus-visible { outline: 3px solid #7CE0AE; outline-offset: -3px; }
+
+.admin-conteudo { max-width: 1240px; margin: 0 auto; padding: var(--esp-6) var(--esp-4) var(--esp-8); }
+.admin-conteudo:focus { outline: none; }
+.admin-secao { display: grid; gap: var(--esp-5); }
+.admin-secao__cabecalho { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: var(--esp-3); }
+.admin-secao__cabecalho h1 { font-size: clamp(1.6rem, 1.3rem + 1.4vw, 2.1rem); }
+.admin-secao__cabecalho h1:focus { outline: none; }
+.admin-negado { display: grid; gap: var(--esp-3); justify-items: start; max-width: 520px; }
+
+/* Números */
+.admin-kpis { display: grid; gap: var(--esp-3); padding: 0; margin: 0; grid-template-columns: repeat(auto-fill, minmax(min(100%, 190px), 1fr)); }
+.admin-kpi { display: grid; gap: .2rem; align-content: start; padding: var(--esp-4); border-top: 4px solid var(--borda); transition: transform .2s, box-shadow .2s; }
+.admin-kpi:hover { transform: translateY(-2px); box-shadow: var(--sombra-2); }
+.admin-kpi--verde { border-top-color: var(--verde); }
+.admin-kpi--laranja { border-top-color: var(--laranja); }
+.admin-kpi--vermelho { border-top-color: var(--vermelho); }
+.admin-kpi--agua { border-top-color: var(--agua); }
+.admin-kpi__valor { font-family: var(--fonte-titulo); font-size: clamp(1.5rem, 1.2rem + 1.2vw, 2rem); font-weight: 700; line-height: 1.15; }
+.admin-kpi__info { font-size: var(--fs-xs); color: var(--texto-sec); }
+
+.admin-grade { display: grid; gap: var(--esp-4); }
+@media (min-width: 900px) { .admin-grade { grid-template-columns: 1fr 1fr; } }
+
+/* Barras */
+.admin-barras { display: grid; gap: var(--esp-3); padding: 0; margin: var(--esp-3) 0 0; }
+.admin-barra__topo { display: flex; justify-content: space-between; gap: var(--esp-2); font-size: var(--fs-sm); margin-bottom: .3rem; }
+.admin-barra__trilho { height: 10px; border-radius: 999px; background: var(--superficie-2); overflow: hidden; }
+.admin-barra__valor { display: block; height: 100%; width: 0; border-radius: inherit; transition: width .9s cubic-bezier(.2, .8, .2, 1); }
+.admin-barra__valor--verde { background: var(--verde); }
+.admin-barra__valor--laranja { background: var(--laranja); }
+.admin-barra__valor--vermelho { background: var(--vermelho); }
+.admin-barra__valor--agua { background: var(--agua); }
+.admin-barra__valor--cinza { background: var(--cinza); }
+
+/* Lista "precisam de atenção" */
+.admin-lista { display: grid; gap: var(--esp-2); padding: 0; margin: var(--esp-3) 0 0; }
+.admin-item {
+  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--esp-2);
+  padding: var(--esp-3); border-radius: 12px; border: 1px solid var(--borda);
+}
+.admin-item > div:first-child { display: grid; }
+.admin-item__info { display: flex; align-items: center; gap: var(--esp-2); }
+
+/* Assinantes */
+.admin-filtros { display: grid; gap: var(--esp-3); }
+@media (min-width: 900px) { .admin-filtros { grid-template-columns: 1fr minmax(240px, 320px); align-items: center; } }
+.admin-busca { width: 100%; }
+.admin-tabela-card { padding: var(--esp-2) var(--esp-3); overflow-x: auto; }
+.admin-tabela td { height: auto; padding-block: var(--esp-3); vertical-align: top; }
+.admin-quem, .admin-situacao { display: grid; gap: .15rem; justify-items: start; }
+.texto-xs { font-size: var(--fs-xs); }
+.admin-vazio { padding: var(--esp-4); text-align: center; }
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .admin-topo { background: linear-gradient(120deg, #0B2419, #164F36); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-barra__valor { transition: none; }
+}

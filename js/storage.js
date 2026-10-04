@@ -554,6 +554,23 @@
       return chamarApi('/api/cartao/criar', { method: 'POST', body: JSON.stringify({ plano: plano }) });
     },
 
+    /* ---------- Administração (só administradores; o servidor confere) ---------- */
+
+    /** → true se a conta logada é administradora. */
+    souAdmin: async function () {
+      try {
+        var r = await chamarApi('/api/admin/eu');
+        return !!r.admin;
+      } catch (e) {
+        return false;
+      }
+    },
+
+    /** Painel de administração. → { numeros, assinantes, pagamentos, hoje } */
+    getPainelAdmin: function () {
+      return chamarApi('/api/admin/resumo');
+    },
+
     /** Volta do Checkout Pro: confere no Mercado Pago. → { status } */
     statusPagamentoCartao: function (compraId) {
       return chamarApi('/api/cartao/status?id=' + encodeURIComponent(compraId));

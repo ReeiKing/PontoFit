@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="pt-BR" data-protegida class="verificando-sessao">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Administração | PontoFit</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#123B2A">
+  <link rel="icon" href="assets/svg/logo.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/admin.css">
+  <noscript><style>.verificando-sessao body { visibility: visible; }</style></noscript>
+  <!-- Proteção de rota: só com sessão. Os dados só vêm se a conta for administradora (api/admin/*). -->
+  <script src="js/vendor/supabase.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/auth.js"></script>
+</head>
+<body class="admin">
+  <a class="pular-link" href="#admin-conteudo">Pular para o conteúdo</a>
+
+  <header class="admin-topo">
+    <div class="admin-topo__barra">
+      <a class="logo logo--claro" href="admin.html" aria-label="PontoFit, administração">
+        <svg class="logo__marca" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M12 2.5C9 6.2 5 10.6 5 14.6a7 7 0 0 0 14 0c0-4-4-8.4-7-12.1Z" fill="#3CB57B"/>
+          <path d="M12 20.2v-7.4m0 3.3 2.6-2.6" fill="none" stroke="#123B2A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>Ponto<strong>Fit</strong></span>
+        <span class="admin-topo__selo">Administração</span>
+      </a>
+      <nav class="admin-topo__acoes" aria-label="Conta">
+        <a class="btn btn--sm btn--contorno-claro" href="app.html#inicio">Voltar ao app</a>
+        <button class="btn btn--sm btn--claro" type="button" data-sair><span>Sair</span></button>
+      </nav>
+    </div>
+    <nav class="admin-abas" aria-label="Seções da administração">
+      <a class="admin-aba" href="#visao" data-aba="visao" aria-current="page">Visão geral</a>
+      <a class="admin-aba" href="#assinantes" data-aba="assinantes">Assinantes</a>
+      <a class="admin-aba" href="#pagamentos" data-aba="pagamentos">Pagamentos</a>
+    </nav>
+  </header>
+
+  <main class="admin-conteudo" id="admin-conteudo" tabindex="-1" data-admin aria-busy="true">
+    <!-- Sem permissão -->
+    <section class="card admin-negado" data-admin-negado hidden>
+      <h1>Área restrita</h1>
+      <p class="texto-sec">Esta página é só para a administração do PontoFit.</p>
+      <a class="btn" href="app.html#inicio">Voltar ao app</a>
+    </section>
+
+    <!-- Visão geral -->
+    <section class="admin-secao" id="visao" data-admin-secao="visao" aria-labelledby="t-visao">
+      <header class="admin-secao__cabecalho">
+        <div>
+          <h1 id="t-visao" tabindex="-1">Visão geral</h1>
+          <p class="texto-sec" data-admin-atualizado>Carregando…</p>
+        </div>
+        <button class="btn btn--sm btn--secundario" type="button" data-admin-atualizar><span>Atualizar</span></button>
+      </header>
+
+      <ul class="admin-kpis" role="list">
+        <li class="card admin-kpi admin-kpi--verde"><p class="painel-rotulo">Assinantes ativos</p><p class="admin-kpi__valor" data-k="ativos">–</p><p class="admin-kpi__info" data-k="ativos-info"></p></li>
+        <li class="card admin-kpi admin-kpi--laranja"><p class="painel-rotulo">A vencer</p><p class="admin-kpi__valor" data-k="aVencer">–</p><p class="admin-kpi__info" data-k="aVencer-info"></p></li>
+        <li class="card admin-kpi admin-kpi--vermelho"><p class="painel-rotulo">Vencidos (bloqueados)</p><p class="admin-kpi__valor" data-k="vencidos">–</p><p class="admin-kpi__info">pagaram e não renovaram</p></li>
+        <li class="card admin-kpi"><p class="painel-rotulo">Nunca pagaram</p><p class="admin-kpi__valor" data-k="semPagamento">–</p><p class="admin-kpi__info">contas criadas sem pagamento</p></li>
+        <li class="card admin-kpi admin-kpi--agua"><p class="painel-rotulo">Receita do mês</p><p class="admin-kpi__valor" data-k="receitaMes">–</p><p class="admin-kpi__info" data-k="receita30"></p></li>
+        <li class="card admin-kpi"><p class="painel-rotulo">Receita total</p><p class="admin-kpi__valor" data-k="receitaTotal">–</p><p class="admin-kpi__info" data-k="pagamentos-info"></p></li>
+      </ul>
+
+      <div class="admin-grade">
+        <section class="card" aria-labelledby="t-situacao">
+          <h2 class="evo__titulo" id="t-situacao">Assinantes por situação</h2>
+          <ul class="admin-barras" role="list" data-admin-situacoes></ul>
+        </section>
+        <section class="card" aria-labelledby="t-planos">
+          <h2 class="evo__titulo" id="t-planos">Vendas por plano</h2>
+          <ul class="admin-barras" role="list" data-admin-planos></ul>
+        </section>
+      </div>
+
+      <section class="card" aria-labelledby="t-atencao">
+        <h2 class="evo__titulo" id="t-atencao">Precisam de atenção</h2>
+        <p class="texto-sm texto-sec">Acesso vencendo nos próximos dias ou já vencido. Bom momento para um contato.</p>
+        <ul class="admin-lista" role="list" data-admin-atencao></ul>
+      </section>
+    </section>
+
+    <!-- Assinantes -->
+    <section class="admin-secao" id="assinantes" data-admin-secao="assinantes" aria-labelledby="t-assinantes" hidden>
+      <header class="admin-secao__cabecalho">
+        <div>
+          <h1 id="t-assinantes" tabindex="-1">Assinantes</h1>
+          <p class="texto-sec" data-admin-contagem></p>
+        </div>
+      </header>
+      <div class="admin-filtros">
+        <div class="livro__filtros" role="group" aria-label="Filtrar por situação" data-admin-filtros></div>
+        <label class="sr-only" for="admin-busca">Buscar por nome, e-mail ou CPF</label>
+        <input class="input admin-busca" id="admin-busca" type="search" placeholder="Buscar por nome, e-mail ou CPF" autocomplete="off">
+      </div>
+      <div class="card admin-tabela-card">
+        <table class="tabela admin-tabela" data-admin-assinantes>
+          <thead>
+            <tr>
+              <th scope="col">Assinante</th>
+              <th scope="col">Situação</th>
+              <th scope="col">Acesso até</th>
+              <th scope="col">Último pagamento</th>
+              <th scope="col">Total pago</th>
+              <th scope="col">Conta criada</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <p class="texto-sec admin-vazio" data-admin-assinantes-vazio hidden>Nenhum assinante encontrado com esse filtro.</p>
+      </div>
+    </section>
+
+    <!-- Pagamentos -->
+    <section class="admin-secao" id="pagamentos" data-admin-secao="pagamentos" aria-labelledby="t-pagamentos" hidden>
+      <header class="admin-secao__cabecalho">
+        <div>
+          <h1 id="t-pagamentos" tabindex="-1">Pagamentos</h1>
+          <p class="texto-sec">Os 30 pagamentos mais recentes (Pix e cartão).</p>
+        </div>
+      </header>
+      <div class="card admin-tabela-card">
+        <table class="tabela admin-tabela" data-admin-pagamentos>
+          <thead>
+            <tr>
+              <th scope="col">Data</th>
+              <th scope="col">Cliente</th>
+              <th scope="col">Plano</th>
+              <th scope="col">Forma</th>
+              <th scope="col">Valor</th>
+              <th scope="col">Situação</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <p class="texto-sec admin-vazio" data-admin-pagamentos-vazio hidden>Nenhum pagamento ainda.</p>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/ui.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

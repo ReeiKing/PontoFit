@@ -72,7 +72,7 @@ const versao = JSON.parse(readFileSync(join(raiz, 'node_modules/@supabase/supaba
 const dist = join(raiz, 'dist');
 rmSync(dist, { recursive: true, force: true });
 mkdirSync(dist);
-for (const item of ['index.html', 'login.html', 'app.html', '404.html', 'css', 'js', 'assets']) {
+for (const item of ['index.html', 'login.html', 'app.html', 'admin.html', '404.html', 'css', 'js', 'assets']) {
   cpSync(join(raiz, item), join(dist, item), { recursive: true });
 }
 
