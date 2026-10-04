@@ -1,7 +1,7 @@
 /* ==========================================================================
    PontoFit — app.js
    Layout da área do paciente (app.html):
-   - navegação por hash (#receitas, #cesta, #ficha, #evolucao, #medicamentos, #plano)
+   - navegação por hash (#inicio, #receitas, #cesta, #ficha, #evolucao, #medicamentos, #plano)
      sem recarregar, com transição entre as seções;
    - menu lateral fixo no desktop / gaveta no celular e tablet;
    - nome, e-mail e iniciais do usuário no menu.
@@ -17,6 +17,7 @@
   var PF = (window.PF = window.PF || {});
   // Na ordem do menu (define a direção da animação ao trocar de seção)
   var SECOES = {
+    inicio: 'Início',
     receitas: 'Receitas',
     cesta: 'Cesta de compras',
     ficha: 'Minha ficha',
@@ -26,7 +27,7 @@
   };
   var ORDEM = Object.keys(SECOES);
   var APELIDOS = { produtos: 'medicamentos' }; // links antigos de "Meus produtos"
-  var PADRAO = 'receitas'; // depois do login, o app abre no livro de receitas
+  var PADRAO = 'inicio'; // depois do login, o app abre no painel (painel.js)
 
   var raiz = document.documentElement;
   var menu = document.getElementById('menu-app');

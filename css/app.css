@@ -1214,3 +1214,127 @@
   opacity: .45;
   pointer-events: none;
 }
+
+/* ==========================================================================
+   Início (painel do paciente)
+   ========================================================================== */
+.painel-topo { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--esp-4); }
+.painel-topo__data { font-size: var(--fs-sm); font-weight: 600; color: var(--verde-escuro); text-transform: capitalize; }
+.painel-topo .btn svg { width: 1.15rem; height: 1.15rem; }
+
+.painel { display: grid; gap: var(--esp-5); }
+.painel-rotulo { font-size: var(--fs-sm); font-weight: 600; color: var(--texto-sec); }
+
+/* Entrada em cascata dos cartões */
+.painel > *, .painel-numeros > *, .painel-grade > * { animation: painel-entra .5s cubic-bezier(.2, .8, .2, 1) both; }
+.painel-numeros > :nth-child(2), .painel-grade > :nth-child(2) { animation-delay: .06s; }
+.painel-numeros > :nth-child(3), .painel-grade > :nth-child(3) { animation-delay: .12s; }
+.painel-numeros > :nth-child(4) { animation-delay: .18s; }
+@keyframes painel-entra { from { opacity: 0; transform: translateY(12px); } }
+
+.painel-aviso {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--esp-3);
+  background: var(--laranja-suave); border-color: transparent;
+}
+.painel-aviso__titulo { font-size: var(--fs-lead); }
+
+/* Meta com anel de progresso */
+.painel-meta {
+  display: grid; gap: var(--esp-5); align-items: center;
+  background: linear-gradient(135deg, var(--verde-suave), var(--superficie) 70%);
+}
+@media (min-width: 640px) { .painel-meta { grid-template-columns: auto 1fr; } }
+.painel-meta__texto { display: grid; gap: var(--esp-1); justify-items: start; }
+.painel-meta__falta { font-family: var(--fonte-titulo); font-size: clamp(1.5rem, 1.2rem + 1.4vw, 2rem); font-weight: 700; line-height: 1.15; }
+.painel-meta[data-estado="atingida"] .painel-meta__falta { color: var(--verde-escuro); }
+
+.anel { position: relative; width: 132px; height: 132px; justify-self: center; }
+.anel svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.anel circle { fill: none; stroke-width: 10; }
+.anel__trilho { stroke: var(--borda); }
+.anel__progresso { stroke: var(--verde); stroke-linecap: round; transition: stroke-dashoffset 1.2s cubic-bezier(.2, .8, .2, 1); }
+.anel__valor {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  font-family: var(--fonte-titulo); font-size: 1.6rem; font-weight: 700;
+}
+
+.link-seta { display: inline-flex; align-items: center; gap: .35rem; margin-top: var(--esp-2); font-weight: 600; color: var(--link); text-decoration: none; }
+.link-seta span { transition: transform .2s; }
+.link-seta:hover span, .link-seta:focus-visible span { transform: translateX(4px); }
+
+/* Números */
+.painel-numeros { display: grid; gap: var(--esp-3); grid-template-columns: 1fr 1fr; padding: 0; margin: 0; }
+@media (min-width: 1024px) { .painel-numeros { grid-template-columns: repeat(4, 1fr); } }
+.painel-numero { display: grid; gap: .15rem; align-content: start; padding: var(--esp-4); transition: transform .2s, box-shadow .2s; }
+.painel-numero:hover { transform: translateY(-2px); box-shadow: var(--sombra-2); }
+.painel-numero__valor { font-family: var(--fonte-titulo); font-size: clamp(1.35rem, 1.1rem + 1vw, 1.75rem); font-weight: 700; line-height: 1.2; }
+.painel-numero__info { font-size: var(--fs-xs); color: var(--texto-sec); }
+.painel-numero--bom { background: var(--verde-suave); border-color: transparent; }
+.painel-numero--bom .painel-numero__valor { color: var(--verde-escuro); }
+.painel-numero--atencao { background: var(--laranja-suave); border-color: transparent; }
+.painel-numero--atencao .painel-numero__valor { color: var(--laranja-escuro); }
+
+/* Receita, dica e plano */
+.painel-grade { display: grid; gap: var(--esp-4); }
+@media (min-width: 768px) { .painel-grade { grid-template-columns: 2fr 1fr; } .painel-receita { grid-row: span 2; } }
+.painel-receita, .painel-dica, .painel-acesso { display: grid; gap: var(--esp-2); align-content: start; justify-items: start; }
+.painel-receita { background: linear-gradient(160deg, var(--laranja-suave), var(--superficie) 60%); }
+.painel-receita__titulo { font-size: clamp(1.25rem, 1.1rem + .8vw, 1.6rem); }
+.painel-receita__dica { padding-left: var(--esp-3); border-left: 3px solid var(--laranja); color: var(--texto-sec); }
+.painel-receita__dica:empty { display: none; }
+.painel-receita .btn { margin-top: var(--esp-2); }
+.painel-dica { background: linear-gradient(160deg, var(--agua-suave), var(--superficie) 70%); }
+.painel-dica__texto { font-size: var(--fs-lead); line-height: 1.5; }
+.painel-acesso__texto { font-weight: 600; }
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .painel-topo__data { color: #6FD3A4; }
+  :root:not([data-theme="light"]) .painel-meta[data-estado="atingida"] .painel-meta__falta,
+  :root:not([data-theme="light"]) .painel-numero--bom .painel-numero__valor { color: #6FD3A4; }
+}
+
+/* ==========================================================================
+   Relatório do paciente (diálogo e impressão)
+   ========================================================================== */
+.relatorio {
+  width: min(840px, calc(100% - 2rem)); max-height: calc(100dvh - 2rem);
+  padding: 0; border: 0; border-radius: var(--raio-card);
+  background: var(--superficie); color: var(--texto); box-shadow: var(--sombra-2);
+}
+.relatorio::backdrop { background: rgb(15 25 20 / .55); backdrop-filter: blur(3px); }
+.relatorio[open] { display: flex; flex-direction: column; animation: painel-entra .3s ease-out; }
+.relatorio__topo {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--esp-3);
+  padding: var(--esp-3) var(--esp-5); border-bottom: 1px solid var(--borda);
+}
+.relatorio__topo h2 { font-size: var(--fs-lead); }
+.relatorio__acoes { display: flex; align-items: center; gap: var(--esp-2); }
+.relatorio__folha { overflow: auto; padding: var(--esp-5); }
+
+.relatorio__cabecalho { padding-bottom: var(--esp-4); margin-bottom: var(--esp-4); border-bottom: 3px solid var(--verde); }
+.relatorio__marca { font-family: var(--fonte-titulo); font-weight: 700; color: var(--verde-escuro); }
+.relatorio__emitido { font-size: var(--fs-sm); color: var(--texto-sec); }
+.relatorio__secao { margin-bottom: var(--esp-5); break-inside: avoid; }
+.relatorio__secao h3 { font-size: var(--fs-lead); margin-bottom: var(--esp-2); }
+.relatorio__subtitulo { margin: var(--esp-3) 0 var(--esp-1); font-weight: 600; font-size: var(--fs-sm); }
+.relatorio__dados { display: grid; grid-template-columns: minmax(9rem, max-content) 1fr; gap: .35rem var(--esp-4); margin: 0; }
+.relatorio__dados dt { color: var(--texto-sec); font-size: var(--fs-sm); }
+.relatorio__dados dd { margin: 0; font-weight: 500; }
+.relatorio__tabela { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); font-variant-numeric: tabular-nums; }
+.relatorio__tabela th, .relatorio__tabela td { padding: .4rem .5rem; border-bottom: 1px solid var(--borda); text-align: left; }
+.relatorio__tabela th { font-weight: 600; color: var(--texto-sec); }
+.relatorio__aviso { margin-top: var(--esp-4); font-size: var(--fs-xs); color: var(--texto-sec); }
+
+.relatorio-impressao { display: none; }
+@media print {
+  .imprimindo-relatorio body > *:not(.relatorio-impressao) { display: none !important; }
+  .imprimindo-relatorio .relatorio-impressao { display: block; color: #000; background: #fff; }
+  .imprimindo-relatorio .relatorio-impressao * { color: #000 !important; }
+  .imprimindo-relatorio .relatorio__cabecalho { border-color: #1F6E4A; }
+  @page { margin: 16mm; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .painel > *, .painel-numeros > *, .painel-grade > *, .relatorio[open] { animation: none; }
+  .anel__progresso { transition: none; }
+}

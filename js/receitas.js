@@ -319,6 +319,16 @@
   renderCapas();
   renderIndice();
 
+  /** Abre uma receita pelo id (usado pelo painel na "receita do dia"). */
+  function abrirPorId(id) {
+    var r = PF.receitas.find(function (x) { return x.id === id; });
+    if (!r) return;
+    var i = estado.lista.indexOf(r);
+    if (i < 0) { estado.lista = PF.receitas; i = PF.receitas.indexOf(r); }
+    abrirReceita(i);
+  }
+  PF.livroReceitas = { abrirPorId: abrirPorId };
+
   // Saiu da seção com o leitor aberto (ex.: botão voltar) → fecha.
   document.addEventListener('pf:secao', function (e) {
     if (e.detail.secao !== 'receitas') fecharLeitor();

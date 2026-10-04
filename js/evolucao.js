@@ -44,10 +44,11 @@
     });
   }
 
-  /** Tudo o que a tela mostra, calculado a partir da ficha e dos registros. */
-  function calcular() {
-    var ficha = estado.ficha;
-    var serie = montarSerie(ficha, estado.registros);
+  /** Tudo o que a tela mostra, calculado a partir da ficha e dos registros.
+      Sem argumentos usa o estado da seção; o painel passa os próprios dados. */
+  function calcular(fichaDada, registrosDados) {
+    var ficha = fichaDada || estado.ficha;
+    var serie = montarSerie(ficha, registrosDados || estado.registros);
     var r = { serie: serie, vazio: !serie.length };
     if (r.vazio) return r;
 
@@ -628,4 +629,6 @@
     if (grafico) { grafico.destroy(); grafico = null; }
     if (PF.app && PF.app.secaoAtual === 'evolucao') renderGrafico(calcular());
   });
+  // O painel (painel.js) usa o mesmo cálculo de meta, ritmo e IMC.
+  PF.evolucao = { calcular: calcular };
 })();
