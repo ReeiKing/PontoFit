@@ -170,43 +170,111 @@
     </section>
   </main>
 
-  <!-- Liberar dias (js/admin.js) -->
-  <dialog class="relatorio admin-dialogo" data-liberar aria-labelledby="liberar-titulo">
-    <form class="admin-dialogo__form" data-liberar-form novalidate>
-      <header class="relatorio__topo">
-        <h2 id="liberar-titulo">Liberar dias de acesso</h2>
-        <button class="leitor__fechar" type="button" data-liberar-fechar aria-label="Fechar">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"/></svg>
-        </button>
-      </header>
-      <div class="admin-dialogo__corpo">
-        <p><strong data-liberar-nome></strong><br><span class="texto-sm texto-sec" data-liberar-atual></span></p>
-        <p class="campo__label" aria-hidden="true">Quantos dias?</p>
+  <!-- Gerenciar cliente (js/admin.js, api/admin/cliente) -->
+  <dialog class="gerenciar" data-gerenciar aria-labelledby="ger-nome">
+    <header class="gerenciar__topo">
+      <div>
+        <p class="painel-rotulo">Gerenciar cliente</p>
+        <h2 id="ger-nome" data-ger-nome>Carregando…</h2>
+        <p class="texto-sm texto-sec" data-ger-email></p>
+      </div>
+      <button class="leitor__fechar" type="button" data-ger-fechar aria-label="Fechar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </header>
+
+    <div class="gerenciar__corpo" data-ger-corpo aria-busy="true">
+      <!-- Resumo -->
+      <section class="ger-bloco ger-resumo">
+        <dl class="ger-dados">
+          <div><dt>Acesso até</dt><dd data-ger-acesso>–</dd></div>
+          <div><dt>Último login</dt><dd data-ger-login>–</dd></div>
+          <div><dt>Conta criada</dt><dd data-ger-criada>–</dd></div>
+          <div><dt>E-mail</dt><dd data-ger-confirmado>–</dd></div>
+        </dl>
+        <div class="ger-resumo__acoes">
+          <button class="btn btn--sm btn--secundario" type="button" data-ger-confirmar hidden><span>Confirmar e-mail</span></button>
+          <button class="btn btn--sm btn--secundario" type="button" data-ger-desconectar><span>Desconectar de todos os aparelhos</span></button>
+        </div>
+      </section>
+
+      <!-- Dados -->
+      <form class="ger-bloco" data-ger-form="dados" novalidate>
+        <h3>Dados da conta</h3>
+        <div class="campo"><label class="campo__label" for="ger-f-nome">Nome</label><input class="input" id="ger-f-nome" name="nome" type="text" maxlength="120" autocomplete="off"></div>
+        <div class="campo"><label class="campo__label" for="ger-f-email">E-mail (login)</label><input class="input" id="ger-f-email" name="email" type="email" autocomplete="off">
+          <p class="campo__ajuda">O novo e-mail já vale para entrar, sem precisar de confirmação.</p></div>
+        <div class="campo"><label class="campo__label" for="ger-f-cpf">CPF</label><input class="input" id="ger-f-cpf" name="cpf" type="text" inputmode="numeric" maxlength="14" autocomplete="off">
+          <p class="campo__ajuda" data-ger-cpf-atual></p></div>
+        <button class="btn btn--sm" type="submit"><span>Salvar dados</span></button>
+      </form>
+
+      <!-- Senha -->
+      <form class="ger-bloco" data-ger-form="senha" novalidate>
+        <h3>Nova senha</h3>
+        <div class="campo">
+          <label class="campo__label" for="ger-f-senha">Nova senha</label>
+          <div class="ger-senha">
+            <input class="input" id="ger-f-senha" name="senha" type="text" autocomplete="new-password" spellcheck="false" aria-describedby="ger-senha-ajuda">
+            <button class="btn btn--sm btn--secundario" type="button" data-ger-gerar><span>Gerar</span></button>
+            <button class="btn btn--sm btn--secundario" type="button" data-ger-copiar><span>Copiar</span></button>
+          </div>
+          <p class="campo__ajuda" id="ger-senha-ajuda">Mínimo de 8 caracteres, com letras e números. Envie ao cliente por um canal seguro.</p>
+        </div>
+        <label class="ger-check"><input type="checkbox" name="desconectar" checked> Desconectar o cliente de todos os aparelhos</label>
+        <button class="btn btn--sm" type="submit"><span>Trocar senha</span></button>
+      </form>
+
+      <!-- Cortesia por plano -->
+      <form class="ger-bloco" data-ger-form="cortesia" novalidate>
+        <h3>Dar cortesia</h3>
+        <p class="texto-sm texto-sec">Soma o período ao acesso atual (ou a partir de hoje, se já venceu).</p>
         <fieldset class="segmentado" style="--opcoes:4">
-          <legend class="sr-only">Quantos dias?</legend>
-          <input type="radio" id="lib-7" name="opcao" value="7" checked><label for="lib-7">7</label>
-          <input type="radio" id="lib-30" name="opcao" value="30"><label for="lib-30">30</label>
-          <input type="radio" id="lib-180" name="opcao" value="180"><label for="lib-180">180</label>
-          <input type="radio" id="lib-outro" name="opcao" value="outro"><label for="lib-outro">Outro</label>
+          <legend class="sr-only">Plano de cortesia</legend>
+          <input type="radio" id="ger-c-7" name="opcao" value="7" checked><label for="ger-c-7">7 dias</label>
+          <input type="radio" id="ger-c-30" name="opcao" value="30"><label for="ger-c-30">30 dias</label>
+          <input type="radio" id="ger-c-180" name="opcao" value="180"><label for="ger-c-180">6 meses</label>
+          <input type="radio" id="ger-c-outro" name="opcao" value="outro"><label for="ger-c-outro">Outro</label>
           <span class="segmentado__indicador" aria-hidden="true"></span>
         </fieldset>
-        <div class="campo" data-liberar-outro hidden>
-          <label class="campo__label" for="lib-dias">Número de dias (1 a 365)</label>
-          <input class="input" id="lib-dias" name="dias" type="number" min="1" max="365" inputmode="numeric">
+        <div class="campo" data-ger-outro hidden><label class="campo__label" for="ger-f-dias">Número de dias (1 a 365)</label><input class="input" id="ger-f-dias" name="dias" type="number" min="1" max="365"></div>
+        <div class="campo"><label class="campo__label" for="ger-f-motivo-c">Motivo</label><input class="input" id="ger-f-motivo-c" name="motivo" type="text" maxlength="200"></div>
+        <p class="admin-dialogo__previa" data-ger-previa aria-live="polite"></p>
+        <button class="btn btn--sm" type="submit"><span>Conceder cortesia</span></button>
+      </form>
+
+      <!-- Acesso exato e plano preferido -->
+      <form class="ger-bloco" data-ger-form="acesso" novalidate>
+        <h3>Data do acesso</h3>
+        <p class="texto-sm texto-sec">Define o último dia de acesso. Para bloquear agora, use "Encerrar acesso".</p>
+        <div class="campo"><label class="campo__label" for="ger-f-data">Acesso até</label><input class="input" id="ger-f-data" name="data" type="date"></div>
+        <div class="campo"><label class="campo__label" for="ger-f-motivo-a">Motivo</label><input class="input" id="ger-f-motivo-a" name="motivo" type="text" maxlength="200" placeholder="Ex.: ajuste, estorno, pedido do cliente"></div>
+        <div class="ger-linha">
+          <button class="btn btn--sm" type="submit"><span>Definir data</span></button>
+          <button class="btn btn--sm btn--perigo" type="button" data-ger-encerrar><span>Encerrar acesso</span></button>
         </div>
-        <div class="campo">
-          <label class="campo__label" for="lib-motivo">Motivo</label>
-          <input class="input" id="lib-motivo" name="motivo" type="text" maxlength="200" placeholder="Ex.: cortesia, compensação, pagamento por fora" required>
-          <p class="campo__ajuda">Fica registrado no histórico de liberações.</p>
+      </form>
+
+      <form class="ger-bloco" data-ger-form="plano" novalidate>
+        <h3>Plano preferido</h3>
+        <p class="texto-sm texto-sec">É o plano que aparece marcado em Assinaturas para o cliente. Não muda o acesso.</p>
+        <div class="ger-linha">
+          <label class="sr-only" for="ger-f-plano">Plano preferido</label>
+          <select class="input" id="ger-f-plano" name="plano">
+            <option value="semanal">7 dias · R$ 4,99</option>
+            <option value="mensal">30 dias · R$ 15,00</option>
+            <option value="semestral">6 meses · R$ 50,00</option>
+          </select>
+          <button class="btn btn--sm btn--secundario" type="submit"><span>Salvar</span></button>
         </div>
-        <p class="admin-dialogo__previa" data-liberar-previa aria-live="polite"></p>
-        <p class="campo__erro" data-liberar-erro aria-live="polite"></p>
-      </div>
-      <footer class="admin-dialogo__acoes">
-        <button class="btn btn--secundario" type="button" data-liberar-fechar><span>Cancelar</span></button>
-        <button class="btn" type="submit"><span>Liberar</span></button>
-      </footer>
-    </form>
+      </form>
+
+      <!-- Histórico -->
+      <section class="ger-bloco">
+        <h3>Histórico</h3>
+        <ul class="ger-historico" role="list" data-ger-historico></ul>
+      </section>
+
+      <p class="campo__erro ger-erro" data-ger-erro role="alert"></p>
+    </div>
   </dialog>
 
   <script src="js/ui.js"></script>

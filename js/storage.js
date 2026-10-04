@@ -571,10 +571,16 @@
       return chamarApi('/api/admin/resumo');
     },
 
-    /** Soma dias de acesso a um assinante. → { acessoAte } */
-    liberarDiasAdmin: function (usuarioId, dias, motivo) {
-      return chamarApi('/api/admin/liberar', { method: 'POST', body: JSON.stringify({ usuarioId: usuarioId, dias: dias, motivo: motivo }) });
+    /** Dados de um cliente para o painel "Gerenciar". */
+    getClienteAdmin: function (usuarioId) {
+      return chamarApi('/api/admin/cliente?id=' + encodeURIComponent(usuarioId));
     },
+
+    /** Executa uma ação no cliente (dados, senha, cortesia, acesso, plano...). → dados atualizados */
+    alterarClienteAdmin: function (usuarioId, acao, campos) {
+      return chamarApi('/api/admin/cliente', { method: 'POST', body: JSON.stringify(Object.assign({ id: usuarioId, acao: acao }, campos || {})) });
+    },
+
 
     /** Volta do Checkout Pro: confere no Mercado Pago. → { status } */
     statusPagamentoCartao: function (compraId) {

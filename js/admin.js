@@ -2,8 +2,9 @@
    PontoFit — admin.js
    Página de administração (admin.html): visão geral do negócio, lista de
    assinantes com a situação do acesso (ativo, a vencer, vencido, nunca pagou,
-   cortesia, em teste), pagamentos recentes, liberação manual de dias
-   (/api/admin/liberar) e exportação em planilha (CSV para Excel/Sheets).
+   cortesia, em teste), pagamentos recentes, painel "Gerenciar cliente"
+   (dados, senha, cortesia, acesso, plano; /api/admin/cliente) e exportação
+   em planilha (CSV para Excel/Sheets).
    Os dados vêm de /api/admin/resumo, que só responde para contas com
    app_metadata.role = 'admin'. Aqui não há nenhuma decisão de permissão.
    ========================================================================== */
@@ -196,10 +197,10 @@
       tr.appendChild(celula('Total pago', reais(a.totalPago) + (a.pagamentos > 1 ? ' (' + a.pagamentos + 'x)' : '')));
       tr.appendChild(celula('Conta criada', data(a.criadoEm)));
       var acao = el('td', 'tabela__acao');
-      var botao = el('button', 'btn btn--sm btn--secundario', 'Liberar dias');
+      var botao = el('button', 'btn btn--sm btn--secundario', 'Gerenciar');
       botao.type = 'button';
-      botao.dataset.liberarId = a.id;
-      botao.setAttribute('aria-label', 'Liberar dias de acesso para ' + (a.nome || a.email));
+      botao.dataset.gerenciarId = a.id;
+      botao.setAttribute('aria-label', 'Gerenciar ' + (a.nome || a.email));
       acao.appendChild(botao);
       tr.appendChild(acao);
       corpo.appendChild(tr);
@@ -246,66 +247,220 @@
     $('[data-admin-liberacoes]').hidden = lista.length === 0;
   }
 
-  /* ---------- Liberar dias ---------- */
-  var dialogo = $('[data-liberar]');
-  var formLib = $('[data-liberar-form]');
-  var alvo = null;
+  /* ---------- Gerenciar cliente (painel lateral) ---------- */
+  var ger = $('[data-gerenciar]');
+  var gerCorpo = $('[data-ger-corpo]');
+  var cliente = null;      // dados vindos de /api/admin/cliente
+  var alterouAlgo = false; // recarrega a lista ao fechar
 
-  function diasEscolhidos() {
-    var opcao = formLib.querySelector('[name="opcao"]:checked').value;
-    return opcao === 'outro' ? Number(formLib.dias.value) : Number(opcao);
+  var NOMES_ACAO = {
+    nome: 'Nome alterado', email: 'E-mail alterado', cpf: 'CPF alterado', senha: 'Senha trocada pela administração',
+    acesso: 'Data de acesso definida', plano: 'Plano preferido alterado', 'confirmar-email': 'E-mail confirmado pela administração',
+    sessoes: 'Desconectado de todos os aparelhos'
+  };
+
+  function gerErro(msg) { $('[data-ger-erro]').textContent = msg || ''; }
+
+  function textoHistorico(h) {
+    if (h.tipo === 'pagamento') {
+      return (h.status === 'approved' ? 'Pagou ' : 'Pagamento ' + ((STATUS[h.status] || { nome: h.status }).nome).toLowerCase() + ': ') +
+        (PLANOS[h.plano] || h.plano) + ' · ' + reais(h.valor) + ' · ' + (h.meio === 'pix' ? 'Pix' : 'Cartão') + (h.comDesconto ? ' (50%)' : '');
+    }
+    if (h.tipo === 'liberacao') return 'Cortesia de ' + h.dias + ' ' + F.plural(h.dias, 'dia', 'dias') + ' (' + h.motivo + ') · acesso até ' + data(h.depois);
+    var d = h.detalhes || {};
+    var extra = '';
+    if (h.acao === 'acesso') extra = ': ' + (d.antes ? data(d.antes) : '—') + ' → ' + data(d.depois) + (d.motivo ? ' (' + d.motivo + ')' : '');
+    else if (h.acao === 'email' || h.acao === 'nome' || h.acao === 'cpf') extra = ': ' + (d.antes || '—') + ' → ' + d.depois;
+    else if (h.acao === 'plano') extra = ': ' + (PLANOS[d.antes] || d.antes || '—') + ' → ' + (PLANOS[d.depois] || d.depois);
+    else if (h.acao === 'senha' && d.desconectou) extra = ' e cliente desconectado dos aparelhos';
+    return (NOMES_ACAO[h.acao] || h.acao) + extra;
   }
 
-  function previaLiberacao() {
-    var outro = formLib.querySelector('[name="opcao"]:checked').value === 'outro';
-    $('[data-liberar-outro]').hidden = !outro;
-    var dias = diasEscolhidos();
-    var previa = $('[data-liberar-previa]');
-    if (!alvo || !Number.isInteger(dias) || dias < 1 || dias > 365) { previa.textContent = ''; return; }
-    var base = alvo.acessoAte && alvo.acessoAte >= dados.hoje ? alvo.acessoAte : F.somarDias(dados.hoje, -1);
-    previa.textContent = 'O acesso passa a valer até ' + F.dataExtenso(F.somarDias(base, dias), true) + '.';
+  function quando(ts) {
+    var d = new Date(ts);
+    return d.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }) + ' ' + d.toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' });
   }
 
-  function abrirLiberar(id) {
-    alvo = dados.assinantes.find(function (a) { return a.id === id; });
-    if (!alvo) return;
-    formLib.reset();
-    $('[data-liberar-erro]').textContent = '';
-    $('[data-liberar-nome]').textContent = alvo.nome || alvo.email;
-    $('[data-liberar-atual]').textContent = alvo.acessoAte && alvo.acessoAte >= dados.hoje
-      ? 'Acesso atual até ' + data(alvo.acessoAte) + '. Os dias são somados a partir dessa data.'
-      : 'Sem acesso ativo hoje. Os dias contam a partir de hoje.';
-    previaLiberacao();
-    if (typeof dialogo.showModal === 'function') dialogo.showModal();
+  function renderCliente() {
+    var c = cliente;
+    $('[data-ger-nome]').textContent = c.nome || '(sem nome)';
+    $('[data-ger-email]').textContent = c.email;
+    var ativo = c.acessoAte && c.acessoAte >= dados.hoje;
+    $('[data-ger-acesso]').textContent = c.acessoAte ? data(c.acessoAte) + (ativo ? '' : ' (bloqueado)') : '—';
+    $('[data-ger-login]').textContent = c.ultimoLogin ? quando(c.ultimoLogin) : 'nunca entrou';
+    $('[data-ger-criada]').textContent = c.criadoEm ? quando(c.criadoEm) : '—';
+    $('[data-ger-confirmado]').textContent = c.emailConfirmado ? 'confirmado' : 'não confirmado';
+    $('[data-ger-confirmar]').hidden = c.emailConfirmado;
+
+    var fDados = gerCorpo.querySelector('[data-ger-form="dados"]');
+    fDados.nome.value = c.nome;
+    fDados.email.value = c.email;
+    fDados.cpf.value = '';
+    fDados.cpf.placeholder = c.cpf ? 'Deixe em branco para manter' : 'Digite o CPF';
+    $('[data-ger-cpf-atual]').textContent = c.cpf ? 'CPF atual: ' + c.cpf + '. Preencha só para trocar.' : 'Conta sem CPF cadastrado.';
+
+    var fAcesso = gerCorpo.querySelector('[data-ger-form="acesso"]');
+    fAcesso.data.value = c.acessoAte && c.acessoAte < '2099-01-01' ? c.acessoAte : '';
+    gerCorpo.querySelector('[data-ger-form="plano"]').plano.value = c.plano;
+
+    var ul = $('[data-ger-historico]');
+    ul.textContent = '';
+    if (!c.historico.length) ul.appendChild(el('li', 'texto-sec', 'Nada registrado ainda.'));
+    c.historico.forEach(function (h) {
+      var li = el('li', 'ger-historico__item ger-historico__item--' + h.tipo);
+      li.appendChild(el('span', 'ger-historico__quando', quando(h.quando)));
+      li.appendChild(el('span', null, textoHistorico(h)));
+      ul.appendChild(li);
+    });
+    previaCortesia();
+    gerCorpo.setAttribute('aria-busy', 'false');
   }
 
-  formLib.addEventListener('change', previaLiberacao);
-  formLib.addEventListener('input', previaLiberacao);
-  document.querySelectorAll('[data-liberar-fechar]').forEach(function (b) {
-    b.addEventListener('click', function () { dialogo.close(); });
-  });
-
-  formLib.addEventListener('submit', async function (e) {
-    e.preventDefault();
-    var erro = $('[data-liberar-erro]');
-    var dias = diasEscolhidos();
-    var motivo = formLib.motivo.value.trim();
-    erro.textContent = '';
-    if (!Number.isInteger(dias) || dias < 1 || dias > 365) { erro.textContent = 'Escolha de 1 a 365 dias.'; return; }
-    if (motivo.length < 3) { erro.textContent = 'Escreva o motivo da liberação.'; formLib.motivo.focus(); return; }
-    var botao = formLib.querySelector('[type="submit"]');
-    PF.setLoading(botao, true, 'Liberando…');
+  async function abrirGerenciar(id) {
+    cliente = null;
+    alterouAlgo = false;
+    gerErro('');
+    gerCorpo.setAttribute('aria-busy', 'true');
+    gerCorpo.querySelectorAll('form').forEach(function (f) { f.reset(); });
+    $('[data-ger-nome]').textContent = 'Carregando…';
+    $('[data-ger-email]').textContent = '';
+    if (typeof ger.showModal === 'function') ger.showModal();
     try {
-      var r = await S.liberarDiasAdmin(alvo.id, dias, motivo);
-      dialogo.close();
-      PF.toast((alvo.nome || alvo.email) + ' agora tem acesso até ' + data(r.acessoAte) + '.', { titulo: dias + ' ' + F.plural(dias, 'dia liberado', 'dias liberados') });
-      await carregar();
+      cliente = await S.getClienteAdmin(id);
+      renderCliente();
     } catch (err) {
-      erro.textContent = err.message || 'Não foi possível liberar agora.';
+      gerErro(err.message || 'Não foi possível carregar o cliente.');
+    }
+  }
+
+  /** Envia uma ação; atualiza o painel com a resposta. */
+  async function executar(acao, campos, botao, mensagem) {
+    if (!cliente) return false;
+    gerErro('');
+    PF.setLoading(botao, true, 'Salvando…');
+    try {
+      var r = await S.alterarClienteAdmin(cliente.id, acao, campos);
+      cliente = r;
+      alterouAlgo = true;
+      renderCliente();
+      if (r.alterado && !r.alterado.length) PF.toast('Nada foi alterado.', { tipo: 'info' });
+      else PF.toast(mensagem, { titulo: cliente.nome || cliente.email });
+      return true;
+    } catch (err) {
+      gerErro(err.message || 'Não foi possível salvar.');
+      return false;
     } finally {
       PF.setLoading(botao, false);
     }
+  }
+
+  // Dados
+  gerCorpo.querySelector('[data-ger-form="dados"]').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var f = e.target;
+    var cpf = f.cpf.value.replace(/\D/g, '');
+    if (cpf && cpf.length !== 11) { gerErro('O CPF tem 11 números.'); f.cpf.focus(); return; }
+    executar('dados', { nome: f.nome.value, email: f.email.value, cpf: cpf || null }, f.querySelector('[type="submit"]'), 'Dados atualizados.');
   });
+  gerCorpo.querySelector('[name="cpf"]').addEventListener('input', function (e) {
+    var d = e.target.value.replace(/\D/g, '').slice(0, 11);
+    e.target.value = d.replace(/^(\d{3})(\d)/, '$1.$2').replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3').replace(/\.(\d{3})(\d)/, '.$1-$2');
+  });
+
+  // Senha
+  function senhaForte() {
+    var letras = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ';
+    var numeros = '23456789';
+    var todos = letras + numeros;
+    var n = new Uint32Array(12);
+    crypto.getRandomValues(n);
+    var s = Array.prototype.map.call(n, function (x) { return todos[x % todos.length]; });
+    s[3] = numeros[n[3] % numeros.length];   // garante número
+    s[7] = letras[n[7] % letras.length];     // garante letra
+    return s.join('');
+  }
+  $('[data-ger-gerar]').addEventListener('click', function () {
+    var campo = gerCorpo.querySelector('[name="senha"]');
+    campo.value = senhaForte();
+    campo.focus();
+    campo.select();
+  });
+  $('[data-ger-copiar]').addEventListener('click', async function () {
+    var campo = gerCorpo.querySelector('[name="senha"]');
+    if (!campo.value) return;
+    try { await navigator.clipboard.writeText(campo.value); } catch (e) { campo.select(); document.execCommand('copy'); }
+    PF.toast('Senha copiada.', { tipo: 'info', duracao: 2500 });
+  });
+  gerCorpo.querySelector('[data-ger-form="senha"]').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var f = e.target;
+    var senha = f.senha.value;
+    if (senha.length < 8 || !/[a-zA-Z]/.test(senha) || !/\d/.test(senha)) { gerErro('A senha precisa ter pelo menos 8 caracteres, com letras e números.'); f.senha.focus(); return; }
+    if (!window.confirm('Trocar a senha de ' + (cliente.nome || cliente.email) + '? A senha antiga deixa de funcionar.')) return;
+    var ok = await executar('senha', { senha: senha, desconectar: f.desconectar.checked }, f.querySelector('[type="submit"]'),
+      'Senha trocada' + (f.desconectar.checked ? ' e cliente desconectado dos aparelhos.' : '.'));
+    if (ok) f.senha.value = '';
+  });
+
+  // Cortesia por plano
+  function diasCortesia() {
+    var f = gerCorpo.querySelector('[data-ger-form="cortesia"]');
+    var opcao = f.querySelector('[name="opcao"]:checked').value;
+    return opcao === 'outro' ? Number(f.dias.value) : Number(opcao);
+  }
+  var NOME_CORTESIA = { 7: 'Plano 7 dias', 30: 'Plano 30 dias', 180: 'Plano 6 meses' };
+  function previaCortesia() {
+    var f = gerCorpo.querySelector('[data-ger-form="cortesia"]');
+    var opcao = f.querySelector('[name="opcao"]:checked').value;
+    $('[data-ger-outro]').hidden = opcao !== 'outro';
+    if (!f.motivo.dataset.editado) f.motivo.value = 'Cortesia: ' + (NOME_CORTESIA[opcao] || 'dias extras');
+    var dias = diasCortesia();
+    var previa = $('[data-ger-previa]');
+    if (!cliente || !Number.isInteger(dias) || dias < 1 || dias > 365) { previa.textContent = ''; return; }
+    var base = cliente.acessoAte && cliente.acessoAte >= dados.hoje ? cliente.acessoAte : F.somarDias(dados.hoje, -1);
+    previa.textContent = 'O acesso passa a valer até ' + F.dataExtenso(F.somarDias(base, dias), true) + '.';
+  }
+  var fCortesia = gerCorpo.querySelector('[data-ger-form="cortesia"]');
+  fCortesia.addEventListener('change', previaCortesia);
+  fCortesia.addEventListener('input', function (e) {
+    if (e.target.name === 'motivo') e.target.dataset.editado = '1';
+    previaCortesia();
+  });
+  fCortesia.addEventListener('reset', function () { delete fCortesia.motivo.dataset.editado; setTimeout(previaCortesia, 0); });
+  fCortesia.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var dias = diasCortesia();
+    if (!Number.isInteger(dias) || dias < 1 || dias > 365) { gerErro('Escolha de 1 a 365 dias.'); return; }
+    executar('cortesia', { dias: dias, motivo: fCortesia.motivo.value }, fCortesia.querySelector('[type="submit"]'),
+      'Cortesia de ' + dias + ' ' + F.plural(dias, 'dia', 'dias') + ' concedida.');
+  });
+
+  // Data exata do acesso / encerrar
+  var fAcesso = gerCorpo.querySelector('[data-ger-form="acesso"]');
+  fAcesso.addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (!fAcesso.data.value) { gerErro('Escolha a data.'); fAcesso.data.focus(); return; }
+    executar('acesso', { data: fAcesso.data.value, motivo: fAcesso.motivo.value || 'Ajuste pela administração' }, fAcesso.querySelector('[type="submit"]'),
+      'Acesso definido até ' + data(fAcesso.data.value) + '.');
+  });
+  $('[data-ger-encerrar]').addEventListener('click', function () {
+    if (!cliente || !window.confirm('Encerrar o acesso de ' + (cliente.nome || cliente.email) + ' agora? O app fica bloqueado até um novo pagamento ou cortesia.')) return;
+    executar('acesso', { data: F.somarDias(dados.hoje, -1), motivo: fAcesso.motivo.value || 'Acesso encerrado pela administração' }, this, 'Acesso encerrado.');
+  });
+
+  // Plano preferido, confirmar e-mail e desconectar
+  gerCorpo.querySelector('[data-ger-form="plano"]').addEventListener('submit', function (e) {
+    e.preventDefault();
+    executar('plano', { plano: e.target.plano.value }, e.target.querySelector('[type="submit"]'), 'Plano preferido atualizado.');
+  });
+  $('[data-ger-confirmar]').addEventListener('click', function () { executar('confirmar-email', {}, this, 'E-mail confirmado.'); });
+  $('[data-ger-desconectar]').addEventListener('click', function () {
+    if (!cliente || !window.confirm('Desconectar ' + (cliente.nome || cliente.email) + ' de todos os aparelhos?')) return;
+    executar('desconectar', {}, this, 'Cliente desconectado de todos os aparelhos.');
+  });
+
+  $('[data-ger-fechar]').addEventListener('click', function () { ger.close(); });
+  ger.addEventListener('close', function () { if (alterouAlgo) carregar(); });
 
   /* ---------- Exportar planilha (CSV com ; e BOM, abre direto no Excel) ---------- */
   function csv(linhas) {
@@ -384,8 +539,8 @@
   }
 
   $('[data-admin-assinantes]').addEventListener('click', function (e) {
-    var b = e.target instanceof Element ? e.target.closest('[data-liberar-id]') : null;
-    if (b) abrirLiberar(b.dataset.liberarId);
+    var b = e.target instanceof Element ? e.target.closest('[data-gerenciar-id]') : null;
+    if (b) abrirGerenciar(b.dataset.gerenciarId);
   });
 
   $('[data-admin-filtros]').addEventListener('click', function (e) {
