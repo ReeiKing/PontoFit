@@ -1,10 +1,10 @@
 // POST /api/cartao/criar  { plano: 'semanal' | 'mensal' | 'semestral' }
 // Cria a preferência do Checkout Pro (Mercado Pago) para o plano escolhido.
-// Valor e descrição saem de PLANOS (servidor), nunca do navegador.
+// Valor (com o desconto da primeira compra, se houver) sai do servidor, nunca do navegador.
 // → { id, initPoint }  (o app redireciona para initPoint)
 'use strict';
 
-const { PLANOS, supabaseAdmin, urlDoSite, mercadoPago, usuarioDaRequisicao, responder } = require('../_lib/pix');
+const { PLANOS, supabaseAdmin, urlDoSite, mercadoPago, usuarioDaRequisicao, precoDoPlano, responder } = require('../_lib/pix');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return responder(res, 405, { erro: 'Use POST.' });
@@ -17,10 +17,12 @@ module.exports = async function handler(req, res) {
     const plano = Object.prototype.hasOwnProperty.call(PLANOS, planoId) ? PLANOS[planoId] : null;
     if (!plano) return responder(res, 400, { erro: 'Plano inválido.' });
 
+    const preco = await precoDoPlano(usuario.id, planoId);
+
     // A compra nasce antes da preferência: o id dela é o external_reference.
     const db = supabaseAdmin();
     const { data: compra, error } = await db.from('pagamentos_cartao')
-      .insert({ usuario_id: usuario.id, plano: planoId, valor: plano.valor })
+      .insert({ usuario_id: usuario.id, plano: planoId, valor: preco.valor, com_desconto: preco.comDesconto })
       .select('id').single();
     if (error) throw error;
 
@@ -34,8 +36,14 @@ module.exports = async function handler(req, res) {
       preferencia = await mercadoPago('/checkout/preferences', {
         method: 'POST',
         body: {
-          items: [{ id: planoId, title: 'PontoFit - ' + plano.item, quantity: 1, unit_price: plano.valor, currency_id: 'BRL' }],
-          payer: { email: usuario.email },
+          items: [{
+            id: planoId,
+            title: 'PontoFit - ' + plano.item + (preco.comDesconto ? ' (50% na primeira compra)' : ''),
+            quantity: 1,
+            unit_price: preco.valor,
+            currency_id: 'BRL'
+          }],
+          payer: Object.assign({ email: usuario.email }, preco.cpf ? { identification: { type: 'CPF', number: preco.cpf } } : {}),
           external_reference: compra.id,
           back_urls: { success: volta, failure: volta, pending: volta },
           ...(publicAppUrl ? { auto_return: 'approved' } : {}),

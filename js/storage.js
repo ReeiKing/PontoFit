@@ -102,8 +102,8 @@
   var ERROS_AUTH = {
     invalid_credentials: ['CREDENCIAIS', 'E-mail ou senha incorretos.'],
     email_not_confirmed: ['EMAIL_NAO_CONFIRMADO', 'Confirme seu e-mail antes de entrar. Procure o link que enviamos para a sua caixa de entrada.'],
-    user_already_exists: ['EMAIL_EM_USO', 'Já existe uma conta com este e-mail.'],
-    email_exists: ['EMAIL_EM_USO', 'Já existe uma conta com este e-mail.'],
+    user_already_exists: ['EMAIL_EM_USO', 'Já existe uma conta com este e-mail. Entre com ela ou use "Esqueci minha senha".'],
+    email_exists: ['EMAIL_EM_USO', 'Já existe uma conta com este e-mail. Entre com ela ou use "Esqueci minha senha".'],
     weak_password: ['SENHA_FRACA', 'Essa senha é fraca demais. Use pelo menos 8 caracteres, com letras e números.'],
     over_email_send_rate_limit: ['LIMITE_EMAIL', 'Muitos e-mails enviados em pouco tempo. Espere alguns minutos e tente de novo.'],
     over_request_rate_limit: ['LIMITE', 'Muitas tentativas em pouco tempo. Espere um pouco e tente de novo.'],
@@ -236,10 +236,21 @@
         password: String(dados.senha || ''),
         options: {
           // Só preenche o perfil (nome e plano); não é usado para autorização.
-          data: { nome: String(dados.nome || '').trim(), plano: ['semanal', 'mensal', 'semestral'].indexOf(dados.plano) !== -1 ? dados.plano : 'mensal', aceite_aviso_saude: !!dados.aceiteAvisoSaude },
+          data: {
+            nome: String(dados.nome || '').trim(),
+            plano: ['semanal', 'mensal', 'semestral'].indexOf(dados.plano) !== -1 ? dados.plano : 'mensal',
+            cpf: String(dados.cpf || '').replace(/\D/g, ''), // o banco valida e exige CPF único
+            aceite_aviso_saude: !!dados.aceiteAvisoSaude
+          },
           emailRedirectTo: urlDe('app.html')
         }
       });
+      // O gatilho do banco recusa CPF repetido (ou inválido); a Supabase devolve
+      // "Database error saving new user". O app já validou os dígitos, então
+      // o motivo é CPF já cadastrado.
+      if (r.error && /database error saving new user/i.test(r.error.message || '')) {
+        throw erro('CPF_EM_USO', 'Já existe uma conta com este CPF. Entre com ela ou use "Esqueci minha senha".', r.error);
+      }
       if (r.error) throw traduzirAuth(r.error);
       var user = r.data.user;
       // Com confirmação ligada, e-mail já cadastrado volta sem erro e sem identidades.
@@ -454,13 +465,14 @@
 
     /* ---------- Assinaturas (planos avulsos) ---------- */
 
-    /** → { plano (preferido), acessoAte, pagamentos: [{ id, meio, plano, valor, status, criadoEm, aprovadoEm }] } */
+    /** → { plano (preferido), acessoAte, descontoPrimeiraCompra, pagamentos: [{ id, meio, plano, valor, status, criadoEm, aprovadoEm }] } */
     getAssinatura: async function () {
       var id = await uid();
       var res = await Promise.all([
         q(sb.from('perfis').select('plano, acesso_ate').eq('id', id).maybeSingle()),
         q(sb.from('pagamentos_pix').select('id, plano, valor, status, criado_em, aprovado_em')),
-        q(sb.from('pagamentos_cartao').select('id, plano, valor, status, criado_em, aprovado_em'))
+        q(sb.from('pagamentos_cartao').select('id, plano, valor, status, criado_em, aprovado_em')),
+        q(sb.rpc('desconto_disponivel'))
       ]);
       var perfil = res[0];
       var pagamentos = res[1].map(function (l) { return pagamentoDoBanco(l, 'pix'); })
@@ -469,6 +481,7 @@
       return {
         plano: (perfil && perfil.plano) || 'mensal',
         acessoAte: (perfil && perfil.acesso_ate) || null,
+        descontoPrimeiraCompra: res[3] === true, // 50% no plano de 30 dias (o servidor confirma)
         pagamentos: pagamentos
       };
     },

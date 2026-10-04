@@ -759,9 +759,11 @@
             <div class="planos-app__opcao">
               <input type="radio" id="pl-mensal" name="plano" value="mensal">
               <label for="pl-mensal">
+                <span class="badge badge--laranja planos-app__selo" data-desconto hidden>50% na primeira compra</span>
                 <span class="planos-app__nome">30 dias</span>
-                <span class="preco"><span class="preco__moeda">R$</span> <span class="preco__inteiro">15</span><span class="preco__centavos">,00</span></span>
-                <span class="planos-app__detalhe">30 dias de acesso completo</span>
+                <s class="planos-app__de" data-desconto hidden><span class="sr-only">De </span>R$ 15,00</s>
+                <span class="preco" data-preco-mensal><span class="preco__moeda">R$</span> <span class="preco__inteiro">15</span><span class="preco__centavos">,00</span></span>
+                <span class="planos-app__detalhe" data-detalhe-mensal>30 dias de acesso completo</span>
               </label>
             </div>
             <div class="planos-app__opcao">

@@ -14,7 +14,7 @@ const { createClient } = require('@supabase/supabase-js');
 // Mude o preço aqui e em js/plano.js (a duração fica em private.duracao_plano()).
 const PLANOS = {
   semanal: { valor: 4.99, item: 'Plano 7 dias' },
-  mensal: { valor: 15, item: 'Plano 30 dias' },
+  mensal: { valor: 15, item: 'Plano 30 dias', valorPrimeiraCompra: 7.5 }, // 50% na primeira compra (uma vez por CPF)
   semestral: { valor: 50, item: 'Plano 6 meses' }
 };
 
@@ -88,7 +88,7 @@ async function sincronizarPagamento(id) {
   const valorOk = mp.currency_id === 'BRL' && Number(mp.transaction_amount) >= Number(pg.valor);
 
   if (mp.status === 'approved' && valorOk) {
-    const { error: e } = await db.rpc('confirmar_pagamento_pix', { p_pagamento_id: pg.id });
+    const { error: e } = await db.rpc('confirmar_pagamento_pix', { p_pagamento_id: pg.id, p_cpf_pagador: cpfDoPagador(mp) });
     if (e) throw e;
     return 'approved';
   }
@@ -100,9 +100,35 @@ async function sincronizarPagamento(id) {
   return status;
 }
 
+/**
+ * Preço do plano para esta pessoa e o CPF dela (para o Mercado Pago).
+ * O desconto da primeira compra é decidido aqui, pelo banco
+ * (desconto_disponivel), nunca pelo navegador.
+ * → { valor, comDesconto, cpf }
+ */
+async function precoDoPlano(usuarioId, planoId) {
+  const plano = PLANOS[planoId];
+  const db = supabaseAdmin();
+  const { data: perfil, error } = await db.from('perfis').select('cpf').eq('id', usuarioId).maybeSingle();
+  if (error) throw error;
+  const cpf = (perfil && perfil.cpf) || null;
+  if (plano.valorPrimeiraCompra) {
+    const { data: disponivel, error: e } = await db.rpc('desconto_disponivel', { p_usuario: usuarioId });
+    if (e) throw e;
+    if (disponivel) return { valor: plano.valorPrimeiraCompra, comDesconto: true, cpf };
+  }
+  return { valor: plano.valor, comDesconto: false, cpf };
+}
+
+/** CPF de quem pagou, quando o Mercado Pago informa (registra o desconto usado). */
+function cpfDoPagador(mp) {
+  const id = mp && mp.payer && mp.payer.identification;
+  return id && /^cpf$/i.test(id.type || '') && id.number ? String(id.number) : null;
+}
+
 function responder(res, status, corpo) {
   res.setHeader('Cache-Control', 'no-store');
   res.status(status).json(corpo);
 }
 
-module.exports = { PLANOS, supabaseAdmin, urlDoSite, mercadoPago, usuarioDaRequisicao, sincronizarPagamento, responder };
+module.exports = { PLANOS, supabaseAdmin, urlDoSite, mercadoPago, usuarioDaRequisicao, sincronizarPagamento, precoDoPlano, cpfDoPagador, responder };

@@ -23,7 +23,8 @@
   var botaoPix = $('[data-pagar-pix]');
   var botaoCartao = $('[data-pagar-cartao]');
 
-  // Igual a PLANOS em api/_lib/pix.js (o servidor decide o valor cobrado).
+  // Igual a PLANOS em api/_lib/pix.js (o servidor decide o valor cobrado,
+  // inclusive os 50% da primeira compra do plano de 30 dias: R$ 7,50).
   var PLANOS = {
     semanal: { nome: '7 dias', item: 'Plano 7 dias', valor: 4.99 },
     mensal: { nome: '30 dias', item: 'Plano 30 dias', valor: 15 },
@@ -128,8 +129,21 @@
     });
   }
 
+  /** Plano de 30 dias com 50% na primeira compra (quem decide é o servidor). */
+  function renderDesconto() {
+    var ativo = !!assinatura.descontoPrimeiraCompra;
+    form.querySelectorAll('[data-desconto]').forEach(function (el) { el.hidden = !ativo; });
+    var preco = form.querySelector('[data-preco-mensal]');
+    preco.querySelector('.preco__inteiro').textContent = ativo ? '7' : '15';
+    preco.querySelector('.preco__centavos').textContent = ativo ? ',50' : ',00';
+    form.querySelector('[data-detalhe-mensal]').textContent = ativo
+      ? '30 dias de acesso completo. Depois, R$ 15,00.'
+      : '30 dias de acesso completo';
+  }
+
   function renderTudo() {
     renderAcesso();
+    renderDesconto();
     renderHistorico();
     if (!planoEscolhido()) {
       var radio = form.querySelector('[value="' + assinatura.plano + '"]') || form.querySelector('[value="mensal"]');
@@ -276,7 +290,8 @@
   async function abrirPix(plano) {
     pararPix();
     dialogo.querySelector('[data-pix-titulo]').textContent = PLANOS[plano].item;
-    dialogo.querySelector('[data-pix-valor]').textContent = reais(PLANOS[plano].valor);
+    var previsto = plano === 'mensal' && assinatura && assinatura.descontoPrimeiraCompra ? 7.5 : PLANOS[plano].valor;
+    dialogo.querySelector('[data-pix-valor]').textContent = reais(previsto);
     dialogo.querySelector('[data-pix-img]').removeAttribute('src');
     dialogo.querySelector('[data-pix-codigo]').value = '';
     dialogo.querySelector('[data-pix-validade]').textContent = '';
@@ -289,6 +304,7 @@
       var pagamento = await S.criarPix(plano);
       if (pix !== meu) return;
       meu.pagamento = pagamento;
+      dialogo.querySelector('[data-pix-valor]').textContent = reais(pagamento.valor); // o servidor decide o valor
       dialogo.querySelector('[data-pix-img]').src = 'data:image/png;base64,' + pagamento.qrCodeBase64;
       dialogo.querySelector('[data-pix-codigo]').value = pagamento.qrCode;
       estadoPix('aguardando', 'Aguardando o pagamento…');

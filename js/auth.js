@@ -263,10 +263,36 @@
       if (v !== form.querySelector('[data-regra="senhaNova"]').value) return 'As senhas não coincidem.';
       return '';
     },
+    cpf: function (v) {
+      var d = v.replace(/\D/g, '');
+      if (!d) return 'Digite seu CPF.';
+      if (d.length !== 11) return 'O CPF tem 11 números.';
+      if (!cpfValido(d)) return 'Esse CPF não é válido. Confira os números.';
+      return '';
+    },
     aceite: function (v, form, input) {
       return input.checked ? '' : 'Para continuar, confirme que leu o aviso de saúde.';
     }
   };
+
+  /** Dígitos verificadores do CPF (igual a private.cpf_valido no banco). */
+  function cpfValido(d) {
+    if (!/^\d{11}$/.test(d) || /^(\d)\1{10}$/.test(d)) return false;
+    function dv(n) {
+      var soma = 0;
+      for (var i = 0; i < n; i++) soma += Number(d[i]) * (n + 1 - i);
+      return (soma * 10) % 11 % 10;
+    }
+    return dv(9) === Number(d[9]) && dv(10) === Number(d[10]);
+  }
+
+  /** Máscara 000.000.000-00 enquanto digita. */
+  function mascaraCpf(input) {
+    input.addEventListener('input', function () {
+      var d = input.value.replace(/\D/g, '').slice(0, 11);
+      input.value = d.replace(/^(\d{3})(\d)/, '$1.$2').replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3').replace(/\.(\d{3})(\d)/, '.$1-$2');
+    });
+  }
 
   function caixaErro(input) {
     return document.getElementById(input.id + '-erro');
@@ -325,12 +351,13 @@
   }
 
   function mostrarErroServidor(form, err) {
-    if (err && err.codigo === 'EMAIL_EM_USO') {
-      var email = form.querySelector('[data-regra="email"]');
-      caixaErro(email).textContent = err.message;
-      email.setAttribute('aria-invalid', 'true');
-      email.classList.remove('is-valido');
-      email.focus();
+    var regra = err && { EMAIL_EM_USO: 'email', CPF_EM_USO: 'cpf' }[err.codigo];
+    var campo = regra && form.querySelector('[data-regra="' + regra + '"]');
+    if (campo) {
+      caixaErro(campo).textContent = err.message;
+      campo.setAttribute('aria-invalid', 'true');
+      campo.classList.remove('is-valido');
+      campo.focus();
       return;
     }
     PF.toast((err && err.message) || 'Algo deu errado. Tente novamente.', { tipo: 'erro' });
@@ -373,6 +400,7 @@
   function iniciarFormCadastro() {
     var form = document.getElementById('form-cadastro');
     var validarTudo = ligarValidacao(form);
+    mascaraCpf(form.cpf);
 
     form.addEventListener('submit', async function (e) {
       e.preventDefault();
@@ -383,6 +411,7 @@
         var resultado = await S.cadastrar({
           nome: form.nome.value,
           email: form.email.value,
+          cpf: form.cpf.value,
           senha: form.senha.value,
           aceiteAvisoSaude: form.aceite.checked,
           plano: form.plano.value

@@ -764,6 +764,7 @@
 .planos-app__selo { justify-self: start; }
 .planos-app__nome { font-family: var(--fonte-titulo); font-weight: 600; font-size: var(--fs-lead); }
 .planos-app__detalhe { color: var(--texto-sec); font-size: var(--fs-sm); }
+.planos-app__de { color: var(--texto-sec); font-size: var(--fs-sm); }
 .planos-app__acoes { display: flex; flex-wrap: wrap; gap: var(--esp-2); }
 .planos-app__erro {
   padding: var(--esp-2) var(--esp-3);

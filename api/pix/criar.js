@@ -1,11 +1,11 @@
 // POST /api/pix/criar  { plano: 'semanal' | 'mensal' | 'semestral' }
 // Gera (ou reaproveita) o Pix de um plano para a pessoa logada.
-// O valor sai de PLANOS (servidor), nunca do navegador.
+// O valor sai de PLANOS e do desconto da primeira compra (servidor), nunca do navegador.
 // → { id, plano, valor, qrCode, qrCodeBase64, expiraEm }
 'use strict';
 
 const { randomUUID } = require('node:crypto');
-const { PLANOS, supabaseAdmin, urlDoSite, mercadoPago, usuarioDaRequisicao, responder } = require('../_lib/pix');
+const { PLANOS, supabaseAdmin, urlDoSite, mercadoPago, usuarioDaRequisicao, precoDoPlano, responder } = require('../_lib/pix');
 
 const VALIDADE_MIN = 60; // o Mercado Pago aceita de 30 min a 30 dias
 
@@ -24,11 +24,13 @@ module.exports = async function handler(req, res) {
     const plano = Object.prototype.hasOwnProperty.call(PLANOS, planoId) ? PLANOS[planoId] : null;
     if (!plano) return responder(res, 400, { erro: 'Plano inválido.' });
 
-    // Já existe um Pix válido deste plano? Reaproveita (evita QR duplicado).
+    const preco = await precoDoPlano(usuario.id, planoId);
+
+    // Já existe um Pix válido deste plano, no mesmo valor? Reaproveita (evita QR duplicado).
     const db = supabaseAdmin();
     const margem = new Date(Date.now() + 5 * 60 * 1000).toISOString();
     const { data: existente } = await db.from('pagamentos_pix').select('*')
-      .eq('usuario_id', usuario.id).eq('plano', planoId).eq('status', 'pending').gt('expira_em', margem)
+      .eq('usuario_id', usuario.id).eq('plano', planoId).eq('valor', preco.valor).eq('status', 'pending').gt('expira_em', margem)
       .order('criado_em', { ascending: false }).limit(1).maybeSingle();
     if (existente) return responder(res, 200, saida(existente));
 
@@ -38,10 +40,10 @@ module.exports = async function handler(req, res) {
       method: 'POST',
       headers: { 'X-Idempotency-Key': referencia },
       body: {
-        transaction_amount: plano.valor,
-        description: 'PontoFit - ' + plano.item,
+        transaction_amount: preco.valor,
+        description: 'PontoFit - ' + plano.item + (preco.comDesconto ? ' (50% na primeira compra)' : ''),
         payment_method_id: 'pix',
-        payer: { email: usuario.email },
+        payer: Object.assign({ email: usuario.email }, preco.cpf ? { identification: { type: 'CPF', number: preco.cpf } } : {}),
         external_reference: referencia,
         notification_url: urlDoSite() + '/api/pix/webhook',
         date_of_expiration: expira.toISOString().replace(/\.\d{3}Z$/, '.000Z')
@@ -55,7 +57,8 @@ module.exports = async function handler(req, res) {
       id: String(mp.id),
       usuario_id: usuario.id,
       plano: planoId,
-      valor: plano.valor,
+      valor: preco.valor,
+      com_desconto: preco.comDesconto,
       status: mp.status || 'pending',
       qr_code: dadosPix.qr_code,
       qr_code_base64: dadosPix.qr_code_base64,

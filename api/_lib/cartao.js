@@ -3,7 +3,7 @@
 // vai como external_reference e liga o pagamento do Mercado Pago à compra.
 'use strict';
 
-const { supabaseAdmin, mercadoPago } = require('./pix');
+const { supabaseAdmin, mercadoPago, cpfDoPagador } = require('./pix');
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -27,7 +27,7 @@ async function conferirPagamento(mp) {
 
   const valorOk = mp.currency_id === 'BRL' && Number(mp.transaction_amount) >= Number(compra.valor);
   if (mp.status === 'approved' && valorOk) {
-    const { error: e } = await db.rpc('confirmar_pagamento_cartao', { p_compra_id: compra.id, p_pagamento_id: String(mp.id) });
+    const { error: e } = await db.rpc('confirmar_pagamento_cartao', { p_compra_id: compra.id, p_pagamento_id: String(mp.id), p_cpf_pagador: cpfDoPagador(mp) });
     if (e) throw e;
     return 'approved';
   }

@@ -697,6 +697,7 @@ html:has(.landing) { scroll-padding-top: 120px; } /* header + barra de aviso */
   font-variant-numeric: tabular-nums;
 }
 .plano__periodo { color: var(--texto-sec); font-weight: 500; }
+.plano__de { color: var(--texto-sec); font-size: var(--fs-sm); margin-bottom: -.5rem; }
 .plano__detalhe { color: var(--texto-sec); font-size: var(--fs-sm); }
 .plano__itens { display: grid; gap: var(--esp-2); margin-block: var(--esp-2) var(--esp-3); padding: 0; }
 .plano > .btn { margin-top: auto; } /* botões alinhados na base dos cards */
