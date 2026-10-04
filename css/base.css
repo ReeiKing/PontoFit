@@ -732,3 +732,9 @@ select.input {
   .btn.is-loading::after { animation: girar 1.4s linear infinite !important; } /* spinner é informativo */
   .toast__tempo { animation-duration: var(--toast-duracao, 4000ms) !important; }
 }
+
+/* ---------- Preço com centavos menores (R$ 4,99) ---------- */
+.preco { display: inline-flex; align-items: baseline; gap: .1em; font-family: var(--fonte-titulo); font-weight: 700; line-height: 1; }
+.preco__moeda { font-size: .45em; font-weight: 600; margin-right: .15em; align-self: flex-start; margin-top: .25em; }
+.preco__inteiro { font-size: 1em; letter-spacing: -.02em; }
+.preco__centavos { font-size: .45em; font-weight: 600; align-self: flex-start; margin-top: .25em; }

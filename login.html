@@ -85,15 +85,17 @@
           <form id="form-cadastro" class="form-auth" novalidate>
             <div class="campo plano-escolha">
               <span class="campo__label" aria-hidden="true">Plano</span>
-              <fieldset class="segmentado" style="--opcoes:2" aria-describedby="cad-plano-ajuda">
+              <fieldset class="segmentado" style="--opcoes:3" aria-describedby="cad-plano-ajuda">
                 <legend class="sr-only">Plano</legend>
+                <input type="radio" id="cad-plano-semanal" name="plano" value="semanal">
+                <label for="cad-plano-semanal">7 dias · R$ 4,99</label>
                 <input type="radio" id="cad-plano-mensal" name="plano" value="mensal" checked>
-                <label for="cad-plano-mensal">Mensal · R$ 20,00</label>
-                <input type="radio" id="cad-plano-anual" name="plano" value="anual">
-                <label for="cad-plano-anual">Anual · R$ 199,99</label>
+                <label for="cad-plano-mensal">30 dias · R$ 15</label>
+                <input type="radio" id="cad-plano-semestral" name="plano" value="semestral">
+                <label for="cad-plano-semestral">6 meses · R$ 50</label>
                 <span class="segmentado__indicador" aria-hidden="true"></span>
               </fieldset>
-              <p class="campo__ajuda" id="cad-plano-ajuda">Os primeiros 7 dias são grátis em qualquer plano.</p>
+              <p class="campo__ajuda" id="cad-plano-ajuda">Você paga o plano logo depois de criar a conta, com Pix ou cartão.</p>
             </div>
 
             <div class="campo">

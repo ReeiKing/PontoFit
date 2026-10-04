@@ -22,7 +22,7 @@
     ficha: 'Minha ficha',
     evolucao: 'Minha evolução',
     medicamentos: 'Medicamentos',
-    plano: 'Meu plano'
+    plano: 'Assinaturas'
   };
   var ORDEM = Object.keys(SECOES);
   var APELIDOS = { produtos: 'medicamentos' }; // links antigos de "Meus produtos"
@@ -136,13 +136,14 @@
     document.dispatchEvent(new CustomEvent('pf:secao', { detail: { secao: id, anterior: anterior } }));
   }
 
-  /* ---------- Acesso bloqueado (mensalidade vencida) ----------
+  /* ---------- Acesso bloqueado (sem plano pago) ----------
      Quem bloqueia de verdade é o banco (RLS exige acesso ativo); aqui o menu
-     só deixa "Meu plano" aberto. O plano.js dispara 'pf:acesso' quando um
-     Pix é aprovado. Tolerância igual à do plano.js / private.acesso_ativo(). */
+     só deixa "Assinaturas" aberta. O plano.js dispara 'pf:acesso' quando um
+     pagamento é aprovado. Acesso vale até acesso_ate, inclusive, sem
+     tolerância (igual a private.acesso_ativo()). */
   var bloqueado = false;
   function definirBloqueio(acessoAte) {
-    bloqueado = !!acessoAte && PF.fmt.hojeISO() > PF.fmt.somarDias(acessoAte, 3);
+    bloqueado = !acessoAte || PF.fmt.hojeISO() > acessoAte;
     if (bloqueado) document.documentElement.setAttribute('data-acesso-bloqueado', '');
     else document.documentElement.removeAttribute('data-acesso-bloqueado');
     document.querySelectorAll('[data-link-secao]').forEach(function (a) {
@@ -155,7 +156,7 @@
   document.addEventListener('pf:acesso', function (e) {
     var estava = bloqueado;
     definirBloqueio(e.detail.acessoAte);
-    if (estava && !bloqueado) PF.toast('Seu acesso foi reativado. Bom te ver de volta!', { titulo: 'Tudo liberado' });
+    if (estava && !bloqueado) PF.toast('Receitas, ficha, evolução e medicamentos já estão liberados.', { titulo: 'Tudo liberado' });
   });
 
   // Hash inválido ou vazio → corrige a URL sem criar entrada no histórico.
@@ -212,8 +213,8 @@
       .then(function () {
         mostrarSecao(secaoNormalizada(), false);
         if (bloqueado) {
-          PF.toast('Sua mensalidade venceu. Pague com Pix para liberar o app na hora.', {
-            titulo: 'Acesso bloqueado', tipo: 'erro', duracao: 8000
+          PF.toast('Escolha um plano e pague com Pix ou cartão para liberar o app na hora.', {
+            titulo: 'Sem acesso ativo', tipo: 'aviso', duracao: 8000
           });
         }
       });

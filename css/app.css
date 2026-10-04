@@ -736,20 +736,45 @@
 .assinatura__proxima { font-weight: 600; }
 .assinatura__proxima:empty { display: none; }
 
-/* Pagamento automático no cartão (Mercado Pago) */
-.cartao-auto { display: grid; gap: var(--esp-3); }
-@media (min-width: 768px) {
-  .cartao-auto { grid-template-columns: 1fr auto; align-items: center; gap: var(--esp-5); }
-  .cartao-auto__erro { grid-column: 1 / -1; }
+/* Escolha do plano (Assinaturas) */
+.planos-app { display: grid; gap: var(--esp-4); margin-top: var(--esp-3); }
+.planos-app__opcoes { display: grid; gap: var(--esp-3); border: 0; padding: 0; margin: 0; min-width: 0; }
+@media (min-width: 640px) { .planos-app__opcoes { grid-template-columns: repeat(3, 1fr); } }
+.planos-app__opcao { position: relative; display: flex; }
+.planos-app__opcao input { position: absolute; opacity: 0; inset: 0; margin: 0; pointer-events: none; }
+.planos-app__opcao label {
+  flex: 1;
+  display: grid;
+  align-content: start;
+  gap: var(--esp-1);
+  padding: var(--esp-4);
+  border: 2px solid var(--borda);
+  border-radius: 16px;
+  background: var(--superficie);
+  cursor: pointer;
+  transition: border-color .2s, background-color .2s, box-shadow .2s;
 }
-.cartao-auto__texto { display: grid; gap: var(--esp-1); }
-.cartao-auto__acoes { display: flex; flex-wrap: wrap; align-items: center; gap: var(--esp-2); }
-.cartao-auto__acoes .badge { font-size: var(--fs-sm); padding: .2rem .7rem; }
-.cartao-auto__erro {
+.planos-app__opcao label:hover { border-color: var(--verde); }
+.planos-app__opcao input:checked + label {
+  border-color: var(--verde);
+  background: var(--verde-suave);
+  box-shadow: 0 0 0 1px var(--verde) inset;
+}
+.planos-app__opcao input:focus-visible + label { outline: 3px solid var(--foco); outline-offset: 2px; }
+.planos-app__selo { justify-self: start; }
+.planos-app__nome { font-family: var(--fonte-titulo); font-weight: 600; font-size: var(--fs-lead); }
+.planos-app__detalhe { color: var(--texto-sec); font-size: var(--fs-sm); }
+.planos-app__acoes { display: flex; flex-wrap: wrap; gap: var(--esp-2); }
+.planos-app__erro {
   padding: var(--esp-2) var(--esp-3);
   border-radius: 10px;
   background: var(--vermelho-suave);
   color: var(--vermelho);
+}
+
+.planos-app .preco { font-size: 2.25rem; color: var(--verde-escuro); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .planos-app .preco { color: #6FD3A4; }
 }
 
 .plano-app__numeros { grid-template-columns: repeat(3, 1fr); }

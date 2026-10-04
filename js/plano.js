@@ -1,14 +1,13 @@
 /* ==========================================================================
    PontoFit — plano.js
-   Seção "Meu plano": plano atual, teste grátis, mensalidades (pagas, em
-   aberto, atrasadas), pagamento por Pix, pagamento automático no cartão
-   (assinatura do Mercado Pago, api/subscriptions/*) e troca de plano.
+   Seção "Assinaturas": situação do acesso, escolha do plano (7 dias, 30 dias
+   ou 6 meses), pagamento por Pix (QR no site, api/pix/*) ou cartão (Checkout
+   Pro do Mercado Pago, api/cartao/*) e histórico de pagamentos.
 
-   As cobranças são geradas a partir do fim do teste grátis. Pagamento: Pix
-   do Mercado Pago (api/pix/*). Só o servidor marca uma mensalidade como paga
-   e estende o acesso (acessoAte); aqui a tela mostra o QR e espera a
-   confirmação.
-   Dados via PF.storage.getAssinatura / saveAssinatura / criarPix / statusPix.
+   Planos avulsos: cada pagamento aprovado soma o período ao acesso. Só o
+   servidor confirma pagamento e estende o acesso (acessoAte); aqui a tela
+   mostra o QR ou leva ao Mercado Pago e espera a confirmação.
+   Sem acesso ativo, esta é a única seção liberada (app.js + RLS no banco).
    ========================================================================== */
 (function () {
   'use strict';
@@ -21,173 +20,80 @@
   if (!raiz) return;
   var $ = function (sel) { return raiz.querySelector(sel); };
   var form = document.getElementById('form-plano');
+  var botaoPix = $('[data-pagar-pix]');
+  var botaoCartao = $('[data-pagar-cartao]');
 
+  // Igual a PLANOS em api/_lib/pix.js (o servidor decide o valor cobrado).
   var PLANOS = {
-    mensal: { nome: 'Mensal', valor: 20, periodo: 'mês', meses: 1, item: 'Mensalidade' },
-    anual: { nome: 'Anual', valor: 199.99, periodo: 'ano', meses: 12, item: 'Anuidade' }
+    semanal: { nome: '7 dias', item: 'Plano 7 dias', valor: 4.99 },
+    mensal: { nome: '30 dias', item: 'Plano 30 dias', valor: 15 },
+    semestral: { nome: '6 meses', item: 'Plano 6 meses', valor: 50 }
   };
 
-  // Dias de uso depois do fim do período pago, antes do bloqueio.
-  // Igual ao "+ 3" de private.acesso_ativo() na migração do Pix.
-  var TOLERANCIA_DIAS = 3;
-
-  var assinatura = null;
-  var cartao = null; // assinatura no cartão (Mercado Pago) ou null
+  var assinatura = null; // { plano, acessoAte, pagamentos }
+  var ocupado = false;   // evita cliques repetidos enquanto processa
 
   /* ---------- Utilitários ---------- */
   function reais(v) {
     return Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   }
 
-  function gerarId() { return PF.uuid(); } // UUID v4 (formato exigido pelo banco)
-
-  /** Soma meses mantendo o dia (31/01 + 1 mês = 28/02 ou 29/02). */
-  function somarMeses(iso, meses) {
-    var d = F.dataDe(iso);
-    var dia = d.getDate();
-    var alvo = new Date(d.getFullYear(), d.getMonth() + meses, 1);
-    var ultimoDia = new Date(alvo.getFullYear(), alvo.getMonth() + 1, 0).getDate();
-    alvo.setDate(Math.min(dia, ultimoDia));
-    return F.paraISO(alvo);
+  function dataDe(ts) {
+    return new Date(ts).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
   }
 
-  /* ---------- Cobranças ----------
-     A 1ª vence no fim do teste grátis; cada uma seguinte vence 1 mês (mensal)
-     ou 12 meses (anual) depois da anterior, sempre contando a partir da data
-     do fim do teste (evita "escorregar" o dia em meses curtos).
-     Sempre existe uma cobrança futura: a próxima a vencer. */
-  function novaCobranca(numero, offsetMeses, plano) {
-    return {
-      id: gerarId(),
-      numero: numero,
-      offsetMeses: offsetMeses,
-      vencimento: somarMeses(assinatura.testeGratisAte, offsetMeses),
-      plano: plano,
-      valor: PLANOS[plano].valor,
-      pagoEm: null
-    };
+  function planoEscolhido() {
+    var marcado = form.querySelector('[name="plano"]:checked');
+    return marcado ? marcado.value : null;
   }
 
-  /** Cria as cobranças que faltam até a próxima a vencer. → true se mudou */
-  function gerarCobrancas() {
-    var hoje = F.hojeISO();
-    var lista = assinatura.cobrancas;
-    var mudou = false;
-    if (!lista.length) {
-      lista.push(novaCobranca(1, 0, assinatura.plano));
-      mudou = true;
-    }
-    var ultima = lista[lista.length - 1];
-    while (ultima.vencimento <= hoje) {
-      ultima = novaCobranca(ultima.numero + 1, ultima.offsetMeses + PLANOS[ultima.plano].meses, assinatura.plano);
-      lista.push(ultima);
-      mudou = true;
-    }
-    return mudou;
+  function erro(msg) {
+    var el = $('[data-plano-erro]');
+    el.hidden = !msg;
+    el.textContent = msg || '';
   }
 
-  function situacao(c, hoje) {
-    if (c.pagoEm) return 'paga';
-    if (c.vencimento < hoje) return 'atrasada';
-    if (c.vencimento === hoje) return 'hoje';
-    return 'aberta';
-  }
-
-  function resumir() {
-    var hoje = F.hojeISO();
-    var r = {
-      hoje: hoje, pagas: [], atrasadas: [], abertas: [],
-      emTeste: hoje < assinatura.testeGratisAte && assinatura.acessoAte === assinatura.testeGratisAte,
-      bloqueado: hoje > F.somarDias(assinatura.acessoAte, TOLERANCIA_DIAS)
-    };
-    assinatura.cobrancas.forEach(function (c) {
-      var s = situacao(c, hoje);
-      if (s === 'paga') r.pagas.push(c);
-      else if (s === 'atrasada') r.atrasadas.push(c);
-      else r.abertas.push(c);
-    });
-    r.proxima = r.abertas[0] || null;
-    r.totalPago = r.pagas.reduce(function (t, c) { return t + c.valor; }, 0);
-    r.totalAberto = r.atrasadas.concat(r.abertas).reduce(function (t, c) { return t + c.valor; }, 0);
-    return r;
-  }
-
-  /* ---------- Badge do menu (mensalidades atrasadas) ---------- */
-  function renderBadge(r) {
-    var badge = document.querySelector('[data-badge-plano]');
-    var leitor = document.querySelector('[data-badge-plano-leitor]');
-    if (!badge) return;
-    var n = r ? r.atrasadas.length : 0;
-    badge.hidden = n === 0;
-    badge.textContent = String(n);
-    leitor.textContent = n ? ', ' + n + ' ' + F.plural(n, 'mensalidade atrasada', 'mensalidades atrasadas') : '';
+  function acessoAtivo() {
+    return !!(assinatura && assinatura.acessoAte && assinatura.acessoAte >= F.hojeISO());
   }
 
   /* ---------- Renderização ---------- */
-  function renderResumo(r) {
-    var plano = PLANOS[assinatura.plano];
+  function renderAcesso() {
     var card = $('[data-assinatura-estado]');
     var badge = $('[data-assinatura-badge]');
-    $('[data-assinatura-nome]').textContent = plano.nome;
-    $('[data-assinatura-preco]').textContent = reais(plano.valor) + ' por ' + plano.periodo;
+    var titulo = $('[data-assinatura-titulo]');
+    var texto = $('[data-assinatura-texto]');
+    badge.hidden = false;
 
-    if (r.bloqueado) {
+    if (!acessoAtivo()) {
       card.dataset.assinaturaEstado = 'atraso';
       badge.className = 'badge badge--vermelho';
-      badge.textContent = 'Acesso bloqueado';
-      $('[data-assinatura-texto]').textContent = 'Pague uma mensalidade em aberto com Pix para liberar o app na hora.';
-    } else if (r.atrasadas.length) {
-      card.dataset.assinaturaEstado = 'atraso';
-      badge.className = 'badge badge--vermelho';
-      badge.textContent = 'Em atraso';
-      $('[data-assinatura-texto]').textContent = r.atrasadas.length + ' ' +
-        F.plural(r.atrasadas.length, 'cobrança atrasada', 'cobranças atrasadas') + ', somando ' +
-        reais(r.atrasadas.reduce(function (t, c) { return t + c.valor; }, 0)) + '.';
-    } else if (r.emTeste) {
-      var dias = F.diasEntre(r.hoje, assinatura.testeGratisAte);
-      card.dataset.assinaturaEstado = 'teste';
-      badge.className = 'badge badge--agua';
-      badge.textContent = 'Teste grátis';
-      $('[data-assinatura-texto]').textContent = 'Seu teste grátis vai até ' + F.dataCurta(assinatura.testeGratisAte) +
-        ' (' + (dias === 1 ? 'falta 1 dia' : 'faltam ' + dias + ' dias') + ').';
-    } else {
-      card.dataset.assinaturaEstado = 'emdia';
-      badge.className = 'badge';
-      badge.textContent = 'Em dia';
-      $('[data-assinatura-texto]').textContent = 'Acesso liberado até ' + F.dataCurta(assinatura.acessoAte) + '.';
+      badge.textContent = 'Sem acesso';
+      titulo.textContent = 'Escolha um plano';
+      texto.textContent = assinatura.acessoAte && assinatura.acessoAte !== F.somarDias(F.hojeISO(), -1)
+        ? 'Seu acesso terminou em ' + F.dataCurta(assinatura.acessoAte) + '. Pague um plano para liberar receitas, ficha, evolução e medicamentos na hora.'
+        : 'Pague um plano para liberar receitas, ficha, evolução e medicamentos na hora.';
+      return;
     }
 
-    var p = r.proxima;
-    if (p) {
-      var faltam = F.diasEntre(r.hoje, p.vencimento);
-      $('[data-assinatura-proxima]').textContent = (p.numero === 1 ? 'Primeira cobrança: ' : 'Próxima cobrança: ') +
-        reais(p.valor) + ' em ' + F.dataExtenso(p.vencimento, true) +
-        (faltam === 0 ? ' (vence hoje)' : faltam === 1 ? ' (amanhã)' : ' (em ' + faltam + ' dias)') + '.';
-    } else {
-      $('[data-assinatura-proxima]').textContent = '';
-    }
-
-    raiz.querySelector('[data-n="pagas"]').textContent = String(r.pagas.length);
-    raiz.querySelector('[data-n="pagas-info"]').textContent = r.pagas.length
-      ? 'última em ' + F.dataCurta(r.pagas.map(function (c) { return c.pagoEm; }).sort().pop()) : 'nenhuma ainda';
-    raiz.querySelector('[data-n="total"]').textContent = reais(r.totalPago);
-    raiz.querySelector('[data-n="total-info"]').textContent = 'desde o início';
-    raiz.querySelector('[data-n="aberto"]').textContent = reais(r.totalAberto);
-    raiz.querySelector('[data-n="aberto-info"]').textContent = r.atrasadas.length
-      ? r.atrasadas.length + ' ' + F.plural(r.atrasadas.length, 'atrasada', 'atrasadas') + ' + próxima'
-      : 'só a próxima cobrança';
-    var cardAberto = raiz.querySelector('[data-n-card="aberto"]');
-    cardAberto.classList.toggle('resumo--atencao', r.atrasadas.length > 0);
+    var dias = F.diasEntre(F.hojeISO(), assinatura.acessoAte) + 1; // conta o dia de hoje
+    card.dataset.assinaturaEstado = dias <= 2 ? 'teste' : 'emdia';
+    badge.className = dias <= 2 ? 'badge badge--laranja' : 'badge';
+    badge.textContent = 'Ativo';
+    titulo.textContent = 'Liberado até ' + F.dataCurta(assinatura.acessoAte);
+    texto.textContent = (dias === 1 ? 'Hoje é o último dia do seu acesso.' : 'Faltam ' + dias + ' dias.') +
+      ' Para continuar sem interrupção, pague um novo plano: os dias são somados.';
   }
 
   var SITUACAO = {
-    paga: { classe: '', texto: function (c) { return 'Paga em ' + F.dataCurta(c.pagoEm); } },
-    aberta: { classe: 'badge--agua', texto: function () { return 'Em aberto'; } },
-    hoje: { classe: 'badge--laranja', texto: function () { return 'Vence hoje'; } },
-    atrasada: { classe: 'badge--vermelho', texto: function (c, hoje) {
-      var d = F.diasEntre(c.vencimento, hoje);
-      return 'Atrasada há ' + d + ' ' + F.plural(d, 'dia', 'dias');
-    } }
+    approved: { classe: '', texto: 'Aprovado' },
+    pending: { classe: 'badge--agua', texto: 'Aguardando' },
+    in_process: { classe: 'badge--agua', texto: 'Em análise' },
+    authorized: { classe: 'badge--agua', texto: 'Em análise' },
+    rejected: { classe: 'badge--vermelho', texto: 'Recusado' },
+    cancelled: { classe: 'badge--vermelho', texto: 'Cancelado' },
+    expired: { classe: 'badge--vermelho', texto: 'Expirado' },
+    valor_divergente: { classe: 'badge--vermelho', texto: 'Em revisão' }
   };
 
   function celula(rotulo, conteudo) {
@@ -198,206 +104,124 @@
     return td;
   }
 
-  function renderCobrancas(r) {
-    var corpo = $('[data-cobrancas] tbody');
+  function renderHistorico() {
+    // Cartão "pending" = checkout aberto e não concluído; não é um pagamento.
+    var lista = assinatura.pagamentos.filter(function (p) { return !(p.meio === 'cartao' && p.status === 'pending'); });
+    var tabela = $('[data-historico]');
+    var corpo = tabela.querySelector('tbody');
     corpo.textContent = '';
-    // Mais recentes primeiro (a próxima a vencer no topo)
-    assinatura.cobrancas.slice().reverse().forEach(function (c) {
-      var s = situacao(c, r.hoje);
+    tabela.hidden = !lista.length;
+    $('[data-historico-vazio]').hidden = !!lista.length;
+
+    lista.forEach(function (p) {
+      var s = SITUACAO[p.status] || { classe: 'badge--agua', texto: p.status };
       var tr = document.createElement('tr');
-      tr.appendChild(celula('Vencimento', F.dataCurta(c.vencimento)));
-      tr.appendChild(celula('Referente a', PLANOS[c.plano].item + ' ' + c.numero));
-      tr.appendChild(celula('Valor', reais(c.valor)));
-
+      tr.appendChild(celula('Data', dataDe(p.aprovadoEm || p.criadoEm)));
+      tr.appendChild(celula('Plano', PLANOS[p.plano] ? PLANOS[p.plano].nome : p.plano));
+      tr.appendChild(celula('Forma', p.meio === 'pix' ? 'Pix' : 'Cartão'));
+      tr.appendChild(celula('Valor', reais(p.valor)));
       var badge = document.createElement('span');
-      badge.className = 'badge ' + SITUACAO[s].classe;
-      badge.textContent = SITUACAO[s].texto(c, r.hoje);
+      badge.className = 'badge ' + s.classe;
+      badge.textContent = s.texto;
       tr.appendChild(celula('Situação', badge));
-
-      var acao = document.createElement('td');
-      acao.className = 'tabela__acao';
-      var btn = document.createElement('button');
-      btn.type = 'button';
-      if (s !== 'paga' && s !== 'atrasada' && cartaoAtivo()) {
-        // Será cobrada no cartão: sem botão de Pix, para não pagar duas vezes.
-        var noCartao = document.createElement('span');
-        noCartao.className = 'texto-sm texto-sec';
-        noCartao.textContent = 'No cartão';
-        acao.appendChild(noCartao);
-      } else if (s !== 'paga') {
-        btn.className = 'btn btn--sm' + (s === 'aberta' ? ' btn--secundario' : '');
-        btn.dataset.pix = c.id;
-        btn.textContent = 'Pagar com Pix';
-        btn.setAttribute('aria-label', 'Pagar com Pix a ' + PLANOS[c.plano].item.toLowerCase() + ' ' + c.numero +
-          ', ' + reais(c.valor) + ', vencimento ' + F.dataCurta(c.vencimento));
-        acao.appendChild(btn);
-      }
-      tr.appendChild(acao);
       corpo.appendChild(tr);
     });
   }
 
-  /* ---------- Pagamento automático no cartão (Mercado Pago) ----------
-     Assinatura sem plano com pagamento pendente: o servidor cria a
-     assinatura (/api/subscriptions) e a pessoa informa o cartão na página do
-     Mercado Pago. Cada cobrança aprovada chega pelo webhook, que marca a
-     mensalidade como paga e estende o acesso, como no Pix. */
-  var cartaoEl = raiz.querySelector('[data-mp-subscriptions-page]');
-  var assinarBtn = cartaoEl.querySelector('[data-cartao-assinar]');
-  var cartaoOcupado = false; // evita cliques repetidos enquanto processa
-
-  var CARTAO = {
-    nenhuma: { badge: '', classe: '', texto: function (p) {
-      return 'Cadastre um cartão no Mercado Pago e cada ' + (p.periodo === 'ano' ? 'anuidade' : 'mensalidade') +
-        ' de ' + reais(p.valor) + ' é cobrada sozinha, a partir do fim do período que você já tem.';
-    }, acoes: [] },
-    pending: { badge: 'Aguardando cartão', classe: 'badge--laranja', texto: function () {
-      return 'Falta informar o cartão na página do Mercado Pago. Clique em "Assinar no cartão" para continuar de onde parou.';
-    }, acoes: ['cancel'] },
-    authorized: { badge: 'Ativo', classe: '', texto: function (p) {
-      return 'As cobranças de ' + reais(p.valor) + ' por ' + p.periodo + ' são feitas no cartão. O acesso é liberado assim que o Mercado Pago aprova.';
-    }, acoes: ['pause', 'cancel'] },
-    paused: { badge: 'Pausado', classe: 'badge--agua', texto: function () {
-      return 'As cobranças no cartão estão pausadas. Reative ou pague as mensalidades com Pix.';
-    }, acoes: ['reactivate', 'cancel'] },
-    cancelled: { badge: 'Cancelado', classe: 'badge--vermelho', texto: function (p) {
-      return 'A assinatura anterior foi cancelada. Você pode assinar de novo, ' + reais(p.valor) + ' por ' + p.periodo + ', ou seguir pagando com Pix.';
-    }, acoes: [] }
-  };
-
-  function cartaoAtivo() { return !!cartao && cartao.status === 'authorized'; }
-  function cartaoVivo() { return !!cartao && ['pending', 'authorized', 'paused'].indexOf(cartao.status) !== -1; }
-
-  function erroCartao(msg) {
-    var el = cartaoEl.querySelector('[data-cartao-erro]');
-    el.hidden = !msg;
-    el.textContent = msg ? msg + ' Se continuar, tente novamente em alguns minutos ou pague com Pix.' : '';
-  }
-
-  function renderCartao() {
-    var estado = cartao && CARTAO[cartao.status] ? cartao.status : 'nenhuma';
-    var info = CARTAO[estado];
-    var plano = PLANOS[estado === 'nenhuma' || estado === 'cancelled' ? assinatura.plano : cartao.plano];
-    cartaoEl.dataset.cartaoEstado = estado;
-    cartaoEl.setAttribute('aria-busy', 'false');
-    cartaoEl.querySelector('[data-cartao-texto]').textContent = info.texto(plano);
-
-    var badge = cartaoEl.querySelector('[data-cartao-badge]');
-    badge.hidden = !info.badge;
-    badge.className = 'badge ' + info.classe;
-    badge.textContent = info.badge;
-
-    assinarBtn.hidden = !(estado === 'nenhuma' || estado === 'cancelled' || estado === 'pending');
-    cartaoEl.querySelectorAll('[data-cartao-acao]').forEach(function (b) {
-      b.hidden = info.acoes.indexOf(b.dataset.cartaoAcao) === -1;
-    });
-  }
-
-  async function carregarCartao() {
-    try {
-      cartao = await S.getAssinaturaCartao();
-    } catch (err) {
-      cartao = null;
-    }
-  }
-
-  async function assinarCartao() {
-    if (cartaoOcupado) return;
-    cartaoOcupado = true;
-    erroCartao('');
-    PF.setLoading(assinarBtn, true, 'Processando…');
-    try {
-      var r = await S.criarAssinaturaCartao();
-      // Vai para a página do Mercado Pago (o botão segue desabilitado).
-      window.location.assign(r.initPoint);
-    } catch (err) {
-      cartaoOcupado = false;
-      PF.setLoading(assinarBtn, false);
-      erroCartao(err.message || 'Não foi possível abrir o Mercado Pago agora.');
-    }
-  }
-
-  var TEXTO_ACAO = {
-    pause: { ok: 'Pagamento automático pausado.', carregando: 'Pausando…' },
-    reactivate: { ok: 'Pagamento automático reativado.', carregando: 'Reativando…' },
-    cancel: { ok: 'Pagamento automático cancelado. Você pode seguir pagando com Pix.', carregando: 'Cancelando…' }
-  };
-
-  async function alterarCartao(acao, botao) {
-    if (cartaoOcupado || !cartao) return;
-    if (acao === 'cancel' && !window.confirm('Cancelar o pagamento automático no cartão? Depois de cancelada, a assinatura não pode ser reativada; será preciso assinar de novo.')) return;
-    cartaoOcupado = true;
-    erroCartao('');
-    PF.setLoading(botao, true, TEXTO_ACAO[acao].carregando);
-    try {
-      cartao = await S.alterarAssinaturaCartao(cartao.id, acao);
-      renderTudo();
-      PF.toast(TEXTO_ACAO[acao].ok);
-    } catch (err) {
-      erroCartao(err.message || 'Não foi possível alterar a assinatura.');
-    } finally {
-      cartaoOcupado = false;
-      PF.setLoading(botao, false);
-    }
-  }
-
-  /** Volta da página do Mercado Pago (back_url: app.html?assinatura=retorno#plano). */
-  async function conferirRetorno() {
-    var params = new URLSearchParams(location.search);
-    if (params.get('assinatura') !== 'retorno') return;
-    params.delete('assinatura');
-    var busca = params.toString();
-    history.replaceState(null, '', location.pathname + (busca ? '?' + busca : '') + location.hash);
-    if (!cartao) return;
-    try {
-      cartao = await S.consultarAssinaturaCartao(cartao.id);
-    } catch (err) { /* mostra o último status conhecido */ }
-    renderTudo();
-    if (cartao.status === 'authorized') {
-      PF.toast('As próximas cobranças serão feitas no cartão automaticamente.', { titulo: 'Pagamento automático ativado', duracao: 6000 });
-    } else if (cartao.status === 'pending') {
-      PF.toast('O cartão ainda não foi confirmado. Se você concluiu agora, a confirmação pode levar alguns minutos.', { tipo: 'info', duracao: 6000 });
-    }
-  }
-
-  assinarBtn.addEventListener('click', assinarCartao);
-  cartaoEl.addEventListener('click', function (e) {
-    var b = e.target instanceof Element ? e.target.closest('[data-cartao-acao]') : null;
-    if (b) alterarCartao(b.dataset.cartaoAcao, b);
-  });
-
   function renderTudo() {
-    var r = resumir();
-    renderResumo(r);
-    renderCartao();
-    renderCobrancas(r);
-    renderBadge(r);
-    var radio = form.querySelector('[value="' + assinatura.plano + '"]');
-    if (radio) radio.checked = true;
-    return r;
+    renderAcesso();
+    renderHistorico();
+    if (!planoEscolhido()) {
+      var radio = form.querySelector('[value="' + assinatura.plano + '"]') || form.querySelector('[value="mensal"]');
+      radio.checked = true;
+    }
   }
 
-  // Badge e seção podem pedir ao mesmo tempo: compartilham o mesmo carregamento
-  // para não gerar as cobranças duas vezes.
+  // Seção e retorno do pagamento podem pedir ao mesmo tempo: um carregamento só.
   var carregando = null;
   function carregar() {
     if (!carregando) {
       carregando = (async function () {
         assinatura = await S.getAssinatura();
-        assinatura.cobrancas = assinatura.cobrancas || [];
-        if (gerarCobrancas()) await S.saveAssinatura(assinatura);
-        await carregarCartao();
       })().finally(function () { carregando = null; });
     }
     return carregando;
   }
 
+  /** Recarrega e avisa o app.js para liberar o menu. */
+  async function acessoLiberado() {
+    await carregar();
+    renderTudo();
+    document.dispatchEvent(new CustomEvent('pf:acesso', { detail: { acessoAte: assinatura.acessoAte } }));
+  }
+
+  /* ---------- Escolha do plano ---------- */
+  form.addEventListener('change', function () {
+    erro('');
+    var plano = planoEscolhido();
+    if (plano && assinatura && plano !== assinatura.plano) {
+      assinatura.plano = plano;
+      S.savePlanoPreferido(plano).catch(function () { /* só preferência */ });
+    }
+  });
+  form.addEventListener('submit', function (e) { e.preventDefault(); });
+
+  /* ---------- Cartão (Checkout Pro) ----------
+     O servidor cria a preferência e devolve o init_point; a pessoa paga na
+     página do Mercado Pago e volta para app.html?pagamento=<id>#plano. */
+  botaoCartao.addEventListener('click', async function () {
+    var plano = planoEscolhido();
+    if (ocupado || !plano) return;
+    ocupado = true;
+    erro('');
+    PF.setLoading(botaoCartao, true, 'Abrindo o Mercado Pago…');
+    try {
+      var r = await S.criarPagamentoCartao(plano);
+      window.location.assign(r.initPoint); // segue desabilitado até sair da página
+    } catch (err) {
+      ocupado = false;
+      PF.setLoading(botaoCartao, false);
+      erro((err.message || 'Não foi possível abrir o pagamento no cartão.') + ' Você também pode pagar com Pix.');
+    }
+  });
+
+  /** Volta do Checkout Pro: confere o pagamento no servidor e libera na hora. */
+  async function conferirRetorno() {
+    var params = new URLSearchParams(location.search);
+    var compra = params.get('pagamento');
+    if (!compra) return;
+    params.delete('pagamento');
+    ['collection_id', 'collection_status', 'payment_id', 'status', 'external_reference', 'payment_type',
+      'merchant_order_id', 'preference_id', 'site_id', 'processing_mode', 'merchant_account_id'].forEach(function (k) { params.delete(k); });
+    var busca = params.toString();
+    history.replaceState(null, '', location.pathname + (busca ? '?' + busca : '') + location.hash);
+
+    var aviso = PF.toast('Conferindo seu pagamento…', { tipo: 'info', duracao: 0 });
+    try {
+      var r = await S.statusPagamentoCartao(compra);
+      aviso.fechar();
+      if (r.status === 'approved') {
+        await acessoLiberado();
+        PF.toast('Acesso liberado até ' + F.dataCurta(assinatura.acessoAte) + '.', { titulo: 'Pagamento aprovado', duracao: 6000 });
+      } else if (r.status === 'rejected' || r.status === 'cancelled') {
+        await carregar();
+        renderTudo();
+        PF.toast('O pagamento não foi aprovado. Tente outro cartão ou pague com Pix.', { titulo: 'Pagamento recusado', tipo: 'erro', duracao: 8000 });
+      } else if (r.status === 'pending' || r.status === 'in_process' || r.status === 'authorized') {
+        PF.toast('O Mercado Pago ainda está analisando o pagamento. Assim que aprovar, o acesso é liberado sozinho.', { tipo: 'info', duracao: 8000 });
+      }
+    } catch (err) {
+      aviso.fechar();
+      PF.toast(err.message || 'Não foi possível conferir o pagamento agora. Atualize a página em instantes.', { tipo: 'erro' });
+    }
+  }
+
   /* ---------- Pix ----------
      Abre o QR, consulta /api/pix/status a cada 5 s enquanto o diálogo está
-     aberto e, quando o Mercado Pago aprova, recarrega o plano e avisa o
-     app.js (evento 'pf:acesso') para desbloquear o menu. */
+     aberto e, quando o Mercado Pago aprova, recarrega e avisa o app.js
+     (evento 'pf:acesso') para desbloquear o menu. */
   var dialogo = document.querySelector('[data-pix-dialogo]');
-  var pix = null; // { pagamento, cobranca, timer, relogio }
+  var pix = null; // { pagamento, plano, timer, relogio }
 
   function pararPix() {
     if (!pix) return;
@@ -438,35 +262,31 @@
   }
 
   async function pixAprovado() {
-    var c = pix.cobranca;
+    var plano = pix.plano;
     pararPix();
     estadoPix('pago', 'Pagamento confirmado!');
-    await carregar();
-    renderTudo();
-    document.dispatchEvent(new CustomEvent('pf:acesso', { detail: { acessoAte: assinatura.acessoAte } }));
+    await acessoLiberado();
     setTimeout(function () { if (dialogo.open) dialogo.close(); }, 1200);
-    PF.toast(PLANOS[c.plano].item + ' ' + c.numero + ' paga. Acesso liberado até ' + F.dataCurta(assinatura.acessoAte) + '.', {
+    PF.toast(PLANOS[plano].item + ' pago. Acesso liberado até ' + F.dataCurta(assinatura.acessoAte) + '.', {
       titulo: 'Pagamento confirmado',
       duracao: 6000
     });
   }
 
-  async function abrirPix(cobrancaId) {
-    var c = assinatura.cobrancas.find(function (x) { return x.id === cobrancaId; });
-    if (!c) return;
+  async function abrirPix(plano) {
     pararPix();
-    dialogo.querySelector('[data-pix-titulo]').textContent = PLANOS[c.plano].item + ' ' + c.numero;
-    dialogo.querySelector('[data-pix-valor]').textContent = reais(PLANOS[c.plano].valor);
+    dialogo.querySelector('[data-pix-titulo]').textContent = PLANOS[plano].item;
+    dialogo.querySelector('[data-pix-valor]').textContent = reais(PLANOS[plano].valor);
     dialogo.querySelector('[data-pix-img]').removeAttribute('src');
     dialogo.querySelector('[data-pix-codigo]').value = '';
     dialogo.querySelector('[data-pix-validade]').textContent = '';
     estadoPix('carregando', 'Gerando o Pix…');
     if (typeof dialogo.showModal === 'function') dialogo.showModal();
 
-    var meu = { cobranca: c };
+    var meu = { plano: plano };
     pix = meu;
     try {
-      var pagamento = await S.criarPix(c.id);
+      var pagamento = await S.criarPix(plano);
       if (pix !== meu) return;
       meu.pagamento = pagamento;
       dialogo.querySelector('[data-pix-img]').src = 'data:image/png;base64,' + pagamento.qrCodeBase64;
@@ -480,6 +300,11 @@
       estadoPix('erro', err.message || 'Não foi possível gerar o Pix.');
     }
   }
+
+  botaoPix.addEventListener('click', function () {
+    var plano = planoEscolhido();
+    if (plano) abrirPix(plano);
+  });
 
   dialogo.addEventListener('close', pararPix);
   dialogo.querySelector('[data-pix-fechar]').addEventListener('click', function () { dialogo.close(); });
@@ -495,59 +320,15 @@
     PF.toast('Código Pix copiado. Cole no app do seu banco, em "Pix copia e cola".', { tipo: 'info' });
   });
 
-  raiz.addEventListener('click', function (e) {
-    var alvo = e.target instanceof Element ? e.target : null;
-    var pagar = alvo && alvo.closest('[data-pix]');
-    if (pagar) abrirPix(pagar.dataset.pix);
-  });
-
-  form.addEventListener('submit', async function (e) {
-    e.preventDefault();
-    var escolhido = form.plano.value;
-    if (!escolhido || escolhido === assinatura.plano) {
-      PF.toast('Esse já é o seu plano atual.', { tipo: 'info' });
-      return;
-    }
-    if (cartaoVivo() && cartao.status !== 'pending') {
-      PF.toast('Cancele o pagamento automático no cartão antes de trocar de plano. Depois, assine de novo no plano novo.', { tipo: 'aviso', duracao: 6000 });
-      return;
-    }
-    var botao = form.querySelector('[type="submit"]');
-    PF.setLoading(botao, true, 'Salvando…');
-    try {
-      var hoje = F.hojeISO();
-      assinatura.plano = escolhido;
-      // Só as cobranças ainda não vencidas e não pagas mudam de valor.
-      assinatura.cobrancas.forEach(function (c) {
-        if (!c.pagoEm && c.vencimento >= hoje) {
-          c.plano = escolhido;
-          c.valor = PLANOS[escolhido].valor;
-        }
-      });
-      await S.saveAssinatura(assinatura);
-      renderTudo();
-      PF.toast('A próxima cobrança já está no valor do plano ' + PLANOS[escolhido].nome.toLowerCase() + ' (' + reais(PLANOS[escolhido].valor) + ').', {
-        titulo: 'Plano alterado para ' + PLANOS[escolhido].nome
-      });
-    } catch (err) {
-      PF.toast(err.message || 'Não foi possível trocar o plano.', { tipo: 'erro' });
-    } finally {
-      PF.setLoading(botao, false);
-    }
-  });
-
-  /* ---------- Eventos e início ---------- */
+  /* ---------- Início ---------- */
   document.addEventListener('pf:secao', async function (e) {
     if (e.detail.secao !== 'plano') return;
-    await carregar();
-    renderTudo();
+    try {
+      await carregar();
+      renderTudo();
+    } catch (err) {
+      erro(err.message || 'Não foi possível carregar suas assinaturas.');
+    }
     await conferirRetorno();
-  });
-
-  // Badge já ao abrir o app (sem esperar a seção ser aberta).
-  PF.auth.pronto.then(async function (usuario) {
-    if (!usuario) return;
-    await carregar();
-    renderBadge(resumir());
   });
 })();

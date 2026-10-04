@@ -22,10 +22,10 @@
   <!-- ===================== Header ===================== -->
   <header class="topo" data-topo>
     <a class="aviso-topo" href="login.html#cadastro">
-      <span class="aviso-topo__selo">7 dias grátis</span>
+      <span class="aviso-topo__selo">A partir de R$ 4,99</span>
       <span class="aviso-topo__texto">
-        <span class="aviso-topo__longo">Teste o PontoFit sem custo. Depois, plano mensal de R$ 20,00 ou anual de R$ 199,99.</span>
-        <span class="aviso-topo__curto">Planos desde R$ 16,67/mês</span>
+        <span class="aviso-topo__longo">Planos de 7 dias por R$ 4,99, 30 dias por R$ 15,00 ou 6 meses por R$ 50,00. Sem renovação automática.</span>
+        <span class="aviso-topo__curto">Planos desde R$ 4,99</span>
       </span>
       <span class="aviso-topo__acao">Criar conta <span aria-hidden="true">→</span></span>
     </a>
@@ -338,43 +338,46 @@
       <div class="container">
         <div class="planos__cabecalho">
           <h2 id="planos-titulo">Planos</h2>
-          <p class="lead">Os primeiros 7 dias são grátis em qualquer plano.</p>
-        </div>
-
-        <div class="teste-gratis" data-revelar>
-          <span class="teste-gratis__numero" aria-hidden="true">7</span>
-          <div class="teste-gratis__texto">
-            <p class="teste-gratis__titulo">Teste grátis por 7 dias</p>
-            <p>Crie sua conta e use tudo: o livro de receitas, a evolução com gráfico, as metas e o lembrete de dose.</p>
-          </div>
-          <a class="btn btn--laranja teste-gratis__botao" href="login.html#cadastro">Começar teste grátis</a>
+          <p class="lead">Pague uma vez e use tudo pelo período escolhido. Sem renovação automática: quando quiser continuar, é só pagar outro plano.</p>
         </div>
 
         <ul class="planos__grade" role="list">
           <li class="card plano" data-revelar>
-            <h3 class="plano__nome">Mensal</h3>
-            <p class="plano__preco"><span class="plano__valor">R$ 20,00</span><span class="plano__periodo">/mês</span></p>
-            <p class="plano__detalhe">Cobrado todo mês, depois do teste grátis.</p>
+            <h3 class="plano__nome">7 dias</h3>
+            <p class="plano__preco"><span class="preco plano__valor"><span class="preco__moeda">R$</span> <span class="preco__inteiro">4</span><span class="preco__centavos">,99</span></span></p>
+            <p class="plano__detalhe">7 dias de acesso completo. Bom para conhecer o PontoFit.</p>
             <ul class="plano__itens" role="list">
               <li>Livro com 18 receitas: salgadas, doces, sucos e vitaminas</li>
               <li>Ficha completa com idade e IMC automáticos</li>
               <li>Gráfico de evolução do peso e metas</li>
               <li>Lembrete de dose com contagem regressiva</li>
             </ul>
-            <a class="btn btn--secundario btn--bloco" href="login.html?plano=mensal#cadastro" aria-label="Começar teste grátis no plano mensal">Começar teste grátis</a>
+            <a class="btn btn--secundario btn--bloco" href="login.html?plano=semanal#cadastro" aria-label="Criar conta e escolher o plano de 7 dias">Começar agora</a>
+          </li>
+          <li class="card plano" data-revelar>
+            <h3 class="plano__nome">30 dias</h3>
+            <p class="plano__preco"><span class="preco plano__valor"><span class="preco__moeda">R$</span> <span class="preco__inteiro">15</span><span class="preco__centavos">,00</span></span></p>
+            <p class="plano__detalhe">30 dias de acesso completo.</p>
+            <ul class="plano__itens" role="list">
+              <li>Livro com 18 receitas: salgadas, doces, sucos e vitaminas</li>
+              <li>Ficha completa com idade e IMC automáticos</li>
+              <li>Gráfico de evolução do peso e metas</li>
+              <li>Lembrete de dose com contagem regressiva</li>
+            </ul>
+            <a class="btn btn--secundario btn--bloco" href="login.html?plano=mensal#cadastro" aria-label="Criar conta e escolher o plano de 30 dias">Começar agora</a>
           </li>
           <li class="card plano plano--destaque" data-revelar>
             <span class="badge badge--laranja plano__selo">Mais econômico</span>
-            <h3 class="plano__nome">Anual</h3>
-            <p class="plano__preco"><span class="plano__valor">R$ 199,99</span><span class="plano__periodo">/ano</span></p>
-            <p class="plano__detalhe">Equivale a R$ 16,67 por mês: você economiza R$ 40,01 por ano em relação ao mensal.</p>
+            <h3 class="plano__nome">6 meses</h3>
+            <p class="plano__preco"><span class="preco plano__valor"><span class="preco__moeda">R$</span> <span class="preco__inteiro">50</span><span class="preco__centavos">,00</span></span></p>
+            <p class="plano__detalhe">6 meses de acesso completo. Sai por cerca de R$ 8,33 por mês.</p>
             <ul class="plano__itens" role="list">
               <li>Livro com 18 receitas: salgadas, doces, sucos e vitaminas</li>
               <li>Ficha completa com idade e IMC automáticos</li>
               <li>Gráfico de evolução do peso e metas</li>
               <li>Lembrete de dose com contagem regressiva</li>
             </ul>
-            <a class="btn btn--bloco" href="login.html?plano=anual#cadastro" aria-label="Começar teste grátis no plano anual">Começar teste grátis</a>
+            <a class="btn btn--bloco" href="login.html?plano=semestral#cadastro" aria-label="Criar conta e escolher o plano de 6 meses">Começar agora</a>
           </li>
         </ul>
       </div>

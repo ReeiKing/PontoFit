@@ -102,7 +102,7 @@
         <li>
           <a class="menu__item" href="#plano" data-link-secao="plano">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
-            <span>Meu plano</span>
+            <span>Assinaturas</span>
             <!-- Mensalidades atrasadas (js/plano.js) -->
             <span class="badge badge--laranja menu__badge" data-badge-plano aria-hidden="true" hidden></span>
             <span class="sr-only" data-badge-plano-leitor></span>
@@ -725,95 +725,81 @@
 
     <section class="secao-app" id="secao-plano" data-secao="plano" aria-labelledby="titulo-plano" hidden>
       <header class="secao-app__cabecalho">
-        <h1 id="titulo-plano" tabindex="-1">Meu plano</h1>
-        <p class="texto-sec">Acompanhe suas mensalidades e registre os pagamentos.</p>
+        <h1 id="titulo-plano" tabindex="-1">Assinaturas</h1>
+        <p class="texto-sec">Escolha um plano e pague com Pix ou cartão. O acesso é liberado assim que o pagamento é aprovado.</p>
       </header>
 
       <div class="plano-app" data-plano>
-        <!-- Resumo da assinatura -->
-        <section class="card assinatura" data-assinatura-estado="teste" aria-labelledby="assinatura-nome" aria-live="polite">
+        <!-- Situação do acesso -->
+        <section class="card assinatura" data-assinatura-estado="carregando" aria-labelledby="assinatura-titulo" aria-live="polite">
           <div class="assinatura__plano">
-            <p class="assinatura__rotulo">Plano atual</p>
-            <h2 class="assinatura__nome" id="assinatura-nome" data-assinatura-nome></h2>
-            <p class="assinatura__preco" data-assinatura-preco></p>
+            <p class="assinatura__rotulo">Seu acesso</p>
+            <h2 class="assinatura__nome" id="assinatura-titulo" data-assinatura-titulo>Carregando…</h2>
           </div>
           <div class="assinatura__situacao">
-            <span class="badge" data-assinatura-badge></span>
+            <span class="badge" data-assinatura-badge hidden></span>
             <p data-assinatura-texto></p>
-            <p class="assinatura__proxima" data-assinatura-proxima></p>
           </div>
         </section>
 
-        <!-- Pagamento automático no cartão (Mercado Pago, js/plano.js) -->
-        <section class="card cartao-auto" data-mp-subscriptions-page="without-plan-pending" data-cartao-estado="carregando" aria-labelledby="plano-t-cartao" aria-busy="true">
-          <div class="cartao-auto__texto">
-            <h2 class="evo__titulo" id="plano-t-cartao">Pagamento automático no cartão</h2>
-            <p class="texto-sm texto-sec" data-cartao-texto>Carregando…</p>
-          </div>
-          <div class="cartao-auto__acoes">
-            <span class="badge" data-cartao-badge hidden></span>
-            <button class="btn btn--sm" type="button" data-cartao-assinar data-mp-subscription-cta="without-plan-pending" hidden><span>Assinar no cartão</span></button>
-            <button class="btn btn--sm btn--secundario" type="button" data-cartao-acao="pause" hidden><span>Pausar</span></button>
-            <button class="btn btn--sm btn--secundario" type="button" data-cartao-acao="reactivate" hidden><span>Reativar</span></button>
-            <button class="btn btn--sm btn--secundario" type="button" data-cartao-acao="cancel" hidden><span>Cancelar</span></button>
-          </div>
-          <p class="cartao-auto__erro texto-sm" data-cartao-erro role="alert" hidden></p>
+        <!-- Escolha do plano e pagamento (Pix no site ou cartão pelo Checkout Pro) -->
+        <section class="card" aria-labelledby="plano-t-escolher">
+          <h2 class="evo__titulo" id="plano-t-escolher">Escolha seu plano</h2>
+          <form class="planos-app" id="form-plano" novalidate>
+            <fieldset class="planos-app__opcoes">
+              <legend class="sr-only">Plano</legend>
+            <div class="planos-app__opcao">
+              <input type="radio" id="pl-semanal" name="plano" value="semanal">
+              <label for="pl-semanal">
+                <span class="planos-app__nome">7 dias</span>
+                <span class="preco"><span class="preco__moeda">R$</span> <span class="preco__inteiro">4</span><span class="preco__centavos">,99</span></span>
+                <span class="planos-app__detalhe">7 dias de acesso completo</span>
+              </label>
+            </div>
+            <div class="planos-app__opcao">
+              <input type="radio" id="pl-mensal" name="plano" value="mensal">
+              <label for="pl-mensal">
+                <span class="planos-app__nome">30 dias</span>
+                <span class="preco"><span class="preco__moeda">R$</span> <span class="preco__inteiro">15</span><span class="preco__centavos">,00</span></span>
+                <span class="planos-app__detalhe">30 dias de acesso completo</span>
+              </label>
+            </div>
+            <div class="planos-app__opcao">
+              <input type="radio" id="pl-semestral" name="plano" value="semestral">
+              <label for="pl-semestral">
+                  <span class="badge badge--laranja planos-app__selo">Mais econômico</span>
+                <span class="planos-app__nome">6 meses</span>
+                <span class="preco"><span class="preco__moeda">R$</span> <span class="preco__inteiro">50</span><span class="preco__centavos">,00</span></span>
+                <span class="planos-app__detalhe">6 meses de acesso completo</span>
+              </label>
+            </div>
+            </fieldset>
+            <div class="planos-app__acoes">
+              <button class="btn" type="button" data-pagar-pix><span>Pagar com Pix</span></button>
+              <button class="btn btn--secundario" type="button" data-pagar-cartao data-mp-checkout-cta="checkout-pro"><span>Pagar com cartão pelo Mercado Pago</span></button>
+            </div>
+            <p class="campo__ajuda">Pagamento único, sem renovação automática. Se você ainda tiver dias de acesso, o novo período é somado a eles.</p>
+            <p class="planos-app__erro texto-sm" data-plano-erro role="alert" hidden></p>
+          </form>
         </section>
 
-        <ul class="evo__resumo plano-app__numeros" role="list">
-          <li class="card resumo">
-            <p class="resumo__rotulo">Pagas</p>
-            <p class="resumo__valor" data-n="pagas">0</p>
-            <p class="resumo__info" data-n="pagas-info"></p>
-          </li>
-          <li class="card resumo">
-            <p class="resumo__rotulo">Total pago</p>
-            <p class="resumo__valor" data-n="total">R$ 0,00</p>
-            <p class="resumo__info" data-n="total-info"></p>
-          </li>
-          <li class="card resumo" data-n-card="aberto">
-            <p class="resumo__rotulo">Em aberto</p>
-            <p class="resumo__valor" data-n="aberto">R$ 0,00</p>
-            <p class="resumo__info" data-n="aberto-info"></p>
-          </li>
-        </ul>
-
-        <div class="plano-app__colunas">
-          <!-- Mensalidades -->
-          <section class="card" aria-labelledby="plano-t-cobrancas">
-            <h2 class="evo__titulo" id="plano-t-cobrancas" tabindex="-1">Mensalidades</h2>
-            <p class="plano-app__aviso texto-sm">Pague com Pix (QR Code ou copia e cola). A confirmação é automática e o acesso é liberado na hora.</p>
-            <table class="tabela" data-cobrancas>
-              <thead>
-                <tr>
-                  <th scope="col">Vencimento</th>
-                  <th scope="col">Referente a</th>
-                  <th scope="col">Valor</th>
-                  <th scope="col">Situação</th>
-                  <th scope="col"><span class="sr-only">Ações</span></th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
-          </section>
-
-          <!-- Trocar de plano -->
-          <section class="card" aria-labelledby="plano-t-trocar">
-            <h2 class="evo__titulo" id="plano-t-trocar">Trocar de plano</h2>
-            <form class="evo__form" id="form-plano" novalidate>
-              <fieldset class="segmentado plano-app__escolha" style="--opcoes:2" aria-describedby="plano-troca-ajuda">
-                <legend class="sr-only">Plano</legend>
-                <input type="radio" id="pl-mensal" name="plano" value="mensal">
-                <label for="pl-mensal">Mensal <span class="plano-app__preco">R$ 20,00/mês</span></label>
-                <input type="radio" id="pl-anual" name="plano" value="anual">
-                <label for="pl-anual">Anual <span class="plano-app__preco">R$ 199,99/ano</span></label>
-                <span class="segmentado__indicador" aria-hidden="true"></span>
-              </fieldset>
-              <p class="campo__ajuda" id="plano-troca-ajuda">A troca vale a partir da próxima cobrança em aberto. Mensalidades atrasadas continuam com o valor do plano anterior.</p>
-              <button class="btn btn--secundario evo__form-botao" type="submit"><span>Salvar plano</span></button>
-            </form>
-          </section>
-        </div>
+        <!-- Histórico de pagamentos -->
+        <section class="card" aria-labelledby="plano-t-historico">
+          <h2 class="evo__titulo" id="plano-t-historico">Pagamentos</h2>
+          <p class="texto-sm texto-sec" data-historico-vazio>Nenhum pagamento ainda.</p>
+          <table class="tabela" data-historico hidden>
+            <thead>
+              <tr>
+                <th scope="col">Data</th>
+                <th scope="col">Plano</th>
+                <th scope="col">Forma</th>
+                <th scope="col">Valor</th>
+                <th scope="col">Situação</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </section>
       </div>
 
       <!-- Pagamento por Pix (js/plano.js) -->

@@ -1,4 +1,4 @@
-// PontoFit — código comum das funções de Pix (Mercado Pago).
+// PontoFit — código comum das funções de pagamento (Mercado Pago: Pix e cartão).
 // Pastas que começam com "_" não viram rotas na Vercel.
 //
 // Variáveis de ambiente (Vercel → Settings → Environment Variables):
@@ -11,9 +11,11 @@
 const { createClient } = require('@supabase/supabase-js');
 
 // Preço e período decididos aqui, nunca pelo valor que vem do navegador.
+// Mude o preço aqui e em js/plano.js (a duração fica em private.duracao_plano()).
 const PLANOS = {
-  mensal: { valor: 20, item: 'Mensalidade' },
-  anual: { valor: 199.99, item: 'Anuidade' }
+  semanal: { valor: 4.99, item: 'Plano 7 dias' },
+  mensal: { valor: 15, item: 'Plano 30 dias' },
+  semestral: { valor: 50, item: 'Plano 6 meses' }
 };
 
 const MP_API = 'https://api.mercadopago.com';

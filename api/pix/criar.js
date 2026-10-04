@@ -1,16 +1,16 @@
-// POST /api/pix/criar  { cobrancaId }
-// Gera (ou reaproveita) o Pix de uma mensalidade em aberto da pessoa logada.
-// → { id, valor, qrCode, qrCodeBase64, expiraEm }
+// POST /api/pix/criar  { plano: 'semanal' | 'mensal' | 'semestral' }
+// Gera (ou reaproveita) o Pix de um plano para a pessoa logada.
+// O valor sai de PLANOS (servidor), nunca do navegador.
+// → { id, plano, valor, qrCode, qrCodeBase64, expiraEm }
 'use strict';
 
 const { randomUUID } = require('node:crypto');
 const { PLANOS, supabaseAdmin, urlDoSite, mercadoPago, usuarioDaRequisicao, responder } = require('../_lib/pix');
 
 const VALIDADE_MIN = 60; // o Mercado Pago aceita de 30 min a 30 dias
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function saida(pg) {
-  return { id: pg.id, valor: Number(pg.valor), qrCode: pg.qr_code, qrCodeBase64: pg.qr_code_base64, expiraEm: pg.expira_em };
+  return { id: pg.id, plano: pg.plano, valor: Number(pg.valor), qrCode: pg.qr_code, qrCodeBase64: pg.qr_code_base64, expiraEm: pg.expira_em };
 }
 
 module.exports = async function handler(req, res) {
@@ -20,34 +20,29 @@ module.exports = async function handler(req, res) {
     const usuario = await usuarioDaRequisicao(req);
     if (!usuario) return responder(res, 401, { erro: 'Sua sessão expirou. Entre novamente.' });
 
-    const cobrancaId = req.body && req.body.cobrancaId;
-    if (!UUID.test(String(cobrancaId || ''))) return responder(res, 400, { erro: 'Mensalidade inválida.' });
+    const planoId = req.body && req.body.plano;
+    const plano = Object.prototype.hasOwnProperty.call(PLANOS, planoId) ? PLANOS[planoId] : null;
+    if (!plano) return responder(res, 400, { erro: 'Plano inválido.' });
 
+    // Já existe um Pix válido deste plano? Reaproveita (evita QR duplicado).
     const db = supabaseAdmin();
-    const { data: c, error } = await db.from('cobrancas')
-      .select('id, usuario_id, numero, plano, pago_em').eq('id', cobrancaId).maybeSingle();
-    if (error) throw error;
-    if (!c || c.usuario_id !== usuario.id) return responder(res, 404, { erro: 'Mensalidade não encontrada.' });
-    if (c.pago_em) return responder(res, 409, { erro: 'Esta mensalidade já está paga.' });
-
-    // Já existe um Pix válido para ela? Reaproveita (evita QR duplicado).
     const margem = new Date(Date.now() + 5 * 60 * 1000).toISOString();
     const { data: existente } = await db.from('pagamentos_pix').select('*')
-      .eq('cobranca_id', c.id).eq('status', 'pending').gt('expira_em', margem)
+      .eq('usuario_id', usuario.id).eq('plano', planoId).eq('status', 'pending').gt('expira_em', margem)
       .order('criado_em', { ascending: false }).limit(1).maybeSingle();
     if (existente) return responder(res, 200, saida(existente));
 
-    const plano = PLANOS[c.plano];
+    const referencia = randomUUID();
     const expira = new Date(Date.now() + VALIDADE_MIN * 60 * 1000);
     const mp = await mercadoPago('/v1/payments', {
       method: 'POST',
-      headers: { 'X-Idempotency-Key': randomUUID() },
+      headers: { 'X-Idempotency-Key': referencia },
       body: {
         transaction_amount: plano.valor,
-        description: 'PontoFit - ' + plano.item + ' ' + c.numero,
+        description: 'PontoFit - ' + plano.item,
         payment_method_id: 'pix',
         payer: { email: usuario.email },
-        external_reference: c.id,
+        external_reference: referencia,
         notification_url: urlDoSite() + '/api/pix/webhook',
         date_of_expiration: expira.toISOString().replace(/\.\d{3}Z$/, '.000Z')
       }
@@ -59,8 +54,7 @@ module.exports = async function handler(req, res) {
     const linha = {
       id: String(mp.id),
       usuario_id: usuario.id,
-      cobranca_id: c.id,
-      plano: c.plano,
+      plano: planoId,
       valor: plano.valor,
       status: mp.status || 'pending',
       qr_code: dadosPix.qr_code,
@@ -72,7 +66,7 @@ module.exports = async function handler(req, res) {
 
     return responder(res, 201, saida(linha));
   } catch (err) {
-    console.error('[pix/criar]', err);
+    console.error('[pix/criar]', err.message || err);
     return responder(res, 500, { erro: 'Não foi possível gerar o Pix agora. Tente de novo em instantes.' });
   }
 };

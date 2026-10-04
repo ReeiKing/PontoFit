@@ -209,7 +209,7 @@
       });
     });
 
-    // Plano vindo da landing (login.html?plano=anual#cadastro)
+    // Plano vindo da landing (login.html?plano=semestral#cadastro)
     var plano = new URLSearchParams(location.search).get('plano');
     var radioPlano = document.getElementById('cad-plano-' + plano);
     if (radioPlano) radioPlano.checked = true;
