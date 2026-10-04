@@ -23,6 +23,7 @@
     ficha: 'Minha ficha',
     evolucao: 'Minha evolução',
     medicamentos: 'Medicamentos',
+    gestacao: 'Gestação',
     plano: 'Assinaturas'
   };
   var ORDEM = Object.keys(SECOES);

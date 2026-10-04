@@ -105,6 +105,12 @@
             <span class="sr-only" data-badge-medicamentos-leitor></span>
           </a>
         </li>
+        <li hidden>
+          <a class="menu__item" href="#gestacao" data-link-secao="gestacao">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 12h.01M15 12h.01M10 16c.5.3 1.2.5 2 .5s1.5-.2 2-.5"/><path d="M19 6.3a9 9 0 0 1 1.8 3.9 2 2 0 0 1 0 3.6 9 9 0 0 1-17.6 0 2 2 0 0 1 0-3.6A9 9 0 0 1 12 3c2 0 3.5 1.1 3.5 2.5s-.9 2.5-2 2.5c-.8 0-1.5-.4-1.5-1"/></svg>
+            <span>Gestação</span>
+          </a>
+        </li>
         <li>
           <a class="menu__item" href="#plano" data-link-secao="plano">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
@@ -194,6 +200,14 @@
             <p class="painel-numero__info" data-p="dose-info"></p>
           </li>
         </ul>
+
+        <!-- Gestação (só para quem ativou o acompanhamento) -->
+        <a class="card painel-gestacao" href="#gestacao" data-painel-gestacao hidden>
+          <span class="painel-rotulo" data-pg-trimestre></span>
+          <span class="painel-gestacao__semana" data-pg-semana></span>
+          <span class="texto-sec" data-pg-bebe></span>
+          <span class="link-seta">Ver a gestação <span aria-hidden="true">→</span></span>
+        </a>
 
         <div class="painel-grade">
           <!-- Receita do dia -->
@@ -827,6 +841,116 @@
       </div>
     </section>
 
+    <!-- ===================== Gestação (js/gestacao.js, conteúdo em js/gestacao-dados.js) ===================== -->
+    <section class="secao-app" id="secao-gestacao" data-secao="gestacao" aria-labelledby="titulo-gestacao" hidden>
+      <header class="secao-app__cabecalho">
+        <h1 id="titulo-gestacao" tabindex="-1">Gestação</h1>
+        <p class="texto-sec">Acompanhe sua gravidez semana a semana: o bebê, o seu peso, os medicamentos e os cuidados de cada fase.</p>
+      </header>
+
+      <div class="gestacao" data-gestacao>
+        <!-- Ativação -->
+        <section class="card g-ativar" data-gestacao-ativar hidden aria-labelledby="g-t-ativar">
+          <h2 class="evo__titulo" id="g-t-ativar">Está grávida? Ative o acompanhamento</h2>
+          <p class="texto-sec">Com a data, o PontoFit calcula a semana da gestação, mostra o desenvolvimento do bebê e compara seu peso com o ganho recomendado.</p>
+          <form class="evo__form" id="form-gestacao" novalidate>
+            <fieldset class="segmentado" style="--opcoes:2">
+              <legend class="sr-only">Qual data você sabe?</legend>
+              <input type="radio" id="g-ref-dum" name="referencia" value="dum" checked>
+              <label for="g-ref-dum">Última menstruação</label>
+              <input type="radio" id="g-ref-dpp" name="referencia" value="dpp">
+              <label for="g-ref-dpp">Data provável do parto</label>
+              <span class="segmentado__indicador" aria-hidden="true"></span>
+            </fieldset>
+            <div class="campo">
+              <label class="campo__label" for="g-data" data-g-rotulo-data>Primeiro dia da última menstruação</label>
+              <input class="input" id="g-data" name="data" type="date" required>
+            </div>
+            <div class="campo">
+              <label class="campo__label" for="g-peso-pre">Peso antes da gravidez (kg)</label>
+              <input class="input" id="g-peso-pre" name="pesoPre" type="text" inputmode="decimal" placeholder="Ex.: 62,5">
+              <p class="campo__ajuda">Usado para calcular o ganho de peso recomendado. Se não souber, pode deixar em branco.</p>
+            </div>
+            <p class="campo__erro" data-g-erro aria-live="polite"></p>
+            <button class="btn" type="submit"><span>Ativar acompanhamento</span></button>
+          </form>
+        </section>
+
+        <!-- Painel da gestação -->
+        <div class="g-painel" data-gestacao-painel hidden>
+          <section class="card g-hero" aria-labelledby="g-t-semana">
+            <div class="g-hero__topo">
+              <div>
+                <p class="painel-rotulo" data-g-trimestre></p>
+                <h2 class="g-hero__semana" id="g-t-semana" data-g-semana></h2>
+              </div>
+              <div class="g-hero__acoes">
+                <button class="btn btn--sm btn--secundario" type="button" data-g-editar><span>Editar datas</span></button>
+                <button class="btn btn--sm btn--secundario" type="button" data-g-encerrar><span>Encerrar</span></button>
+              </div>
+            </div>
+            <div class="g-progresso" role="img" aria-labelledby="g-barra-rotulo">
+              <span class="g-progresso__barra" data-g-barra></span>
+            </div>
+            <p class="texto-sm texto-sec"><span id="g-barra-rotulo" data-g-barra-rotulo></span> · <span data-g-dpp></span></p>
+            <div class="g-bebe">
+              <p class="g-bebe__fruta" data-g-fruta></p>
+              <p class="texto-sec" data-g-medidas></p>
+              <p data-g-bebe></p>
+            </div>
+          </section>
+
+          <div class="g-grade">
+            <section class="card" aria-labelledby="g-t-peso">
+              <h2 class="evo__titulo" id="g-t-peso">Ganho de peso</h2>
+              <div data-g-peso></div>
+              <p class="g-status" data-g-peso-status hidden></p>
+              <a class="link-seta" href="#evolucao">Registrar peso <span aria-hidden="true">→</span></a>
+            </section>
+
+            <section class="card g-meds" data-g-meds-card aria-labelledby="g-t-meds">
+              <h2 class="evo__titulo" id="g-t-meds">Medicamentos na gestação</h2>
+              <div data-g-meds></div>
+              <details class="g-detalhes">
+                <summary>Ver a lista de medicamentos que pedem cuidado</summary>
+                <ul class="g-lista" data-g-lista-meds></ul>
+                <p class="texto-sm texto-sec">Lista educativa e não completa. Sempre confirme com seu obstetra.</p>
+              </details>
+            </section>
+          </div>
+
+          <section class="card" aria-labelledby="g-t-marcos">
+            <h2 class="evo__titulo" id="g-t-marcos">Exames e marcos do pré-natal</h2>
+            <ul class="g-marcos" role="list" data-g-marcos></ul>
+            <p class="texto-sm texto-sec">Datas de referência. Seu obstetra define o calendário de exames.</p>
+          </section>
+
+          <div class="g-grade">
+            <section class="card" aria-labelledby="g-t-mae">
+              <h2 class="evo__titulo" id="g-t-mae" data-g-dicas-mae-titulo>Dicas para você</h2>
+              <ul class="g-lista g-lista--check" data-g-dicas-mae></ul>
+            </section>
+            <section class="card g-sinais" aria-labelledby="g-t-sinais">
+              <h2 class="evo__titulo" id="g-t-sinais">Procure atendimento se tiver</h2>
+              <ul class="g-lista" data-g-sinais></ul>
+            </section>
+          </div>
+
+          <section aria-labelledby="g-t-bebe">
+            <h2 class="evo__titulo" id="g-t-bebe">Para o bebê que está na barriga</h2>
+            <ul class="g-dicas" role="list" data-g-dicas-bebe></ul>
+          </section>
+
+          <section class="card" aria-labelledby="g-t-evitar">
+            <h2 class="evo__titulo" id="g-t-evitar">Alimentos e hábitos a evitar</h2>
+            <ul class="g-lista" data-g-evitar></ul>
+          </section>
+
+          <p class="texto-sm texto-sec g-rodape">O PontoFit é um apoio ao acompanhamento e não substitui as consultas de pré-natal.</p>
+        </div>
+      </div>
+    </section>
+
     <section class="secao-app" id="secao-plano" data-secao="plano" aria-labelledby="titulo-plano" hidden>
       <header class="secao-app__cabecalho">
         <h1 id="titulo-plano" tabindex="-1">Assinaturas</h1>
@@ -961,6 +1085,8 @@
   <script src="js/evolucao.js"></script>
   <script src="js/cesta.js"></script>
   <script src="js/medicamentos.js"></script>
+  <script src="js/gestacao-dados.js"></script>
+  <script src="js/gestacao.js"></script>
   <script src="js/plano.js"></script>
   <script src="js/painel.js"></script>
 </body>

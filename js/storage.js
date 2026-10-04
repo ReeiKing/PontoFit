@@ -164,7 +164,9 @@
     ['nivelAtividade', 'nivel_atividade'], ['condicoesSaude', 'condicoes_saude', 'a'], ['condicoesOutras', 'condicoes_outras'],
     ['alergias', 'alergias'], ['medicamentos', 'medicamentos_em_uso'], ['profissionalNome', 'profissional_nome'],
     ['profissionalContato', 'profissional_contato'], ['observacoes', 'observacoes'], ['metaPesoKg', 'meta_peso_kg', 'n'],
-    ['metaData', 'meta_data'], ['marcosVistos', 'marcos_vistos', 'a'], ['atualizadoEm', 'atualizado_em']
+    ['metaData', 'meta_data'], ['marcosVistos', 'marcos_vistos', 'a'], ['atualizadoEm', 'atualizado_em'],
+    ['gestante', 'gestante', 'b'], ['gestacaoDum', 'gestacao_dum'], ['gestacaoDpp', 'gestacao_dpp'],
+    ['pesoPreGestacionalKg', 'peso_pre_gestacional_kg', 'n']
   ];
   var CAMPOS_MED = [
     ['nome', 'nome'], ['doseMl', 'dose_ml', 'n'], ['doseMg', 'dose_mg', 'n'], ['intervaloValor', 'intervalo_valor', 'n'],
@@ -178,6 +180,7 @@
     campos.forEach(function (c) {
       var v = linha[c[1]];
       if (c[2] === 'n') o[c[0]] = num(v);
+      else if (c[2] === 'b') o[c[0]] = !!v;
       else if (c[2] === 'a') o[c[0]] = v || [];
       else o[c[0]] = v === null ? '' : v;
     });
@@ -191,6 +194,7 @@
       if (!Object.prototype.hasOwnProperty.call(objeto, c[0]) || c[0] === 'atualizadoEm' || c[0] === 'criadoEm') return;
       var v = objeto[c[0]];
       if (c[2] === 'n') linha[c[1]] = num(v);
+      else if (c[2] === 'b') linha[c[1]] = !!v;
       else if (c[2] === 'a') linha[c[1]] = Array.isArray(v) ? v : [];
       else linha[c[1]] = vazioParaNulo(typeof v === 'string' ? v.trim() : v);
     });

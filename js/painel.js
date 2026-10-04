@@ -3,6 +3,7 @@
    Seção "Início": painel do paciente ao entrar no app.
    - saudação, meta (anel de progresso, quanto falta, estimativa), peso,
      variação, IMC e próxima dose;
+   - semana da gestação, para quem ativou o acompanhamento (gestacao.js);
    - receita do dia e dica do dia (mudam a cada dia, iguais o dia inteiro);
    - situação do plano;
    - "Relatório do paciente": prévia na tela e versão para imprimir/PDF.
@@ -231,8 +232,19 @@
     el.textContent = 'Acesso liberado até ' + F.dataCurta(ate) + (dias <= 3 ? ' (' + (dias === 1 ? 'último dia' : 'faltam ' + dias + ' dias') + ').' : '.');
   }
 
+  function renderGestacao() {
+    var card = $('[data-painel-gestacao]');
+    var g = PF.acompanhamentoGestacao && PF.acompanhamentoGestacao.resumo(dados.ficha);
+    card.hidden = !g;
+    if (!g) return;
+    $('[data-pg-trimestre]').textContent = 'Gestação · ' + g.trimestre + 'º trimestre';
+    $('[data-pg-semana]').textContent = g.semana + ' semanas' + (g.diasExtra ? ' e ' + g.diasExtra + (g.diasExtra === 1 ? ' dia' : ' dias') : '');
+    $('[data-pg-bebe]').textContent = g.semana >= 4 ? 'Seu bebê está do tamanho de ' + g.bebe.fruta + '.' : 'O bebê está começando a se formar.';
+  }
+
   function renderTudo() {
     renderTopo();
+    renderGestacao();
     renderCompletar();
     renderMeta();
     renderNumeros();
@@ -377,6 +389,23 @@
       })));
     }
     folha.appendChild(s2);
+
+    // Gestação
+    var g = PF.acompanhamentoGestacao && PF.acompanhamentoGestacao.resumo(f);
+    if (g) {
+      var sg = secaoRelatorio('Gestação');
+      var dlg = el('dl', 'relatorio__dados');
+      linhaDado(dlg, 'Idade gestacional', g.semana + ' semanas' + (g.diasExtra ? ' e ' + g.diasExtra + ' dias' : '') + ' (' + g.trimestre + 'º trimestre)');
+      linhaDado(dlg, 'Última menstruação', f.gestacaoDum ? F.dataCurta(f.gestacaoDum) : null);
+      linhaDado(dlg, 'Data provável do parto', F.dataCurta(g.dpp));
+      linhaDado(dlg, 'Peso antes da gravidez', f.pesoPreGestacionalKg ? kg(f.pesoPreGestacionalKg) : null);
+      if (f.pesoPreGestacionalKg && !r.vazio) {
+        var ganho = r.atual.pesoKg - f.pesoPreGestacionalKg;
+        linhaDado(dlg, 'Ganho de peso', (ganho < 0 ? '−' : '+') + kg(ganho) + ' (' + F.dataCurta(r.atual.data) + ')');
+      }
+      sg.appendChild(dlg);
+      folha.appendChild(sg);
+    }
 
     // Medicamentos
     var s3 = secaoRelatorio('Medicamentos acompanhados');
