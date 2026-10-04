@@ -738,3 +738,26 @@ select.input {
 .preco__moeda { font-size: .45em; font-weight: 600; margin-right: .15em; align-self: flex-start; margin-top: .25em; }
 .preco__inteiro { font-size: 1em; letter-spacing: -.02em; }
 .preco__centavos { font-size: .45em; font-weight: 600; align-self: flex-start; margin-top: .25em; }
+
+/* ---------- Botões premium: brilho que atravessa no hover e toque firme ----------
+   O ::before fica atrás do texto (isolation no .btn); o ::after é o spinner de
+   carregamento e o ripple é um span à parte, então nada conflita. */
+.btn { --btn-brilho: rgb(255 255 255 / .32); }
+.btn--secundario, .btn--fantasma, .btn--claro { --btn-brilho: rgb(46 157 106 / .16); }
+.btn::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  z-index: -1;
+  background: linear-gradient(110deg, transparent 25%, var(--btn-brilho) 50%, transparent 75%);
+  transform: translateX(-110%);
+  transition: transform .75s cubic-bezier(.2, .8, .2, 1);
+  pointer-events: none;
+}
+.btn:hover::before, .btn:focus-visible::before { transform: translateX(110%); }
+.btn:active { transform: translateY(0) scale(.98); }
+.btn:disabled::before, .btn[aria-disabled="true"]::before, .btn.is-loading::before { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .btn::before { display: none; }
+  .btn:active { transform: none; }
+}
