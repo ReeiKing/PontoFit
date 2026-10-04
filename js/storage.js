@@ -463,6 +463,24 @@
       return itens;
     },
 
+    /* ---------- Receitas favoritas ---------- */
+
+    /** → [id da receita, ...] */
+    getFavoritas: async function () {
+      var linhas = await q(sb.from('receitas_favoritas').select('receita_id'));
+      return linhas.map(function (l) { return l.receita_id; });
+    },
+
+    /** Marca (favorita = true) ou desmarca uma receita. */
+    alternarFavorita: async function (receitaId, favorita) {
+      var id = await uid();
+      if (favorita) {
+        await q(sb.from('receitas_favoritas').upsert({ usuario_id: id, receita_id: receitaId }, { onConflict: 'usuario_id,receita_id', ignoreDuplicates: true }));
+      } else {
+        await q(sb.from('receitas_favoritas').delete().eq('usuario_id', id).eq('receita_id', receitaId));
+      }
+    },
+
     /* ---------- Assinaturas (planos avulsos) ---------- */
 
     /** → { plano (preferido), acessoAte, descontoPrimeiraCompra, pagamentos: [{ id, meio, plano, valor, status, criadoEm, aprovadoEm }] } */

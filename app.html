@@ -224,7 +224,7 @@
     <section class="secao-app" id="secao-receitas" data-secao="receitas" aria-labelledby="titulo-receitas" hidden>
       <header class="secao-app__cabecalho">
         <h1 id="titulo-receitas" tabindex="-1">Receitas</h1>
-        <p class="texto-sec">Seu livro de receitas para o dia a dia. Escolha uma categoria ou procure pelo que tem na geladeira.</p>
+        <p class="texto-sec">58 receitas para o dia a dia. Escolha uma categoria, filtre pelo que combina com você ou procure pelo que tem na geladeira.</p>
       </header>
 
       <div class="livro" data-receitas>
@@ -240,11 +240,14 @@
           <p class="campo__ajuda" id="busca-resultado" data-busca-resultado aria-live="polite"></p>
         </div>
 
+        <!-- Filtros: favoritas e etiquetas (js/receitas.js) -->
+        <div class="livro__filtros" role="group" aria-label="Filtrar receitas" data-filtros></div>
+
         <!-- Índice: cards das receitas -->
         <ul class="livro__indice" role="list" data-indice></ul>
         <div class="card vazio" data-indice-vazio hidden>
           <p class="vazio__titulo">Nenhuma receita encontrada</p>
-          <p class="texto-sec">Tente outro ingrediente ou volte para todas as categorias.</p>
+          <p class="texto-sec" data-indice-vazio-texto>Tente outro ingrediente ou volte para todas as categorias.</p>
           <div><button class="btn btn--secundario" type="button" data-limpar-busca>Ver todas as receitas</button></div>
         </div>
       </div>
@@ -254,12 +257,16 @@
         <article class="leitor__pagina" data-leitor-pagina>
           <header class="leitor__topo">
             <p class="leitor__categoria" data-leitor-categoria></p>
+            <button class="leitor__favorita" type="button" data-leitor-favorita aria-pressed="false" aria-label="Salvar nos favoritos">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+            </button>
             <button class="leitor__fechar" type="button" data-leitor-fechar aria-label="Fechar receita">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"/></svg>
             </button>
           </header>
           <h2 class="leitor__titulo" id="leitor-titulo" data-leitor-titulo tabindex="-1"></h2>
           <p class="leitor__meta" data-leitor-meta></p>
+          <p class="leitor__tags" data-leitor-tags></p>
 
           <div class="leitor__corpo">
             <section class="leitor__ingredientes" aria-labelledby="leitor-t-ingredientes">
