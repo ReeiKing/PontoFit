@@ -1505,3 +1505,54 @@
   :root:not([data-theme="light"]) .nutriente__bloco--gestacao { background: #3A1F2B; }
 }
 @media (prefers-reduced-motion: reduce) { .nutriente--destaque { animation: none; } }
+
+/* ---------- Painel: água, check-in e conquistas ---------- */
+.painel-habitos { display: grid; gap: var(--esp-4); }
+@media (min-width: 900px) { .painel-habitos { grid-template-columns: 1fr 1fr; } }
+
+.painel-agua { display: grid; grid-template-columns: auto 1fr; gap: var(--esp-4); align-items: center; background: linear-gradient(150deg, var(--agua-suave), var(--superficie) 65%); }
+.painel-agua__texto { display: grid; gap: .3rem; justify-items: start; }
+.painel-agua__qtd { font-family: var(--fonte-titulo); font-size: clamp(1.4rem, 1.1rem + 1vw, 1.8rem); font-weight: 700; }
+.painel-agua__botoes { display: flex; gap: var(--esp-2); margin-top: var(--esp-1); }
+.painel-agua__sequencia { font-size: var(--fs-sm); font-weight: 600; color: var(--agua-escuro); }
+.painel-agua__sequencia:empty { display: none; }
+.copo { width: 84px; }
+.copo svg { width: 100%; height: auto; overflow: visible; }
+.copo__fundo { fill: color-mix(in srgb, var(--agua) 10%, transparent); }
+.copo__contorno { fill: none; stroke: var(--agua-escuro); stroke-width: 3; stroke-linejoin: round; }
+.copo__agua { transform: translateY(100px); transition: transform .8s cubic-bezier(.2, .8, .2, 1); }
+.copo__onda { fill: var(--agua); animation: copo-onda 3s linear infinite; }
+@keyframes copo-onda { from { transform: translateX(0); } to { transform: translateX(40px); } }
+.painel-agua--batida .copo__contorno { stroke: var(--verde); }
+.painel-agua--batida .painel-agua__qtd { color: var(--verde-escuro); }
+
+.painel-checkin { display: grid; gap: var(--esp-2); align-content: start; background: linear-gradient(150deg, var(--laranja-suave), var(--superficie) 65%); }
+.painel-checkin__titulo { font-size: var(--fs-lead); }
+.painel-checkin__form { display: flex; gap: var(--esp-2); flex-wrap: wrap; }
+.painel-checkin__form .input { flex: 1 1 10rem; min-width: 0; }
+
+.painel-conquistas__topo { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: var(--esp-2); }
+.conquistas { display: grid; gap: var(--esp-3); padding: 0; margin: var(--esp-3) 0 0; grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr)); }
+.conquista {
+  display: grid; grid-template-columns: auto 1fr; gap: var(--esp-3); align-items: center;
+  padding: var(--esp-3); border-radius: 14px; border: 1px dashed var(--borda); color: var(--texto-sec);
+  transition: transform .2s;
+}
+.conquista__icone { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--superficie-2); }
+.conquista__icone svg { width: 1.4rem; height: 1.4rem; }
+.conquista__texto { display: grid; gap: .1rem; font-size: var(--fs-sm); }
+.conquista__texto strong { color: var(--texto); }
+.conquista--feita { border-style: solid; border-color: transparent; background: linear-gradient(140deg, #FFF4D6, var(--superficie) 80%); color: var(--texto); }
+.conquista--feita .conquista__icone { background: linear-gradient(140deg, #F5C24B, #E0962B); color: #fff; box-shadow: 0 6px 14px rgb(224 150 43 / .35); }
+.conquista--feita:hover { transform: translateY(-2px); }
+.conquista:not(.conquista--feita) .conquista__icone { opacity: .55; }
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .conquista--feita { background: linear-gradient(140deg, #3A3018, var(--superficie) 80%); }
+  :root:not([data-theme="light"]) .painel-agua__sequencia { color: var(--agua); }
+  :root:not([data-theme="light"]) .painel-agua--batida .painel-agua__qtd { color: #6FD3A4; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .copo__onda { animation: none; }
+  .copo__agua { transition: none; }
+}

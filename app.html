@@ -207,6 +207,48 @@
           </li>
         </ul>
 
+        <!-- Hábitos: água do dia e check-in semanal -->
+        <div class="painel-habitos">
+          <section class="card painel-agua" aria-labelledby="painel-t-agua">
+            <div class="copo" aria-hidden="true">
+              <svg viewBox="0 0 80 110" focusable="false">
+                <defs>
+                  <clipPath id="copo-forma"><path d="M8 6h64l-7 96a6 6 0 0 1-6 5.5H21A6 6 0 0 1 15 102z"/></clipPath>
+                </defs>
+                <g clip-path="url(#copo-forma)">
+                  <rect class="copo__fundo" x="0" y="0" width="80" height="110"/>
+                  <g class="copo__agua" data-agua-nivel>
+                    <path class="copo__onda" d="M-40 8 q10 -6 20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 V120 H-40z"/>
+                  </g>
+                </g>
+                <path class="copo__contorno" d="M8 6h64l-7 96a6 6 0 0 1-6 5.5H21A6 6 0 0 1 15 102z"/>
+              </svg>
+            </div>
+            <div class="painel-agua__texto">
+              <p class="painel-rotulo" id="painel-t-agua">Água de hoje</p>
+              <p class="painel-agua__qtd" data-agua-qtd aria-live="polite">–</p>
+              <p class="texto-sm texto-sec" data-agua-info></p>
+              <div class="painel-agua__botoes">
+                <button class="btn btn--sm" type="button" data-agua-mais><span>+ 1 copo</span></button>
+                <button class="btn btn--sm btn--secundario" type="button" data-agua-menos aria-label="Tirar um copo"><span>−</span></button>
+              </div>
+              <p class="painel-agua__sequencia" data-agua-sequencia></p>
+            </div>
+          </section>
+
+          <section class="card painel-checkin" data-painel-checkin hidden aria-labelledby="painel-t-checkin">
+            <p class="painel-rotulo">Check-in semanal</p>
+            <h2 class="painel-checkin__titulo" id="painel-t-checkin" data-checkin-titulo>Hora de registrar seu peso</h2>
+            <p class="texto-sm texto-sec" data-checkin-texto>Uma pesagem por semana, no mesmo horário, mostra o seu progresso real.</p>
+            <form class="painel-checkin__form" data-checkin-form novalidate>
+              <label class="sr-only" for="checkin-peso">Peso de hoje (kg)</label>
+              <input class="input" id="checkin-peso" name="peso" type="text" inputmode="decimal" placeholder="Peso de hoje (kg)" required>
+              <button class="btn btn--sm" type="submit"><span>Registrar</span></button>
+            </form>
+            <p class="campo__erro" data-checkin-erro aria-live="polite"></p>
+          </section>
+        </div>
+
         <!-- Gestação (só para quem ativou o acompanhamento) -->
         <a class="card painel-gestacao" href="#gestacao" data-painel-gestacao hidden>
           <span class="painel-rotulo" data-pg-trimestre></span>
@@ -238,6 +280,15 @@
             <a class="link-seta" href="#plano">Ver assinaturas <span aria-hidden="true">→</span></a>
           </section>
         </div>
+
+        <!-- Conquistas -->
+        <section class="card painel-conquistas" aria-labelledby="painel-t-conquistas">
+          <div class="painel-conquistas__topo">
+            <h2 class="evo__titulo" id="painel-t-conquistas">Suas conquistas</h2>
+            <p class="texto-sm texto-sec" data-conquistas-total></p>
+          </div>
+          <ul class="conquistas" role="list" data-conquistas></ul>
+        </section>
       </div>
     </section>
 

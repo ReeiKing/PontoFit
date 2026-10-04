@@ -467,6 +467,22 @@
       return itens;
     },
 
+    /* ---------- Água do dia ---------- */
+
+    /** Registros desde uma data (AAAA-MM-DD). → [{ data, copos, meta }] (mais recente primeiro) */
+    getAgua: async function (desde) {
+      var linhas = await q(sb.from('registros_agua').select('data, copos, meta').gte('data', desde).order('data', { ascending: false }));
+      return linhas.map(function (l) { return { data: l.data, copos: l.copos, meta: l.meta }; });
+    },
+
+    /** Grava os copos de um dia (cria ou atualiza). */
+    saveAgua: async function (data, copos, meta) {
+      var id = await uid();
+      await q(sb.from('registros_agua').upsert({
+        usuario_id: id, data: data, copos: copos, meta: meta, atualizado_em: new Date().toISOString()
+      }, { onConflict: 'usuario_id,data' }));
+    },
+
     /* ---------- Receitas favoritas ---------- */
 
     /** → [id da receita, ...] */

@@ -4,6 +4,8 @@
    - saudação, meta (anel de progresso, quanto falta, estimativa), peso,
      variação, IMC e próxima dose;
    - semana da gestação, para quem ativou o acompanhamento (gestacao.js);
+   - água do dia (copo com meta pelo peso e sequência de dias), check-in
+     semanal de peso e conquistas;
    - receita do dia e dica do dia (mudam a cada dia, iguais o dia inteiro);
    - situação do plano;
    - "Relatório do paciente": prévia na tela e versão para imprimir/PDF.
@@ -242,8 +244,170 @@
     $('[data-pg-bebe]').textContent = g.semana >= 4 ? 'Seu bebê está do tamanho de ' + g.bebe.fruta + '.' : 'O bebê está começando a se formar.';
   }
 
+  /* ---------- Água do dia ---------- */
+  var agua = { copos: 0, meta: 8, timer: null };
+
+  /** Meta em copos de 250 ml: 35 ml por kg, entre 6 e 14 copos (8 sem peso). */
+  function metaAgua() {
+    var r = dados.resumo;
+    if (r.vazio) return 8;
+    return Math.max(6, Math.min(14, Math.round(r.atual.pesoKg * 35 / 250)));
+  }
+
+  /** Dias seguidos batendo a meta (termina hoje ou ontem). */
+  function sequenciaAgua() {
+    var porDia = {};
+    dados.agua.forEach(function (a) { porDia[a.data] = a; });
+    porDia[F.hojeISO()] = { copos: agua.copos, meta: agua.meta };
+    var dia = F.hojeISO();
+    var ok = function (d) { return porDia[d] && porDia[d].copos >= porDia[d].meta; };
+    if (!ok(dia)) dia = F.somarDias(dia, -1);
+    var n = 0;
+    while (ok(dia)) { n++; dia = F.somarDias(dia, -1); }
+    return n;
+  }
+
+  function renderAgua(animar) {
+    var pct = Math.min(1, agua.copos / agua.meta);
+    var nivel = $('[data-agua-nivel]');
+    if (!animar) nivel.style.transition = 'none';
+    nivel.style.transform = 'translateY(' + ((1 - pct) * 100).toFixed(1) + 'px)';
+    if (!animar) { void nivel.getBoundingClientRect(); nivel.style.transition = ''; }
+    $('[data-agua-qtd]').textContent = agua.copos + ' de ' + agua.meta + (agua.meta === 1 ? ' copo' : ' copos');
+    $('[data-agua-info]').textContent = agua.copos >= agua.meta
+      ? 'Meta do dia batida! ' + F.numero(agua.copos * 0.25, 2) + ' litros.'
+      : 'Faltam ' + (agua.meta - agua.copos) + (agua.meta - agua.copos === 1 ? ' copo' : ' copos') + ' de 250 ml (' + F.numero(agua.meta * 0.25, 2) + ' L no dia).';
+    $('[data-agua-menos]').disabled = agua.copos === 0;
+    var seq = sequenciaAgua();
+    $('[data-agua-sequencia]').textContent = seq >= 2 ? seq + ' dias seguidos batendo a meta' : seq === 1 ? 'Primeiro dia da sequência. Volte amanhã!' : '';
+    secao.querySelector('.painel-agua').classList.toggle('painel-agua--batida', agua.copos >= agua.meta);
+  }
+
+  function mudarAgua(delta) {
+    var antes = agua.copos;
+    agua.copos = Math.max(0, Math.min(40, agua.copos + delta));
+    if (agua.copos === antes) return;
+    renderAgua(true);
+    if (antes < agua.meta && agua.copos >= agua.meta) {
+      PF.toast('Você bateu a meta de água de hoje.', { titulo: 'Hidratação em dia', duracao: 4000 });
+    }
+    clearTimeout(agua.timer);
+    agua.timer = setTimeout(function () {
+      S.saveAgua(F.hojeISO(), agua.copos, agua.meta).then(function () {
+        var hoje = dados.agua.find(function (a) { return a.data === F.hojeISO(); });
+        if (hoje) { hoje.copos = agua.copos; hoje.meta = agua.meta; }
+        else dados.agua.unshift({ data: F.hojeISO(), copos: agua.copos, meta: agua.meta });
+        renderConquistas();
+      }, function (err) {
+        PF.toast(err.message || 'Não foi possível salvar a água de hoje.', { tipo: 'erro' });
+      });
+    }, 500);
+  }
+
+  $('[data-agua-mais]').addEventListener('click', function () { mudarAgua(1); });
+  $('[data-agua-menos]').addEventListener('click', function () { mudarAgua(-1); });
+
+  function prepararAgua() {
+    var hoje = dados.agua.find(function (a) { return a.data === F.hojeISO(); });
+    agua.meta = metaAgua();
+    agua.copos = hoje ? hoje.copos : 0;
+    renderAgua(false);
+    // Enche até o nível de hoje com animação depois de aparecer.
+    if (agua.copos) {
+      var c = agua.copos;
+      agua.copos = 0;
+      renderAgua(false);
+      agua.copos = c;
+      requestAnimationFrame(function () { requestAnimationFrame(function () { renderAgua(true); }); });
+    }
+  }
+
+  /* ---------- Check-in semanal de peso ---------- */
+  function renderCheckin() {
+    var r = dados.resumo;
+    var card = $('[data-painel-checkin]');
+    var dias = r.vazio ? null : F.diasEntre(r.atual.data, F.hojeISO());
+    card.hidden = !(r.vazio || dias >= 7);
+    if (card.hidden) return;
+    $('[data-checkin-titulo]').textContent = r.vazio ? 'Registre seu primeiro peso' : 'Hora do check-in semanal';
+    $('[data-checkin-texto]').textContent = r.vazio
+      ? 'É o ponto de partida para o painel calcular sua evolução e sua meta.'
+      : 'Seu último registro foi há ' + dias + ' dias (' + kg(r.atual.pesoKg) + '). Pese-se de manhã, em jejum, para comparar.';
+  }
+
+  $('[data-checkin-form]').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var form = e.target;
+    var erro = $('[data-checkin-erro]');
+    var peso = F.decimal(form.peso.value);
+    erro.textContent = '';
+    if (peso == null || peso < 20 || peso > 400) { erro.textContent = 'Digite um peso entre 20 e 400 kg, como 72,5.'; form.peso.focus(); return; }
+    var botao = form.querySelector('[type="submit"]');
+    PF.setLoading(botao, true, 'Registrando…');
+    try {
+      await S.addPeso({ data: F.hojeISO(), pesoKg: peso });
+      form.reset();
+      await carregar();
+      renderTudo();
+      PF.toast('Peso de ' + kg(peso) + ' registrado.', { titulo: 'Check-in feito' });
+    } catch (err) {
+      erro.textContent = err.message || 'Não foi possível registrar agora.';
+    } finally {
+      PF.setLoading(botao, false);
+    }
+  });
+
+  /* ---------- Conquistas ---------- */
+  function conquistas() {
+    var f = dados.ficha || {};
+    var r = dados.resumo;
+    var naDirecao = 0;
+    if (!r.vazio && r.serie.length > 1 && r.direcao) naDirecao = r.diferenca * r.direcao; // kg na direção da meta
+    var registrosPeso = dados.pesos.length;
+    var diasAguaOk = dados.agua.filter(function (a) { return a.copos >= a.meta; }).length;
+    var lista = [
+      { id: 'primeiro', titulo: 'Primeiro passo', texto: 'Registrou o primeiro peso.', ok: !r.vazio },
+      { id: 'ficha', titulo: 'Ficha completa', texto: 'Altura, peso, meta e nascimento preenchidos.', ok: !!(f.alturaCm && (f.pesoInicialKg || registrosPeso) && f.metaPesoKg && f.dataNascimento) },
+      { id: 'meta-definida', titulo: 'Meta definida', texto: 'Escolheu aonde quer chegar.', ok: !!f.metaPesoKg },
+      { id: 'agua-1', titulo: 'Hidratada', texto: 'Bateu a meta de água em um dia.', ok: diasAguaOk >= 1 || agua.copos >= agua.meta },
+      { id: 'agua-7', titulo: 'Semana hidratada', texto: '7 dias seguidos na meta de água.', ok: sequenciaAgua() >= 7 },
+      { id: 'constancia', titulo: 'Constância', texto: '5 pesagens registradas.', ok: registrosPeso >= 5 },
+      { id: 'kg-1', titulo: 'Primeiro quilo', texto: '1 kg na direção da sua meta.', ok: naDirecao >= 1 },
+      { id: 'kg-5', titulo: 'Cinco quilos', texto: '5 kg na direção da sua meta.', ok: naDirecao >= 5 },
+      { id: 'metade', titulo: 'Metade do caminho', texto: '50% da meta concluída.', ok: r.meta != null && r.progresso >= 50 },
+      { id: 'meta', titulo: 'Meta atingida', texto: 'Chegou ao peso que definiu.', ok: !!r.atingida },
+      { id: 'chef', titulo: 'Chef PontoFit', texto: '5 receitas favoritas salvas.', ok: (dados.favoritas || []).length >= 5 }
+    ];
+    if (f.gestante) lista.push({ id: 'gestacao', titulo: 'Gestação acompanhada', texto: 'Ativou o acompanhamento da gestação.', ok: true });
+    return lista;
+  }
+
+  var ICONE_MEDALHA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7.21 15 2.66 7.14a2 2 0 0 1 .13-2.2L4.4 2.8A2 2 0 0 1 6 2h12a2 2 0 0 1 1.6.8l1.6 2.14a2 2 0 0 1 .14 2.2L16.79 15"/><path d="M11 12 5.12 2.2M13 12l5.88-9.8M8 7h8"/><circle cx="12" cy="17" r="5"/><path d="M12 18v-2h-.5"/></svg>';
+
+  function renderConquistas() {
+    var lista = conquistas();
+    var ul = $('[data-conquistas]');
+    ul.textContent = '';
+    var feitas = 0;
+    lista.forEach(function (c) {
+      if (c.ok) feitas++;
+      var li = el('li', 'conquista' + (c.ok ? ' conquista--feita' : ''));
+      li.innerHTML = '<span class="conquista__icone">' + ICONE_MEDALHA + '</span>';
+      var txt = el('span', 'conquista__texto');
+      txt.appendChild(el('strong', null, c.titulo));
+      txt.appendChild(el('span', null, c.texto));
+      li.appendChild(txt);
+      li.appendChild(el('span', 'sr-only', c.ok ? ' (conquistada)' : ' (ainda não)'));
+      ul.appendChild(li);
+    });
+    $('[data-conquistas-total]').textContent = feitas + ' de ' + lista.length + ' conquistadas';
+  }
+
   function renderTudo() {
     renderTopo();
+    prepararAgua();
+    renderCheckin();
+    renderConquistas();
     renderGestacao();
     renderCompletar();
     renderMeta();
@@ -260,7 +424,9 @@
       S.getFicha(),
       S.getPesos(),
       S.getMedicamentos(),
-      S.getAcessoAte()
+      S.getAcessoAte(),
+      S.getAgua(F.somarDias(F.hojeISO(), -60)).catch(function () { return []; }),
+      S.getFavoritas ? S.getFavoritas().catch(function () { return []; }) : Promise.resolve([])
     ]);
     var meds = res[3];
     var apls = await Promise.all(meds.map(function (m) { return S.getAplicacoes(m.id).catch(function () { return []; }); }));
@@ -272,7 +438,9 @@
       pesos: res[2],
       meds: meds,
       aplicacoes: porMed,
-      acessoAte: res[4]
+      acessoAte: res[4],
+      agua: res[5],
+      favoritas: res[6]
     };
     dados.resumo = PF.evolucao ? PF.evolucao.calcular(dados.ficha, dados.pesos) : { vazio: true, serie: [] };
     dados.dose = proximaDose(meds, porMed);
