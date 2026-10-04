@@ -1463,3 +1463,45 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) .painel-gestacao { background: linear-gradient(140deg, #3A1F2B, var(--superficie) 70%); }
 }
+
+
+/* ==========================================================================
+   Vitaminas e nutrientes
+   ========================================================================== */
+.nutrientes { display: grid; gap: var(--esp-5); }
+.nutrientes__orientacoes { background: linear-gradient(140deg, var(--verde-suave), var(--superficie) 70%); }
+.nutrientes__orientacoes-lista { display: grid; gap: var(--esp-3); padding: 0; margin: var(--esp-3) 0 0; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+.nutrientes__orientacoes-lista li { display: grid; gap: .25rem; padding: var(--esp-3); border-radius: 12px; background: rgb(255 255 255 / .55); }
+.nutrientes__lista { display: grid; gap: var(--esp-4); padding: 0; margin: 0; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); align-items: start; }
+.nutriente { --n-cor: var(--verde); display: grid; gap: var(--esp-2); border-top: 5px solid var(--n-cor); scroll-margin-top: 90px; transition: transform .2s, box-shadow .2s; }
+.nutriente:hover { transform: translateY(-2px); box-shadow: var(--sombra-2); }
+.nutriente--vermelho { --n-cor: #D9534F; }
+.nutriente--laranja { --n-cor: var(--laranja); }
+.nutriente--agua { --n-cor: var(--agua); }
+.nutriente--roxo { --n-cor: #9B7EDE; }
+.nutriente--destaque { animation: nutriente-pisca 1.2s ease-out; }
+@keyframes nutriente-pisca { 0%, 40% { box-shadow: 0 0 0 4px var(--n-cor); } 100% { box-shadow: var(--sombra-1); } }
+.nutriente__nome { font-size: var(--fs-h3); }
+.nutriente__resumo { font-weight: 600; color: var(--texto-sec); }
+.nutriente__rotulo { margin-top: var(--esp-2); font-size: var(--fs-xs); font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--texto-sec); }
+.nutriente__alimentos { display: flex; flex-wrap: wrap; gap: .35rem; padding: 0; margin: 0; list-style: none; }
+.nutriente__alimentos li { padding: .2rem .65rem; border-radius: 999px; background: var(--superficie-2); font-size: var(--fs-sm); }
+.nutriente__dica { padding: var(--esp-2) var(--esp-3); border-radius: 10px; background: var(--superficie-2); font-size: var(--fs-sm); }
+.nutriente__mais summary { cursor: pointer; font-weight: 600; color: var(--link); }
+.nutriente__mais[open] summary { margin-bottom: var(--esp-2); }
+.nutriente__bloco { margin-bottom: var(--esp-2); }
+.nutriente__bloco .nutriente__rotulo { margin-top: 0; }
+.nutriente__bloco--gestacao { padding: var(--esp-2) var(--esp-3); border-radius: 10px; background: #FDE7EF; }
+.nutriente__receitas { display: flex; flex-wrap: wrap; gap: .4rem; }
+.nutriente__receita {
+  padding: .35rem .75rem; border-radius: 999px; border: 1px solid var(--borda); background: var(--superficie);
+  font-size: var(--fs-sm); font-weight: 600; color: var(--link); cursor: pointer; text-align: left;
+  transition: background-color .2s, border-color .2s, transform .15s;
+}
+.nutriente__receita:hover { border-color: var(--n-cor); background: var(--superficie-2); }
+.nutriente__receita:active { transform: scale(.97); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .nutrientes__orientacoes-lista li { background: rgb(0 0 0 / .2); }
+  :root:not([data-theme="light"]) .nutriente__bloco--gestacao { background: #3A1F2B; }
+}
+@media (prefers-reduced-motion: reduce) { .nutriente--destaque { animation: none; } }

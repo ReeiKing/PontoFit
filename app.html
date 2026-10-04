@@ -77,6 +77,12 @@
           </a>
         </li>
         <li>
+          <a class="menu__item" href="#nutrientes" data-link-secao="nutrientes">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg>
+            <span>Vitaminas</span>
+          </a>
+        </li>
+        <li>
           <a class="menu__item" href="#cesta" data-link-secao="cesta">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 11-1 9M19 11l-4-7M2 11h20M3.5 11l1.6 7.4a2 2 0 0 0 2 1.6h9.8a2 2 0 0 0 2-1.6l1.7-7.4M4.5 15.5h15M5 11l4-7M9 11l1 9"/></svg>
             <span>Cesta de compras</span>
@@ -312,6 +318,27 @@
           </button>
         </footer>
       </dialog>
+    </section>
+
+    <!-- ===================== Vitaminas e nutrientes (js/nutrientes.js) ===================== -->
+    <section class="secao-app" id="secao-nutrientes" data-secao="nutrientes" aria-labelledby="titulo-nutrientes" hidden>
+      <header class="secao-app__cabecalho">
+        <h1 id="titulo-nutrientes" tabindex="-1">Vitaminas e nutrientes</h1>
+        <p class="texto-sec">Para que serve cada vitamina e mineral, onde encontrar nos alimentos e quando um suplemento costuma ser indicado.</p>
+      </header>
+
+      <div class="nutrientes" data-nutrientes>
+        <nav class="livro__filtros" aria-label="Ir para um nutriente" data-nutrientes-atalhos></nav>
+
+        <section class="card nutrientes__orientacoes" aria-labelledby="n-t-orient">
+          <h2 class="evo__titulo" id="n-t-orient">Antes de pensar em suplementos</h2>
+          <ul class="nutrientes__orientacoes-lista" role="list" data-nutrientes-orientacoes></ul>
+        </section>
+
+        <ul class="nutrientes__lista" role="list" data-nutrientes-lista></ul>
+
+        <p class="texto-sm texto-sec g-rodape">Conteúdo educativo. Suplementos, inclusive manipulados, só com orientação de médico ou nutricionista.</p>
+      </div>
     </section>
 
     <section class="secao-app" id="secao-cesta" data-secao="cesta" aria-labelledby="titulo-cesta" hidden>
@@ -1083,6 +1110,8 @@
   <!-- Gráfico: Chart.js via CDN (sem conexão, a seção mostra o histórico e um aviso) -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
   <script src="js/evolucao.js"></script>
+  <script src="js/nutrientes-dados.js"></script>
+  <script src="js/nutrientes.js"></script>
   <script src="js/cesta.js"></script>
   <script src="js/medicamentos.js"></script>
   <script src="js/gestacao-dados.js"></script>

@@ -19,6 +19,7 @@
   var SECOES = {
     inicio: 'Início',
     receitas: 'Receitas',
+    nutrientes: 'Vitaminas',
     cesta: 'Cesta de compras',
     ficha: 'Minha ficha',
     evolucao: 'Minha evolução',
