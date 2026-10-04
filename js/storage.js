@@ -124,7 +124,8 @@
   function traduzirDados(e) {
     if (!e) return erro('DADOS', 'Não foi possível salvar. Tente de novo.');
     if (e.code === '23505') return erro('DUPLICADO', 'Esse registro já existe.', e);
-    if (e.code === '42501' || e.code === 'PGRST301') return erro('SEM_PERMISSAO', 'Sua sessão expirou. Entre novamente.', e);
+    if (e.code === 'PGRST301' || /jwt expired/i.test(e.message || '')) return erro('SEM_SESSAO', 'Sua sessão expirou. Entre novamente.', e);
+    if (e.code === '42501') return erro('SEM_PERMISSAO', 'Não foi possível carregar esta parte agora. Atualize a página e, se continuar, fale com o suporte.', e);
     if (/fetch|network/i.test(e.message || '')) return erro('REDE', 'Sem conexão com o servidor. Verifique sua internet e tente de novo.', e);
     return erro('DADOS', 'Não foi possível salvar. Tente de novo.', e);
   }
