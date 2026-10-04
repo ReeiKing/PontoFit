@@ -2,7 +2,9 @@
    PontoFit — painel.js
    Seção "Início": painel do paciente ao entrar no app.
    - saudação, meta (anel de progresso, quanto falta, estimativa), peso,
-     variação, IMC e próxima dose;
+     variação e IMC;
+   - destaque da próxima aplicação de cada medicamento (dias que faltam,
+     anel do intervalo, data por extenso; laranja amanhã/hoje, vermelho atrasada);
    - semana da gestação, para quem ativou o acompanhamento (gestacao.js);
    - água do dia (copo com meta pelo peso e sequência de dias), check-in
      semanal de peso e conquistas;
@@ -74,6 +76,8 @@
 
   /* ---------- Formatação ---------- */
   function kg(n) { return F.numero(Math.abs(n)) + ' kg'; }
+  /** "domingo, 4 de outubro" → "Domingo, 4 de outubro" (só a primeira letra). */
+  function inicialMaiuscula(t) { return t ? t.charAt(0).toUpperCase() + t.slice(1) : t; }
 
   function saudacao(nome) {
     var h = new Date().getHours();
@@ -88,6 +92,20 @@
   }
 
   /* ---------- Próxima dose (mesmo cálculo de medicamentos.js) ---------- */
+  /** Todos os medicamentos com a próxima aplicação, do mais urgente ao menos.
+      → [{ med, proxima, ultima, dias, intervalo }] e, sem data, { med, semData: true } no fim */
+  function proximasDoses(meds, aplicacoesPorMed) {
+    var com = [];
+    var sem = [];
+    meds.forEach(function (m) {
+      var d = proximaDose([m], aplicacoesPorMed);
+      if (d) com.push(Object.assign({ intervalo: m.intervaloDias }, d));
+      else if (m.intervaloDias) sem.push({ med: m, semData: true });
+    });
+    com.sort(function (a, b) { return a.dias - b.dias; });
+    return com.concat(sem);
+  }
+
   function proximaDose(meds, aplicacoesPorMed) {
     var melhor = null;
     meds.forEach(function (m) {
@@ -104,7 +122,7 @@
 
   /* ---------- Renderização ---------- */
   function renderTopo() {
-    $('[data-painel-data]').textContent = F.dataExtenso(F.hojeISO(), true);
+    $('[data-painel-data]').textContent = inicialMaiuscula(F.dataExtenso(F.hojeISO(), true));
     $('[data-painel-saudacao]').textContent = saudacao(dados.usuario && dados.usuario.nome);
   }
 
@@ -196,18 +214,78 @@
       definir('imc', '–');
       definir('imc-info', 'informe sua altura');
     }
+  }
 
-    var d = dados.dose;
-    var cardDose = secao.querySelector('[data-p-card="dose"]');
-    cardDose.classList.remove('painel-numero--atencao');
-    if (!d) {
-      definir('dose', '–');
-      definir('dose-info', dados.meds.length ? 'registre a última aplicação' : 'nenhum medicamento');
-    } else {
-      definir('dose', d.dias > 1 ? 'em ' + d.dias + ' dias' : d.dias === 1 ? 'amanhã' : d.dias === 0 ? 'hoje' : 'atrasada');
-      definir('dose-info', d.med.nome + ' · ' + F.dataCurta(d.proxima));
-      if (d.dias <= 1) cardDose.classList.add('painel-numero--atencao');
-    }
+  /* ---------- Próximas aplicações (destaque) ---------- */
+  var ESTADO_DOSE = {
+    ok: function (d) { return { titulo: 'Faltam ' + d.dias + ' dias', classe: 'ok' }; },
+    amanha: function () { return { titulo: 'Sua próxima aplicação é amanhã', classe: 'amanha' }; },
+    hoje: function () { return { titulo: 'Hoje é dia da aplicação', classe: 'hoje' }; },
+    atrasada: function (d) { var n = Math.abs(d.dias); return { titulo: 'Atrasada há ' + n + ' ' + F.plural(n, 'dia', 'dias'), classe: 'atrasada' }; }
+  };
+
+  function renderDoses() {
+    var caixa = $('[data-painel-doses]');
+    caixa.textContent = '';
+    (dados.doses || []).slice(0, 3).forEach(function (d) {
+      var m = d.med;
+      var card = el('section', 'card painel-dose');
+      card.setAttribute('aria-label', 'Próxima aplicação de ' + m.nome);
+      if (d.semData) {
+        card.classList.add('painel-dose--sem');
+        var t = el('div', 'painel-dose__texto');
+        t.appendChild(el('p', 'painel-rotulo', 'Próxima aplicação · ' + m.nome));
+        t.appendChild(el('p', 'painel-dose__titulo', 'Registre a última aplicação'));
+        t.appendChild(el('p', 'texto-sec texto-sm', 'Com a data da última aplicação, o PontoFit conta os dias até a próxima.'));
+        var a = el('a', 'link-seta', 'Ir para Medicamentos ');
+        a.href = '#medicamentos';
+        a.appendChild(el('span', null, '→')).setAttribute('aria-hidden', 'true');
+        t.appendChild(a);
+        card.appendChild(t);
+        caixa.appendChild(card);
+        return;
+      }
+      var chave = d.dias >= 2 ? 'ok' : d.dias === 1 ? 'amanha' : d.dias === 0 ? 'hoje' : 'atrasada';
+      var est = ESTADO_DOSE[chave](d);
+      card.classList.add('painel-dose--' + est.classe);
+
+      // Anel: quanto do intervalo já passou
+      var passados = Math.max(0, Math.min(d.intervalo, d.intervalo - d.dias));
+      var circ = 2 * Math.PI * 42;
+      var anel = el('div', 'painel-dose__anel');
+      anel.setAttribute('aria-hidden', 'true');
+      anel.innerHTML = '<svg viewBox="0 0 100 100" focusable="false"><circle class="painel-dose__trilho" cx="50" cy="50" r="42"/>' +
+        '<circle class="painel-dose__progresso" cx="50" cy="50" r="42" stroke-dasharray="' + circ.toFixed(1) + '" stroke-dashoffset="' + circ.toFixed(1) + '"/></svg>';
+      var centro = el('span', 'painel-dose__numero');
+      centro.appendChild(el('strong', null, chave === 'atrasada' ? '!' : String(Math.max(0, d.dias))));
+      centro.appendChild(el('span', null, chave === 'atrasada' ? 'atrasada' : d.dias === 1 ? 'dia' : 'dias'));
+      anel.appendChild(centro);
+      card.appendChild(anel);
+
+      var texto = el('div', 'painel-dose__texto');
+      texto.appendChild(el('p', 'painel-rotulo', 'Próxima aplicação · ' + m.nome));
+      texto.appendChild(el('p', 'painel-dose__titulo', est.titulo));
+      var dose = [m.doseMl ? F.numero(m.doseMl, 2) + ' mL' : null, m.doseMg ? F.numero(m.doseMg, 2) + ' mg' : null].filter(Boolean).join(' · ');
+      texto.appendChild(el('p', 'painel-dose__data', inicialMaiuscula(F.dataExtenso(d.proxima, true))));
+      texto.appendChild(el('p', 'texto-sec texto-sm', [dose, 'a cada ' + d.intervalo + ' ' + F.plural(d.intervalo, 'dia', 'dias'), 'última em ' + F.dataCurta(d.ultima)].filter(Boolean).join(' · ')));
+      if (chave === 'hoje' || chave === 'atrasada') {
+        var b = el('a', 'btn btn--sm', 'Registrar aplicação');
+        b.href = '#medicamentos';
+        texto.appendChild(b);
+      } else {
+        var l = el('a', 'link-seta', 'Ver medicamentos ');
+        l.href = '#medicamentos';
+        l.appendChild(el('span', null, '→')).setAttribute('aria-hidden', 'true');
+        texto.appendChild(l);
+      }
+      card.appendChild(texto);
+      caixa.appendChild(card);
+
+      var progresso = anel.querySelector('.painel-dose__progresso');
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () { progresso.style.strokeDashoffset = (circ * (1 - passados / d.intervalo)).toFixed(1); });
+      });
+    });
   }
 
   function renderReceita() {
@@ -411,6 +489,7 @@
     renderGestacao();
     renderCompletar();
     renderMeta();
+    renderDoses();
     renderNumeros();
     renderReceita();
     renderDica();
@@ -444,6 +523,7 @@
     };
     dados.resumo = PF.evolucao ? PF.evolucao.calcular(dados.ficha, dados.pesos) : { vazio: true, serie: [] };
     dados.dose = proximaDose(meds, porMed);
+    dados.doses = proximasDoses(meds, porMed);
   }
 
   /* ---------- Receita do dia → abre no livro ---------- */
