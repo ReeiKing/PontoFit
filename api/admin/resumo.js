@@ -42,7 +42,7 @@ module.exports = async function handler(req, res) {
     if (!admin) return responder(res, 403, { erro: 'Acesso restrito à administração.' });
 
     const db = supabaseAdmin();
-    const [usuariosAuth, perfis, pix, cartao, liberacoes] = await Promise.all([
+    const [usuariosAuth, perfis, pix, cartao, liberacoes, excluidas] = await Promise.all([
       db.auth.admin.listUsers({ page: 1, perPage: 1000 }).then(function (r) {
         if (r.error) throw r.error;
         return r.data.users;
@@ -50,7 +50,8 @@ module.exports = async function handler(req, res) {
       todos(db.from('perfis').select('id, nome, email, cpf, plano, acesso_ate, criado_em')),
       todos(db.from('pagamentos_pix').select('id, usuario_id, plano, valor, status, com_desconto, criado_em, aprovado_em')),
       todos(db.from('pagamentos_cartao').select('id, usuario_id, plano, valor, status, com_desconto, criado_em, aprovado_em')),
-      todos(db.from('admin_liberacoes').select('admin_id, usuario_id, dias, motivo, acesso_antes, acesso_depois, criado_em').order('criado_em', { ascending: false }))
+      todos(db.from('admin_liberacoes').select('admin_id, usuario_id, dias, motivo, acesso_antes, acesso_depois, criado_em').order('criado_em', { ascending: false })),
+      todos(db.from('contas_excluidas').select('admin_id, nome, email, cpf_mascarado, motivo, pagamentos_aprovados, total_pago, excluida_em').order('excluida_em', { ascending: false }))
     ]);
 
     const admins = new Set(usuariosAuth.filter(ehAdmin).map(function (u) { return u.id; }));
@@ -150,7 +151,7 @@ module.exports = async function handler(req, res) {
       .map(function (p) {
         return {
           data: dataSP(p.aprovado_em || p.criado_em),
-          cliente: nomes[p.usuario_id] || '—',
+          cliente: p.usuario_id ? (nomes[p.usuario_id] || '—') : 'Conta excluída',
           plano: p.plano,
           meio: p.meio,
           valor: Number(p.valor),
@@ -167,7 +168,7 @@ module.exports = async function handler(req, res) {
     const historicoLiberacoes = liberacoes.slice(0, 30).map(function (l) {
       return {
         data: dataSP(l.criado_em),
-        cliente: nomes[l.usuario_id] || '—',
+        cliente: l.usuario_id ? (nomes[l.usuario_id] || '—') : 'Conta excluída',
         admin: nomes[l.admin_id] || 'Administração',
         dias: l.dias,
         motivo: l.motivo,
@@ -178,7 +179,13 @@ module.exports = async function handler(req, res) {
 
     return responder(res, 200, {
       geradoEm: new Date().toISOString(), hoje: hoje, numeros: numeros,
-      assinantes: assinantes, pagamentos: recentes, liberacoes: historicoLiberacoes
+      assinantes: assinantes, pagamentos: recentes, liberacoes: historicoLiberacoes,
+      excluidas: excluidas.slice(0, 30).map(function (x) {
+        return {
+          data: dataSP(x.excluida_em), nome: x.nome || '', email: x.email, cpf: x.cpf_mascarado, motivo: x.motivo,
+          pagamentos: x.pagamentos_aprovados, totalPago: Number(x.total_pago), admin: nomes[x.admin_id] || 'Administração'
+        };
+      })
     });
   } catch (err) {
     console.error('[admin/resumo]', err.message || err);

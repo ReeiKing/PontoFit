@@ -167,6 +167,24 @@
         </table>
         <p class="texto-sec admin-vazio" data-admin-liberacoes-vazio hidden>Nenhuma liberação manual até agora.</p>
       </section>
+
+      <section class="card admin-tabela-card" aria-labelledby="t-excluidas">
+        <h2 class="evo__titulo" id="t-excluidas">Contas excluídas</h2>
+        <p class="texto-sm texto-sec">Registro das exclusões feitas pela administração (as 30 mais recentes).</p>
+        <table class="tabela admin-tabela" data-admin-excluidas>
+          <thead>
+            <tr>
+              <th scope="col">Data</th>
+              <th scope="col">Cliente</th>
+              <th scope="col">Pagou</th>
+              <th scope="col">Motivo</th>
+              <th scope="col">Por</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <p class="texto-sec admin-vazio" data-admin-excluidas-vazio hidden>Nenhuma conta excluída.</p>
+      </section>
     </section>
   </main>
 
@@ -273,8 +291,67 @@
         <ul class="ger-historico" role="list" data-ger-historico></ul>
       </section>
 
+      <!-- Zona de perigo -->
+      <section class="ger-bloco ger-perigo" aria-labelledby="ger-t-perigo">
+        <h3 id="ger-t-perigo">Excluir conta</h3>
+        <p class="texto-sm">Apaga a conta e todos os dados do cliente. Não pode ser desfeito.</p>
+        <div><button class="btn btn--sm btn--perigo" type="button" data-ger-excluir><span>Excluir conta</span></button></div>
+      </section>
+
       <p class="campo__erro ger-erro" data-ger-erro role="alert"></p>
     </div>
+  </dialog>
+
+  <!-- Excluir conta: confirmação em dois passos (js/admin.js) -->
+  <dialog class="relatorio admin-dialogo excluir" data-excluir aria-labelledby="excluir-titulo">
+    <header class="relatorio__topo">
+      <h2 id="excluir-titulo">Excluir conta de <span data-excluir-nome></span></h2>
+      <button class="leitor__fechar" type="button" data-excluir-fechar aria-label="Cancelar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </header>
+
+    <!-- Passo 1 -->
+    <form class="admin-dialogo__form" data-excluir-passo="1" novalidate>
+      <div class="admin-dialogo__corpo">
+        <p class="excluir__passo">Passo 1 de 2</p>
+        <div class="excluir__aviso">
+          <p><strong>Será apagado para sempre:</strong></p>
+          <ul>
+            <li>a conta e o login (e-mail e senha);</li>
+            <li>perfil, CPF, ficha e dados de saúde;</li>
+            <li>pesos, medicamentos, aplicações, água, cesta e receitas favoritas.</li>
+          </ul>
+          <p><strong>Continua guardado</strong> (sem vínculo com a conta): pagamentos, cortesias e alterações feitas pela administração, para o seu controle financeiro. O desconto de 50% já usado continua bloqueado para esse CPF.</p>
+        </div>
+        <div class="campo">
+          <label class="campo__label" for="excluir-motivo">Motivo da exclusão</label>
+          <input class="input" id="excluir-motivo" name="motivo" type="text" maxlength="200" placeholder="Ex.: pedido do cliente (LGPD), conta duplicada" required>
+        </div>
+        <label class="ger-check"><input type="checkbox" name="entendo"> Entendo que essa ação não pode ser desfeita</label>
+        <p class="campo__erro" data-excluir-erro-1 aria-live="polite"></p>
+      </div>
+      <footer class="admin-dialogo__acoes">
+        <button class="btn btn--secundario" type="button" data-excluir-fechar><span>Cancelar</span></button>
+        <button class="btn btn--perigo" type="submit"><span>Continuar</span></button>
+      </footer>
+    </form>
+
+    <!-- Passo 2 -->
+    <form class="admin-dialogo__form" data-excluir-passo="2" novalidate hidden>
+      <div class="admin-dialogo__corpo">
+        <p class="excluir__passo">Passo 2 de 2</p>
+        <p>Para confirmar, digite o e-mail do cliente:</p>
+        <p class="excluir__email" data-excluir-email></p>
+        <div class="campo">
+          <label class="campo__label" for="excluir-confirmacao">E-mail do cliente</label>
+          <input class="input" id="excluir-confirmacao" name="confirmacao" type="text" autocomplete="off" spellcheck="false" autocapitalize="off">
+        </div>
+        <p class="campo__erro" data-excluir-erro-2 aria-live="polite"></p>
+      </div>
+      <footer class="admin-dialogo__acoes">
+        <button class="btn btn--secundario" type="button" data-excluir-voltar><span>Voltar</span></button>
+        <button class="btn btn--perigo" type="submit" disabled><span>Excluir definitivamente</span></button>
+      </footer>
+    </form>
   </dialog>
 
   <script src="js/ui.js"></script>

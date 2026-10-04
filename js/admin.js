@@ -459,6 +459,85 @@
     executar('desconectar', {}, this, 'Cliente desconectado de todos os aparelhos.');
   });
 
+  /* ---------- Excluir conta (confirmação em dois passos) ---------- */
+  var dExcluir = $('[data-excluir]');
+  var passo1 = dExcluir.querySelector('[data-excluir-passo="1"]');
+  var passo2 = dExcluir.querySelector('[data-excluir-passo="2"]');
+
+  function mostrarPasso(n) {
+    passo1.hidden = n !== 1;
+    passo2.hidden = n !== 2;
+    (n === 1 ? passo1.motivo : passo2.confirmacao).focus();
+  }
+
+  $('[data-ger-excluir]').addEventListener('click', function () {
+    if (!cliente) return;
+    passo1.reset();
+    passo2.reset();
+    passo2.querySelector('[type="submit"]').disabled = true;
+    $('[data-excluir-erro-1]').textContent = '';
+    $('[data-excluir-erro-2]').textContent = '';
+    $('[data-excluir-nome]').textContent = cliente.nome || cliente.email;
+    $('[data-excluir-email]').textContent = cliente.email;
+    if (typeof dExcluir.showModal === 'function') dExcluir.showModal();
+    mostrarPasso(1);
+  });
+
+  passo1.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var erro = $('[data-excluir-erro-1]');
+    if (passo1.motivo.value.trim().length < 3) { erro.textContent = 'Escreva o motivo da exclusão.'; passo1.motivo.focus(); return; }
+    if (!passo1.entendo.checked) { erro.textContent = 'Marque que você entende que a exclusão não pode ser desfeita.'; return; }
+    erro.textContent = '';
+    mostrarPasso(2);
+  });
+
+  passo2.confirmacao.addEventListener('input', function () {
+    var ok = passo2.confirmacao.value.trim().toLowerCase() === String(cliente.email).toLowerCase();
+    passo2.querySelector('[type="submit"]').disabled = !ok;
+  });
+  dExcluir.querySelector('[data-excluir-voltar]').addEventListener('click', function () { mostrarPasso(1); });
+  dExcluir.querySelectorAll('[data-excluir-fechar]').forEach(function (b) { b.addEventListener('click', function () { dExcluir.close(); }); });
+
+  passo2.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var botao = passo2.querySelector('[type="submit"]');
+    var erro = $('[data-excluir-erro-2]');
+    erro.textContent = '';
+    PF.setLoading(botao, true, 'Excluindo…');
+    try {
+      var r = await S.alterarClienteAdmin(cliente.id, 'excluir', { motivo: passo1.motivo.value.trim(), confirmacao: passo2.confirmacao.value.trim() });
+      dExcluir.close();
+      alterouAlgo = true;
+      ger.close();
+      PF.toast('A conta de ' + r.email + ' foi excluída. Pagamentos e registros continuam no painel.', { titulo: 'Conta excluída', duracao: 6000 });
+    } catch (err) {
+      erro.textContent = err.message || 'Não foi possível excluir agora.';
+      PF.setLoading(botao, false);
+    }
+  });
+
+  /* ---------- Contas excluídas (registro) ---------- */
+  function renderExcluidas() {
+    var lista = dados.excluidas || [];
+    var corpo = $('[data-admin-excluidas] tbody');
+    corpo.textContent = '';
+    lista.forEach(function (x) {
+      var tr = el('tr');
+      tr.appendChild(celula('Data', data(x.data)));
+      var quem = el('div', 'admin-quem');
+      quem.appendChild(el('strong', null, x.nome || '(sem nome)'));
+      quem.appendChild(el('span', 'texto-sm texto-sec', x.email + (x.cpf ? ' · CPF ' + x.cpf : '')));
+      tr.appendChild(celula('Cliente', quem));
+      tr.appendChild(celula('Pagou', reais(x.totalPago) + (x.pagamentos ? ' (' + x.pagamentos + 'x)' : '')));
+      tr.appendChild(celula('Motivo', x.motivo));
+      tr.appendChild(celula('Por', x.admin));
+      corpo.appendChild(tr);
+    });
+    $('[data-admin-excluidas-vazio]').hidden = lista.length > 0;
+    $('[data-admin-excluidas]').hidden = lista.length === 0;
+  }
+
   $('[data-ger-fechar]').addEventListener('click', function () { ger.close(); });
   ger.addEventListener('close', function () { if (alterouAlgo) carregar(); });
 
@@ -523,6 +602,7 @@
       renderAssinantes();
       renderPagamentos();
       renderLiberacoes();
+      renderExcluidas();
       raiz.setAttribute('aria-busy', 'false');
     } catch (err) {
       raiz.setAttribute('aria-busy', 'false');

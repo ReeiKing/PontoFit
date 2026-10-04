@@ -132,3 +132,12 @@ body.admin { background: var(--fundo); min-height: 100dvh; }
 .ger-historico__quando { font-size: var(--fs-xs); color: var(--texto-sec); }
 .ger-erro:empty { display: none; }
 @media (prefers-reduced-motion: reduce) { .gerenciar[open] { animation: none; } }
+
+/* ---------- Excluir conta ---------- */
+.ger-perigo { border-color: var(--vermelho); background: var(--vermelho-suave); }
+.ger-perigo h3 { color: var(--vermelho); }
+.excluir__passo { font-size: var(--fs-xs); font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--vermelho); }
+.excluir__aviso { display: grid; gap: var(--esp-2); padding: var(--esp-3) var(--esp-4); border-radius: 12px; background: var(--vermelho-suave); font-size: var(--fs-sm); }
+.excluir__aviso ul { margin: 0; padding-left: 1.2rem; display: grid; gap: .2rem; }
+.excluir__email { padding: var(--esp-2) var(--esp-3); border-radius: 10px; background: var(--superficie-2); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 600; word-break: break-all; user-select: none; }
+.excluir .btn--perigo:disabled { opacity: .45; }

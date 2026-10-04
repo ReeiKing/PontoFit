@@ -7,6 +7,10 @@
 //   acao 'acesso'          { data (AAAA-MM-DD), motivo }   data exata; ontem = encerrar
 //   acao 'plano'           { plano }                       plano preferido
 //   acao 'desconectar'                                      sai de todos os aparelhos
+//   acao 'excluir'         { motivo, confirmacao }          confirmacao = e-mail do cliente
+//     Apaga a conta e os dados pessoais e de saúde. Pagamentos e registros da
+//     administração ficam sem vínculo (conta excluída); contas_excluidas guarda
+//     quem excluiu, quando, o motivo e um resumo.
 // Só administradores. Contas de administrador não podem ser alteradas aqui.
 // Tudo fica registrado em admin_acoes (a senha nunca é gravada).
 'use strict';
@@ -201,6 +205,43 @@ module.exports = async function handler(req, res) {
       if (s.error) throw s.error;
       await registrar(db, admin, id, 'sessoes', { sessoes: s.data || 0 });
       feito.push('desconectado');
+    } else if (acao === 'excluir') {
+      const usuario = alvo.data.user;
+      const confirmacao = String(corpo.confirmacao || '').trim().toLowerCase();
+      const motivo = String(corpo.motivo || '').trim();
+      if (motivo.length < 3 || motivo.length > 200) throw new ErroUsuario(400, 'Escreva o motivo da exclusão (de 3 a 200 caracteres).');
+      if (!confirmacao || confirmacao !== String(usuario.email || '').toLowerCase()) {
+        throw new ErroUsuario(400, 'Para confirmar, digite exatamente o e-mail do cliente.');
+      }
+      const [perfil, pixOk, cartaoOk] = await Promise.all([
+        db.from('perfis').select('nome, cpf, criado_em').eq('id', id).maybeSingle(),
+        db.from('pagamentos_pix').select('valor').eq('usuario_id', id).not('aprovado_em', 'is', null),
+        db.from('pagamentos_cartao').select('valor').eq('usuario_id', id).not('aprovado_em', 'is', null)
+      ]);
+      [perfil, pixOk, cartaoOk].forEach(function (r) { if (r.error) throw r.error; });
+      const aprovados = pixOk.data.concat(cartaoOk.data);
+      const total = Math.round(aprovados.reduce(function (t, x) { return t + Number(x.valor); }, 0) * 100) / 100;
+
+      // Registra antes de apagar: se a exclusão falhar, o registro é desfeito.
+      const { data: registro, error: eReg } = await db.from('contas_excluidas').insert({
+        usuario_id: id,
+        admin_id: admin.id,
+        nome: perfil.data && perfil.data.nome,
+        email: usuario.email,
+        cpf_mascarado: mascararCpf(perfil.data && perfil.data.cpf),
+        motivo,
+        pagamentos_aprovados: aprovados.length,
+        total_pago: total,
+        conta_criada_em: (perfil.data && perfil.data.criado_em) || usuario.created_at
+      }).select('id').single();
+      if (eReg) throw eReg;
+
+      const r = await db.auth.admin.deleteUser(id);
+      if (r.error) {
+        await db.from('contas_excluidas').delete().eq('id', registro.id);
+        throw r.error;
+      }
+      return responder(res, 200, { excluido: true, email: usuario.email });
     } else {
       return responder(res, 400, { erro: 'Ação inválida.' });
     }
