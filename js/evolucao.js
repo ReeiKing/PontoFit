@@ -364,7 +364,8 @@
         tooltip: {
           filter: function (item) { return item.datasetIndex === 0; },
           callbacks: {
-            title: function (itens) { return new Date(itens[0].parsed.x).toLocaleDateString('pt-BR'); },
+            // Pode vir vazio (só a linha da meta sob o dedo, ou dados recém-trocados).
+            title: function (itens) { return itens.length ? new Date(itens[0].parsed.x).toLocaleDateString('pt-BR') : ''; },
             label: function (item) { return ' ' + kg(item.parsed.y); }
           }
         }
@@ -398,6 +399,9 @@
     };
 
     if (grafico) {
+      // No celular o toque deixa um ponto "ativo"; com os dados novos ele não existe mais.
+      grafico.setActiveElements([]);
+      if (grafico.tooltip) grafico.tooltip.setActiveElements([], { x: 0, y: 0 });
       grafico.data.datasets = conjuntos;
       grafico.options = opcoes;
       grafico.update();
