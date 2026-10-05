@@ -83,7 +83,32 @@
         <!-- ============ Criar conta ============ -->
         <section class="painel" id="painel-cadastro" role="tabpanel" aria-labelledby="aba-cadastro" tabindex="-1" hidden>
           <form id="form-cadastro" class="form-auth" novalidate>
-            <div class="campo plano-escolha">
+            <!-- Cadastro de profissional (login.html?tipo=profissional) -->
+            <div class="cadastro-prof" data-so-profissional hidden>
+              <p class="cadastro-prof__aviso">Conta de <strong>profissional</strong>: gratuita. Você recebe um link para convidar seus pacientes e acompanha os dados que eles compartilharem.</p>
+              <div class="campo">
+                <label class="campo__label" for="cad-profissao">Profissão</label>
+                <select class="input" id="cad-profissao" name="profissao" data-regra="profissao" aria-describedby="cad-profissao-erro">
+                  <option value="">Selecione</option>
+                  <option value="nutricionista">Nutricionista</option>
+                  <option value="personal">Personal trainer</option>
+                  <option value="academia">Academia</option>
+                  <option value="medico">Médico(a)</option>
+                  <option value="outro">Outro</option>
+                </select>
+                <p class="campo__erro" id="cad-profissao-erro" aria-live="polite"></p>
+              </div>
+              <div class="campo">
+                <label class="campo__label" for="cad-registro">Registro profissional <span class="texto-sec">(opcional)</span></label>
+                <input class="input" id="cad-registro" name="registro" type="text" maxlength="40" placeholder="Ex.: CRN 3/12345 ou CREF 012345-G/SP" autocomplete="off">
+              </div>
+              <div class="campo">
+                <label class="campo__label" for="cad-empresa">Empresa ou academia <span class="texto-sec">(opcional)</span></label>
+                <input class="input" id="cad-empresa" name="empresa" type="text" maxlength="120" autocomplete="organization">
+              </div>
+            </div>
+
+            <div class="campo plano-escolha" data-so-paciente>
               <span class="campo__label" aria-hidden="true">Plano</span>
               <fieldset class="segmentado" style="--opcoes:3" aria-describedby="cad-plano-ajuda">
                 <legend class="sr-only">Plano</legend>
@@ -113,11 +138,11 @@
             </div>
 
             <div class="campo">
-              <label class="campo__label" for="cad-cpf">CPF</label>
+              <label class="campo__label" for="cad-cpf">CPF <span class="texto-sec" data-cpf-opcional hidden>(opcional)</span></label>
               <input class="input" id="cad-cpf" name="cpf" type="text" inputmode="numeric" autocomplete="off"
                      maxlength="14" placeholder="000.000.000-00"
                      required data-regra="cpf" aria-describedby="cad-cpf-ajuda cad-cpf-erro">
-              <p class="campo__ajuda" id="cad-cpf-ajuda">Usado para identificar sua conta (uma por CPF) e nos pagamentos.</p>
+              <p class="campo__ajuda" id="cad-cpf-ajuda" data-cpf-ajuda>Usado para identificar sua conta (uma por CPF) e nos pagamentos.</p>
               <p class="campo__erro" id="cad-cpf-erro" aria-live="polite"></p>
             </div>
 

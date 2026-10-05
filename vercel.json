@@ -42,7 +42,7 @@
       ]
     },
     {
-      "source": "/(app|login|admin).html",
+      "source": "/(app|login|admin|profissional|convite).html",
       "headers": [
         {
           "key": "X-Robots-Tag",

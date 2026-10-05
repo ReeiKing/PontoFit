@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Convite | PontoFit</title>
+  <meta name="description" content="Convite para compartilhar seu acompanhamento de saúde no PontoFit com o seu profissional.">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#1F6E4A">
+  <link rel="icon" href="assets/svg/logo.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/auth.css">
+  <script src="js/vendor/supabase.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/storage.js"></script>
+</head>
+<body class="auth convite-pagina">
+  <main class="convite" id="conteudo" aria-busy="true" data-convite>
+    <a class="logo" href="index.html" aria-label="PontoFit, página inicial">
+      <svg class="logo__marca" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M12 2.5C9 6.2 5 10.6 5 14.6a7 7 0 0 0 14 0c0-4-4-8.4-7-12.1Z" fill="#2E9D6A"/>
+        <path d="M12 20.2v-7.4m0 3.3 2.6-2.6" fill="none" stroke="#F7FBF8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>Ponto<strong>Fit</strong></span>
+    </a>
+
+    <section class="card convite__cartao">
+      <p class="convite__carregando" data-convite-carregando>Carregando o convite…</p>
+
+      <!-- Convite inválido -->
+      <div data-convite-erro hidden>
+        <h1 class="convite__titulo">Convite não encontrado</h1>
+        <p class="texto-sec" data-convite-erro-texto>Peça um link novo ao seu profissional.</p>
+        <a class="btn" href="index.html">Conhecer o PontoFit</a>
+      </div>
+
+      <!-- Convite válido -->
+      <div class="convite__conteudo" data-convite-ok hidden>
+        <div class="convite__prof">
+          <span class="convite__avatar" aria-hidden="true" data-prof-iniciais></span>
+          <div>
+            <h1 class="convite__titulo"><span data-prof-nome></span></h1>
+            <p class="texto-sec" data-prof-info></p>
+          </div>
+        </div>
+        <p class="convite__frase">quer acompanhar sua saúde pelo PontoFit.</p>
+
+        <!-- Sem login -->
+        <div data-convite-sem-login hidden>
+          <p class="texto-sec">Crie sua conta (ou entre) para decidir o que compartilhar. Você escolhe tudo e pode remover o acesso quando quiser.</p>
+          <div class="convite__acoes">
+            <a class="btn btn--lg btn--bloco" href="#" data-link-cadastro>Criar minha conta</a>
+            <a class="btn btn--lg btn--bloco btn--secundario" href="#" data-link-entrar>Já tenho conta</a>
+          </div>
+        </div>
+
+        <!-- Com login: autorização -->
+        <form data-convite-form hidden novalidate>
+          <fieldset class="convite__opcoes">
+            <legend>O que esse profissional poderá ver:</legend>
+            <label class="ger-check convite__opcao"><input type="checkbox" name="peso" checked> <span><strong>Peso e meta</strong><br><span class="texto-sm texto-sec">Seus registros de peso, a meta e a evolução</span></span></label>
+            <label class="ger-check convite__opcao"><input type="checkbox" name="agua" checked> <span><strong>Água</strong><br><span class="texto-sm texto-sec">Quantos copos você bebe por dia</span></span></label>
+            <label class="ger-check convite__opcao"><input type="checkbox" name="medicamentos" checked> <span><strong>Medicamentos</strong><br><span class="texto-sm texto-sec">Doses, intervalos e aplicações</span></span></label>
+            <label class="ger-check convite__opcao"><input type="checkbox" name="ficha" checked> <span><strong>Ficha</strong><br><span class="texto-sm texto-sec">Idade, objetivo, condições de saúde e alergias</span></span></label>
+            <label class="ger-check convite__opcao"><input type="checkbox" name="gestacao"> <span><strong>Gestação</strong><br><span class="texto-sm texto-sec">Semana da gestação e data provável do parto</span></span></label>
+          </fieldset>
+          <p class="texto-sm texto-sec">Você pode mudar isso ou remover o acesso a qualquer momento em Minha ficha.</p>
+          <p class="campo__erro" data-convite-form-erro aria-live="polite"></p>
+          <button class="btn btn--lg btn--bloco" type="submit"><span>Autorizar</span></button>
+          <a class="link-botao convite__recusar" href="app.html">Agora não</a>
+        </form>
+
+        <!-- Autorizado -->
+        <div data-convite-pronto hidden>
+          <p class="convite__pronto">Pronto! <strong data-pronto-nome></strong> já acompanha você.</p>
+          <a class="btn btn--lg btn--bloco" href="app.html#inicio">Ir para o meu painel</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/ui.js"></script>
+  <script src="js/convite.js"></script>
+</body>
+</html>

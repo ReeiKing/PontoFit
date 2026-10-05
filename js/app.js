@@ -211,7 +211,20 @@
   Promise.all([PF.auth.pronto, paginaPronta]).then(function (resultado) {
     var usuario = resultado[0];
     if (!usuario) return; // redirecionando para o login
+    // Convite de profissional aberto antes do login/cadastro: volta para ele.
+    var convite = null;
+    try { convite = localStorage.getItem('pf-convite-pendente'); } catch (e) { convite = null; }
+    if (convite && /^[A-Z0-9-]{4,24}$/.test(convite)) {
+      location.replace('convite.html?c=' + encodeURIComponent(convite));
+      return;
+    }
     mostrarUsuario(usuario);
+    // Link para o painel do profissional (contas com perfil profissional).
+    var profissional = PF.storage.getProfissional().then(function (r) { return r.profissional; }, function () { return null; });
+    profissional.then(function (prof) {
+      var item = document.querySelector('[data-menu-prof]');
+      if (item) item.hidden = !prof;
+    });
     // Link para a administração: só aparece se o servidor confirmar (api/admin/eu).
     PF.storage.souAdmin().then(function (admin) {
       var item = document.querySelector('[data-menu-admin]');
@@ -220,11 +233,19 @@
     return PF.storage.getAcessoAte().then(definirBloqueio, function () { /* sem rede: o banco decide */ })
       .then(function () {
         mostrarSecao(secaoNormalizada(), false);
-        if (bloqueado) {
+        if (!bloqueado) return;
+        return profissional.then(function (prof) {
+          if (prof) {
+            PF.toast('O painel do profissional é gratuito. O app pessoal (receitas, evolução…) precisa de um plano.', {
+              titulo: 'Conta profissional', tipo: 'info', duracao: 10000,
+              acao: { texto: 'Abrir painel do profissional', href: 'profissional.html' }
+            });
+            return;
+          }
           PF.toast('Escolha um plano e pague com Pix ou cartão para liberar o app na hora.', {
             titulo: 'Sem acesso ativo', tipo: 'aviso', duracao: 8000
           });
-        }
+        });
       });
   });
 })();

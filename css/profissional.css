@@ -1,0 +1,63 @@
+/* ==========================================================================
+   PontoFit — profissional.css
+   Painel do profissional (reaproveita admin.css: topo, abas, KPIs, painel lateral).
+   ========================================================================== */
+.prof-ativar { display: grid; gap: var(--esp-3); max-width: 560px; margin: 0 auto; }
+.prof-ativar h1 { font-size: clamp(1.5rem, 1.2rem + 1.2vw, 2rem); }
+.prof-vazio { display: grid; gap: var(--esp-3); justify-items: start; }
+
+/* Lista de pacientes */
+.prof-pacientes { display: grid; gap: var(--esp-3); padding: 0; margin: 0; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); }
+.prof-paciente { padding: 0; overflow: hidden; border-left: 4px solid var(--verde); transition: transform .2s, box-shadow .2s; }
+.prof-paciente--alerta { border-left-color: var(--laranja); }
+.prof-paciente:hover { transform: translateY(-2px); box-shadow: var(--sombra-2); }
+.prof-paciente__botao {
+  display: grid; gap: var(--esp-3); width: 100%; padding: var(--esp-4); border: 0; background: none;
+  color: inherit; font: inherit; text-align: left; cursor: pointer;
+}
+.prof-paciente__botao:focus-visible { outline: 3px solid var(--foco); outline-offset: -3px; }
+.prof-paciente__topo { display: flex; align-items: center; gap: var(--esp-3); }
+.prof-paciente__quem { display: grid; flex: 1; min-width: 0; }
+.prof-paciente__nome { font-family: var(--fonte-titulo); font-size: var(--fs-lead); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.prof-avatar {
+  display: grid; place-items: center; flex: none; width: 2.6rem; height: 2.6rem; border-radius: 50%;
+  background: var(--verde-suave); color: var(--verde-escuro); font-weight: 700; font-size: var(--fs-sm);
+}
+.prof-paciente__dados { display: grid; grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr)); gap: var(--esp-2) var(--esp-3); margin: 0; }
+.prof-paciente__dados dt { font-size: var(--fs-xs); color: var(--texto-sec); font-weight: 600; }
+.prof-paciente__dados dd { margin: 0; font-weight: 600; }
+.prof-dif { font-size: var(--fs-sm); font-weight: 600; }
+.prof-dif--desce { color: var(--verde-escuro); }
+.prof-dif--sobe { color: var(--laranja-escuro, #B86A16); }
+
+.prof-alertas { display: flex; flex-wrap: wrap; gap: var(--esp-2); padding: 0; margin: 0; }
+.prof-alerta { padding: .25rem .65rem; border-radius: 999px; font-size: var(--fs-xs); font-weight: 600; background: var(--laranja-suave); color: var(--texto); }
+.prof-alerta--dose { background: var(--vermelho-suave); color: var(--vermelho); }
+
+/* Convite */
+.prof-convite { display: grid; gap: var(--esp-3); }
+.prof-convite__link { display: flex; flex-wrap: wrap; gap: var(--esp-2); }
+.prof-convite__link .input { flex: 1 1 16rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: var(--fs-sm); }
+.prof-convite__acoes { display: flex; flex-wrap: wrap; gap: var(--esp-2); }
+.prof-convite__acoes svg { width: 1.1rem; height: 1.1rem; }
+.prof-convite__codigo strong { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .05em; }
+.prof-passos { display: grid; gap: var(--esp-2); margin: var(--esp-3) 0 0; padding-left: 1.3rem; }
+.prof-perfil { max-width: 560px; }
+
+/* Detalhes */
+.prof-oculto { opacity: .7; border-style: dashed; }
+.prof-grafico { width: 100%; height: auto; max-height: 160px; }
+.prof-grafico__linha { fill: none; stroke: var(--verde); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.prof-grafico__ponto { fill: var(--superficie); stroke: var(--verde); stroke-width: 2; }
+.prof-grafico__meta { stroke: var(--laranja); stroke-width: 2; stroke-dasharray: 6 4; }
+.prof-doses { display: grid; gap: var(--esp-2); padding: 0; margin: 0; }
+.prof-dose { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--esp-2); padding: var(--esp-2) 0; border-bottom: 1px solid var(--borda); }
+.prof-dose:last-child { border-bottom: 0; }
+.prof-dose > div { display: grid; }
+.prof-agua { display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--esp-2); padding: 0; margin: 0; }
+.prof-agua__dia { display: grid; justify-items: center; gap: .3rem; }
+.prof-agua__coluna { position: relative; display: block; width: 100%; max-width: 2rem; height: 70px; border-radius: 8px; background: var(--superficie-2); overflow: hidden; }
+.prof-agua__nivel { position: absolute; inset: auto 0 0; background: var(--agua); border-radius: inherit; }
+.prof-agua__dia--meta .prof-agua__nivel { background: var(--verde); }
+.prof-agua__rotulo { font-size: var(--fs-xs); color: var(--texto-sec); text-transform: capitalize; }
+.prof-aviso { text-align: center; }

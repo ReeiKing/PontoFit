@@ -243,3 +243,30 @@
 .confirmar__titulo:focus { outline: none; }
 .auth__sub[hidden] + .abas[hidden] + .painel { margin-top: var(--esp-6); }
 #painel-nova-senha { margin-top: var(--esp-6); }
+
+/* Cadastro de profissional (login.html?tipo=profissional) */
+.cadastro-prof { display: grid; gap: var(--esp-3); margin-bottom: var(--esp-2); }
+.cadastro-prof__aviso { padding: var(--esp-3); border-radius: 12px; background: var(--verde-suave); color: var(--verde-escuro); font-size: var(--fs-sm); }
+
+/* ---------- Página do convite (convite.html) ---------- */
+.convite-pagina { min-height: 100dvh; background: linear-gradient(160deg, var(--verde-suave), var(--fundo) 55%, var(--agua-suave)); }
+.convite { display: grid; justify-items: center; gap: var(--esp-5); max-width: 520px; margin: 0 auto; padding: var(--esp-7) var(--esp-4); }
+.convite__cartao { width: 100%; display: grid; gap: var(--esp-4); }
+.convite__carregando { color: var(--texto-sec); text-align: center; }
+.convite__conteudo, .convite__conteudo > div, .convite__conteudo form { display: grid; gap: var(--esp-4); }
+.convite__prof { display: flex; align-items: center; gap: var(--esp-3); }
+.convite__avatar {
+  display: grid; place-items: center; flex: none; width: 60px; height: 60px; border-radius: 50%;
+  background: linear-gradient(140deg, var(--verde), var(--agua)); color: #fff;
+  font-family: var(--fonte-titulo); font-weight: 700; font-size: 1.3rem;
+}
+.convite__titulo { font-size: var(--fs-h3); }
+.convite__frase { font-size: var(--fs-lead); font-weight: 500; margin-top: calc(-1 * var(--esp-2)); }
+.convite__acoes { display: grid; gap: var(--esp-2); }
+.convite__opcoes { display: grid; gap: var(--esp-2); border: 0; padding: 0; margin: 0; }
+.convite__opcoes legend { font-weight: 600; margin-bottom: var(--esp-2); }
+.convite__opcao { align-items: flex-start; padding: var(--esp-3); border: 1px solid var(--borda); border-radius: 12px; }
+.convite__opcao input { margin-top: .2rem; width: 1.15rem; height: 1.15rem; accent-color: var(--verde); flex: none; }
+.convite__recusar { justify-self: center; }
+.convite__pronto { padding: var(--esp-4); border-radius: 12px; background: var(--verde-suave); color: var(--verde-escuro); font-size: var(--fs-lead); }
+.ger-check { display: flex; align-items: center; gap: var(--esp-2); cursor: pointer; }

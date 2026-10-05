@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="pt-BR" data-protegida data-login="login.html?tipo=profissional" class="verificando-sessao">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Painel do profissional | PontoFit</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#123B2A">
+  <link rel="icon" href="assets/svg/logo.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/admin.css">
+  <link rel="stylesheet" href="css/profissional.css">
+  <noscript><style>.verificando-sessao body { visibility: visible; }</style></noscript>
+  <!-- Proteção de rota: só com sessão. Dados de pacientes só via api/prof (vínculo ativo). -->
+  <script src="js/vendor/supabase.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/auth.js"></script>
+</head>
+<body class="admin profissional">
+  <a class="pular-link" href="#prof-conteudo">Pular para o conteúdo</a>
+
+  <header class="admin-topo">
+    <div class="admin-topo__barra">
+      <a class="logo logo--claro" href="profissional.html" aria-label="PontoFit, painel do profissional">
+        <svg class="logo__marca" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M12 2.5C9 6.2 5 10.6 5 14.6a7 7 0 0 0 14 0c0-4-4-8.4-7-12.1Z" fill="#3CB57B"/>
+          <path d="M12 20.2v-7.4m0 3.3 2.6-2.6" fill="none" stroke="#123B2A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>Ponto<strong>Fit</strong></span>
+        <span class="admin-topo__selo">Profissional</span>
+      </a>
+      <nav class="admin-topo__acoes" aria-label="Conta">
+        <a class="btn btn--sm btn--contorno-claro" href="app.html#inicio">Meu app</a>
+        <button class="btn btn--sm btn--claro" type="button" data-sair><span>Sair</span></button>
+      </nav>
+    </div>
+    <nav class="admin-abas" aria-label="Seções do painel" data-prof-abas hidden>
+      <a class="admin-aba" href="#pacientes" data-aba="pacientes" aria-current="page">Pacientes</a>
+      <a class="admin-aba" href="#convite" data-aba="convite">Meu convite</a>
+      <a class="admin-aba" href="#perfil" data-aba="perfil">Meu perfil</a>
+    </nav>
+  </header>
+
+  <main class="admin-conteudo" id="prof-conteudo" tabindex="-1" data-prof aria-busy="true">
+    <p class="texto-sec" data-prof-carregando>Carregando…</p>
+
+    <!-- Ativar painel (conta que ainda não é profissional) -->
+    <section class="card prof-ativar" data-prof-ativar hidden aria-labelledby="t-ativar">
+      <h1 id="t-ativar">Ative seu painel profissional</h1>
+      <p class="texto-sec">É gratuito. Você recebe um link para convidar seus pacientes e acompanha os dados que eles autorizarem.</p>
+      <form class="evo__form" data-prof-form="ativar" novalidate>
+        <div class="campo"><label class="campo__label" for="at-nome">Seu nome (como os pacientes conhecem você)</label><input class="input" id="at-nome" name="nome" type="text" maxlength="120" required></div>
+        <div class="campo"><label class="campo__label" for="at-profissao">Profissão</label>
+          <select class="input" id="at-profissao" name="profissao" required>
+            <option value="">Selecione</option><option value="nutricionista">Nutricionista</option><option value="personal">Personal trainer</option>
+            <option value="academia">Academia</option><option value="medico">Médico(a)</option><option value="outro">Outro</option>
+          </select></div>
+        <div class="campo"><label class="campo__label" for="at-registro">Registro profissional <span class="texto-sec">(opcional)</span></label><input class="input" id="at-registro" name="registro" type="text" maxlength="40" placeholder="Ex.: CRN 3/12345"></div>
+        <div class="campo"><label class="campo__label" for="at-empresa">Empresa ou academia <span class="texto-sec">(opcional)</span></label><input class="input" id="at-empresa" name="empresa" type="text" maxlength="120"></div>
+        <p class="campo__erro" data-prof-erro="ativar" aria-live="polite"></p>
+        <button class="btn" type="submit"><span>Ativar painel</span></button>
+      </form>
+    </section>
+
+    <!-- Pacientes -->
+    <section class="admin-secao" id="pacientes" data-prof-secao="pacientes" aria-labelledby="t-pacientes" hidden>
+      <header class="admin-secao__cabecalho">
+        <div>
+          <h1 id="t-pacientes" tabindex="-1">Seus pacientes</h1>
+          <p class="texto-sec" data-prof-saudacao></p>
+        </div>
+        <button class="btn btn--sm btn--secundario" type="button" data-prof-atualizar><span>Atualizar</span></button>
+      </header>
+
+      <ul class="admin-kpis" role="list">
+        <li class="card admin-kpi admin-kpi--verde"><p class="painel-rotulo">Pacientes</p><p class="admin-kpi__valor" data-k="total">–</p><p class="admin-kpi__info">compartilhando com você</p></li>
+        <li class="card admin-kpi admin-kpi--laranja"><p class="painel-rotulo">Precisam de atenção</p><p class="admin-kpi__valor" data-k="alertas">–</p><p class="admin-kpi__info">dose atrasada ou sem pesar</p></li>
+        <li class="card admin-kpi admin-kpi--agua"><p class="painel-rotulo">Com plano ativo</p><p class="admin-kpi__valor" data-k="ativos">–</p><p class="admin-kpi__info">usando o app hoje</p></li>
+      </ul>
+
+      <div class="prof-vazio card" data-prof-vazio hidden>
+        <h2 class="evo__titulo">Ainda nenhum paciente</h2>
+        <p class="texto-sec">Envie o seu link de convite. Quando o paciente autorizar, ele aparece aqui na hora.</p>
+        <a class="btn" href="#convite">Ver meu link de convite</a>
+      </div>
+
+      <div class="admin-filtros" data-prof-filtros-caixa>
+        <div class="livro__filtros" role="group" aria-label="Filtrar pacientes" data-prof-filtros></div>
+        <label class="sr-only" for="prof-busca">Buscar paciente</label>
+        <input class="input admin-busca" id="prof-busca" type="search" placeholder="Buscar paciente pelo nome" autocomplete="off">
+      </div>
+      <ul class="prof-pacientes" role="list" data-prof-lista></ul>
+    </section>
+
+    <!-- Meu convite -->
+    <section class="admin-secao" id="convite" data-prof-secao="convite" aria-labelledby="t-convite" hidden>
+      <header class="admin-secao__cabecalho"><div><h1 id="t-convite" tabindex="-1">Meu convite</h1>
+        <p class="texto-sec">Envie para os seus pacientes. Eles escolhem o que compartilhar e podem remover o acesso quando quiserem.</p></div></header>
+      <section class="card prof-convite">
+        <p class="painel-rotulo">Seu link</p>
+        <div class="prof-convite__link"><input class="input" type="text" readonly data-prof-link aria-label="Link de convite"><button class="btn" type="button" data-prof-copiar><span>Copiar link</span></button></div>
+        <div class="prof-convite__acoes">
+          <a class="btn btn--secundario" href="#" target="_blank" rel="noopener" data-prof-whatsapp>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+            <span>Enviar pelo WhatsApp</span></a>
+        </div>
+        <p class="prof-convite__codigo">Código: <strong data-prof-codigo></strong></p>
+        <details class="g-detalhes"><summary>Gerar um link novo</summary>
+          <p class="texto-sm texto-sec">O link atual para de funcionar. Os pacientes que já autorizaram continuam com você.</p>
+          <button class="btn btn--sm btn--secundario" type="button" data-prof-trocar><span>Gerar link novo</span></button>
+        </details>
+      </section>
+      <section class="card">
+        <h2 class="evo__titulo">Como funciona</h2>
+        <ol class="prof-passos">
+          <li>Você envia o link para o paciente (WhatsApp, Instagram, e-mail).</li>
+          <li>Ele cria a conta no PontoFit (ou entra) e vê quem está convidando.</li>
+          <li>Ele escolhe o que compartilhar: peso e meta, água, medicamentos, ficha e gestação.</li>
+          <li>Ao autorizar, ele aparece na aba Pacientes. O plano do app é pago pelo paciente.</li>
+        </ol>
+      </section>
+    </section>
+
+    <!-- Meu perfil -->
+    <section class="admin-secao" id="perfil" data-prof-secao="perfil" aria-labelledby="t-perfil" hidden>
+      <header class="admin-secao__cabecalho"><div><h1 id="t-perfil" tabindex="-1">Meu perfil</h1>
+        <p class="texto-sec">É o que o paciente vê no convite e na lista de profissionais que o acompanham.</p></div></header>
+      <section class="card">
+        <form class="evo__form prof-perfil" data-prof-form="perfil" novalidate>
+          <div class="campo"><label class="campo__label" for="pf-nome">Nome</label><input class="input" id="pf-nome" name="nome" type="text" maxlength="120"></div>
+          <div class="campo"><label class="campo__label" for="pf-profissao">Profissão</label>
+            <select class="input" id="pf-profissao" name="profissao">
+              <option value="nutricionista">Nutricionista</option><option value="personal">Personal trainer</option>
+              <option value="academia">Academia</option><option value="medico">Médico(a)</option><option value="outro">Outro</option>
+            </select></div>
+          <div class="campo"><label class="campo__label" for="pf-registro">Registro profissional <span class="texto-sec">(opcional)</span></label><input class="input" id="pf-registro" name="registro" type="text" maxlength="40"></div>
+          <div class="campo"><label class="campo__label" for="pf-empresa">Empresa ou academia <span class="texto-sec">(opcional)</span></label><input class="input" id="pf-empresa" name="empresa" type="text" maxlength="120"></div>
+          <p class="campo__erro" data-prof-erro="perfil" aria-live="polite"></p>
+          <button class="btn" type="submit"><span>Salvar</span></button>
+        </form>
+      </section>
+    </section>
+  </main>
+
+  <!-- Detalhes do paciente -->
+  <dialog class="gerenciar prof-detalhe" data-prof-detalhe aria-labelledby="det-nome">
+    <header class="gerenciar__topo">
+      <div>
+        <p class="painel-rotulo">Paciente</p>
+        <h2 id="det-nome" data-det-nome>Carregando…</h2>
+        <p class="texto-sm texto-sec" data-det-info></p>
+      </div>
+      <button class="leitor__fechar" type="button" data-det-fechar aria-label="Fechar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </header>
+    <div class="gerenciar__corpo" data-det-corpo aria-busy="true"></div>
+  </dialog>
+
+  <script src="js/ui.js"></script>
+  <script src="js/profissional.js"></script>
+</body>
+</html>

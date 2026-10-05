@@ -26,7 +26,8 @@
       var usuario = null;
       try { usuario = await S.getUser(); } catch (e) { usuario = null; }
       if (!usuario) {
-        location.replace('login.html');
+        // Página protegida pode pedir um login específico: <html data-login="login.html?tipo=profissional">
+        location.replace(raiz.getAttribute('data-login') || 'login.html');
         return null;
       }
       raiz.classList.remove('verificando-sessao');
@@ -67,6 +68,7 @@
     iniciarMostrarSenha();
     iniciarFormEntrar();
     iniciarFormCadastro();
+    configurarModoProfissional();
     iniciarEsqueciSenha();
     iniciarNovaSenha();
 
@@ -76,7 +78,35 @@
       return;
     }
     // Já está logado? Vai direto para a área do paciente.
-    S.getUser().then(function (u) { if (u) location.replace('app.html'); });
+    S.getUser().then(function (u) { if (u) location.replace(destino()); });
+  }
+
+  /* ---------- Modo profissional e destino depois de entrar ----------
+     login.html?tipo=profissional → cadastro de profissional (sem plano, CPF
+     opcional, profissão). ?voltar=convite.html?c=... → volta para o convite.
+     Só aceita páginas do próprio site (nada de endereço externo). */
+  var PARAMS = new URLSearchParams(location.search);
+  var MODO_PROF = PARAMS.get('tipo') === 'profissional';
+  function destino() {
+    var v = PARAMS.get('voltar') || '';
+    if (/^[a-z0-9-]+\.html(\?[A-Za-z0-9=&%._-]*)?(#[A-Za-z0-9_-]*)?$/i.test(v)) return v;
+    return MODO_PROF ? 'profissional.html' : 'app.html';
+  }
+
+  function configurarModoProfissional() {
+    if (!MODO_PROF) return;
+    document.querySelectorAll('[data-so-profissional]').forEach(function (el) { el.hidden = false; });
+    document.querySelectorAll('[data-so-paciente]').forEach(function (el) { el.hidden = true; });
+    var cpf = document.getElementById('cad-cpf');
+    if (cpf) { cpf.dataset.opcional = '1'; cpf.removeAttribute('required'); }
+    var opc = document.querySelector('[data-cpf-opcional]');
+    if (opc) opc.hidden = false;
+    var ajuda = document.querySelector('[data-cpf-ajuda]');
+    if (ajuda) ajuda.textContent = 'Não é obrigatório para profissionais.';
+    var aba = document.getElementById('aba-cadastro');
+    if (aba) aba.dataset.titulo = 'Crie sua conta de profissional';
+    var sub = document.querySelector('.auth__sub');
+    if (sub) sub.textContent = 'Acompanhe seus pacientes no PontoFit. Gratuito para profissionais.';
   }
 
   /** Mostra só um dos painéis (entrar, cadastro, confirmação ou nova senha). */
@@ -138,7 +168,7 @@
       try {
         await S.definirNovaSenha(form.senha.value);
         PF.toast('Senha alterada. Entrando na sua conta…', { titulo: 'Tudo certo' });
-        setTimeout(function () { location.replace('app.html'); }, 1200);
+        setTimeout(function () { location.replace(destino()); }, 1200);
       } catch (err) {
         PF.setLoading(botao, false);
         PF.toast(err.codigo === 'SEM_SESSAO' || err.codigo === 'AUTH'
@@ -263,12 +293,17 @@
       if (v !== form.querySelector('[data-regra="senhaNova"]').value) return 'As senhas não coincidem.';
       return '';
     },
-    cpf: function (v) {
+    cpf: function (v, form, input) {
       var d = v.replace(/\D/g, '');
+      if (!d && input && input.dataset.opcional) return '';
       if (!d) return 'Digite seu CPF.';
       if (d.length !== 11) return 'O CPF tem 11 números.';
       if (!cpfValido(d)) return 'Esse CPF não é válido. Confira os números.';
       return '';
+    },
+    profissao: function (v, form, input) {
+      if (input.closest('[hidden]')) return ''; // só no cadastro de profissional
+      return v ? '' : 'Escolha sua profissão.';
     },
     aceite: function (v, form, input) {
       return input.checked ? '' : 'Para continuar, confirme que leu o aviso de saúde.';
@@ -375,7 +410,7 @@
       PF.setLoading(botao, true, 'Entrando…');
       try {
         await S.entrar(form.email.value, form.senha.value, form.lembrar.checked);
-        location.replace('app.html');
+        location.replace(destino());
       } catch (err) {
         PF.setLoading(botao, false);
         if (err && err.codigo === 'EMAIL_NAO_CONFIRMADO') {
@@ -408,7 +443,17 @@
       var botao = form.querySelector('[type="submit"]');
       PF.setLoading(botao, true, 'Criando sua conta…');
       try {
-        var resultado = await S.cadastrar({
+        var resultado = await S.cadastrar(MODO_PROF ? {
+          tipo: 'profissional',
+          nome: form.nome.value,
+          email: form.email.value,
+          cpf: form.cpf.value,
+          senha: form.senha.value,
+          aceiteAvisoSaude: form.aceite.checked,
+          profissao: form.profissao.value,
+          registro: form.registro.value,
+          empresa: form.empresa.value
+        } : {
           nome: form.nome.value,
           email: form.email.value,
           cpf: form.cpf.value,
@@ -421,7 +466,7 @@
           mostrarConfirmacao(form.email.value.trim().toLowerCase());
           return;
         }
-        location.replace('app.html');
+        location.replace(destino());
       } catch (err) {
         PF.setLoading(botao, false);
         mostrarErroServidor(form, err);

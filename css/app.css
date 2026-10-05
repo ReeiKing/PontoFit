@@ -1601,3 +1601,12 @@
 .meds__mais .btn svg { width: 1.1rem; height: 1.1rem; }
 .painel-doses__mais { margin-top: calc(-1 * var(--esp-2)); }
 .painel-doses__mais .link-seta { margin-top: 0; background: none; border: 0; padding: 0; cursor: pointer; font: inherit; font-weight: 600; }
+
+/* ---------- Minha ficha: profissionais que me acompanham ---------- */
+.vinculos { display: grid; gap: var(--esp-3); margin-top: var(--esp-5); }
+.vinculos__lista { display: grid; gap: var(--esp-3); padding: 0; margin: 0; }
+.vinculo { display: grid; gap: var(--esp-3); padding: var(--esp-3) 0; border-top: 1px solid var(--borda); }
+.vinculo__topo { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--esp-2); }
+.vinculo__quem { display: grid; }
+.vinculo__campos { display: flex; flex-wrap: wrap; gap: var(--esp-2); border: 0; padding: 0; margin: 0; }
+.vinculo__remover { color: var(--vermelho); }

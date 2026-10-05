@@ -126,6 +126,12 @@
             <span class="sr-only" data-badge-plano-leitor></span>
           </a>
         </li>
+        <li hidden data-menu-prof>
+          <a class="menu__item menu__item--admin" href="profissional.html">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>Painel do profissional</span>
+          </a>
+        </li>
         <li hidden data-menu-admin>
           <a class="menu__item menu__item--admin" href="admin.html">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
@@ -635,6 +641,12 @@
           <button class="btn" type="submit"><span>Salvar ficha</span></button>
         </div>
       </form>
+
+      <section class="card vinculos" data-vinculos aria-labelledby="titulo-vinculos" hidden>
+        <h2 class="card__titulo" id="titulo-vinculos">Profissionais que me acompanham</h2>
+        <p class="texto-sm texto-sec">Eles veem só o que você marcar aqui. Para adicionar alguém, abra o link de convite que o profissional enviar.</p>
+        <ul class="vinculos__lista" role="list" data-vinculos-lista></ul>
+      </section>
     </section>
 
     <section class="secao-app" id="secao-evolucao" data-secao="evolucao" aria-labelledby="titulo-evolucao" hidden>
@@ -1186,5 +1198,6 @@
   <script src="js/gestacao.js"></script>
   <script src="js/plano.js"></script>
   <script src="js/painel.js"></script>
+  <script src="js/vinculos.js"></script>
 </body>
 </html>

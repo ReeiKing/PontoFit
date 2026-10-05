@@ -241,13 +241,22 @@
         password: String(dados.senha || ''),
         options: {
           // Só preenche o perfil (nome e plano); não é usado para autorização.
-          data: {
+          data: dados.tipo === 'profissional' ? {
+            // Profissional: CPF opcional; o banco cria o painel profissional junto.
+            tipo: 'profissional',
+            nome: String(dados.nome || '').trim(),
+            profissao: String(dados.profissao || 'outro'),
+            registro: String(dados.registro || '').trim(),
+            empresa: String(dados.empresa || '').trim(),
+            cpf: String(dados.cpf || '').replace(/\D/g, ''),
+            aceite_aviso_saude: !!dados.aceiteAvisoSaude
+          } : {
             nome: String(dados.nome || '').trim(),
             plano: ['semanal', 'mensal', 'semestral'].indexOf(dados.plano) !== -1 ? dados.plano : 'mensal',
             cpf: String(dados.cpf || '').replace(/\D/g, ''), // o banco valida e exige CPF único
             aceite_aviso_saude: !!dados.aceiteAvisoSaude
           },
-          emailRedirectTo: urlDe('app.html')
+          emailRedirectTo: urlDe(dados.tipo === 'profissional' ? 'profissional.html' : 'app.html')
         }
       });
       // O gatilho do banco recusa CPF repetido (ou inválido); a Supabase devolve
@@ -554,6 +563,47 @@
     criarPagamentoCartao: function (plano) {
       return chamarApi('/api/cartao/criar', { method: 'POST', body: JSON.stringify({ plano: plano }) });
     },
+
+    /* ---------- Profissionais e vínculos com pacientes ---------- */
+
+    /** Convite público (não precisa estar logado). → { nome, profissao, profissaoNome, registro, empresa } */
+    getConvite: async function (codigo) {
+      var resp;
+      try {
+        resp = await fetch('/api/vinculos?convite=' + encodeURIComponent(codigo), { headers: { Accept: 'application/json' } });
+      } catch (e) {
+        throw erro('REDE', 'Sem conexão. Verifique sua internet e tente de novo.');
+      }
+      var dados = await resp.json().catch(function () { return {}; });
+      if (!resp.ok) throw erro('CONVITE', dados.erro || 'Convite não encontrado.');
+      return dados;
+    },
+
+    /** Profissionais que acompanham a pessoa logada. → { profissionais: [...] } */
+    getVinculos: function () { return chamarApi('/api/vinculos'); },
+    aceitarConvite: function (codigo, compartilha) {
+      return chamarApi('/api/vinculos', { method: 'POST', body: JSON.stringify({ acao: 'aceitar', codigo: codigo, compartilha: compartilha }) });
+    },
+    atualizarVinculo: function (id, compartilha) {
+      return chamarApi('/api/vinculos', { method: 'POST', body: JSON.stringify({ acao: 'atualizar', id: id, compartilha: compartilha }) });
+    },
+    revogarVinculo: function (id) {
+      return chamarApi('/api/vinculos', { method: 'POST', body: JSON.stringify({ acao: 'revogar', id: id }) });
+    },
+
+    /** Painel profissional da conta logada. → { profissional: {...} | null } */
+    getProfissional: function () { return chamarApi('/api/prof?acao=eu'); },
+    ativarProfissional: function (campos) {
+      return chamarApi('/api/prof', { method: 'POST', body: JSON.stringify(Object.assign({ acao: 'ativar' }, campos)) });
+    },
+    atualizarProfissional: function (campos) {
+      return chamarApi('/api/prof', { method: 'POST', body: JSON.stringify(Object.assign({ acao: 'atualizar' }, campos)) });
+    },
+    trocarCodigoProfissional: function () {
+      return chamarApi('/api/prof', { method: 'POST', body: JSON.stringify({ acao: 'trocar-codigo' }) });
+    },
+    getPacientesProf: function () { return chamarApi('/api/prof?acao=pacientes'); },
+    getPacienteProf: function (id) { return chamarApi('/api/prof?acao=paciente&id=' + encodeURIComponent(id)); },
 
     /* ---------- Administração (só administradores; o servidor confere) ---------- */
 

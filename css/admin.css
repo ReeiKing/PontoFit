@@ -12,6 +12,7 @@ body.admin { background: var(--fundo); min-height: 100dvh; }
   max-width: 1240px; margin: 0 auto; padding: var(--esp-3) var(--esp-4);
 }
 .admin-topo .logo { color: #fff; }
+.admin-topo .logo strong { color: #7CE0AE; }
 .admin-topo__selo {
   margin-left: var(--esp-2); padding: .15rem .6rem; border-radius: 999px;
   background: rgb(255 255 255 / .15); font-size: var(--fs-xs); font-weight: 600; letter-spacing: .03em;
