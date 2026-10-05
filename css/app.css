@@ -1511,10 +1511,12 @@
 .painel-habitos { display: grid; gap: var(--esp-4); }
 @media (min-width: 900px) { .painel-habitos { grid-template-columns: 1fr 1fr; } }
 
-.painel-agua { display: grid; grid-template-columns: auto 1fr; gap: var(--esp-4); align-items: center; background: linear-gradient(150deg, var(--agua-suave), var(--superficie) 65%); }
-.painel-agua__texto { display: grid; gap: .3rem; justify-items: start; }
+.painel-agua { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--esp-4); align-items: center; background: linear-gradient(150deg, var(--agua-suave), var(--superficie) 65%); }
+.painel-agua__texto { display: grid; gap: .3rem; justify-items: start; min-width: 0; }
 .painel-agua__qtd { font-family: var(--fonte-titulo); font-size: clamp(1.4rem, 1.1rem + 1vw, 1.8rem); font-weight: 700; }
-.painel-agua__botoes { display: flex; gap: var(--esp-2); margin-top: var(--esp-1); }
+.painel-agua__botoes { display: flex; flex-wrap: wrap; gap: var(--esp-2); margin-top: var(--esp-1); max-width: 100%; }
+/* Nomes longos ("+ 1 caneca de 1 L", "+ 1 garrafinha (500 ml)") quebram em vez de alargar o cartão no celular */
+.painel-agua__botoes [data-agua-mais] { white-space: normal; text-align: left; line-height: 1.2; min-width: 0; }
 .painel-agua__sequencia { font-size: var(--fs-sm); font-weight: 600; color: var(--agua-escuro); }
 .painel-agua__sequencia:empty { display: none; }
 .copo { width: 84px; }
