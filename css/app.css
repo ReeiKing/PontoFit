@@ -715,7 +715,7 @@
 /* ==========================================================================
    Meu plano (assinatura e mensalidades)
    ========================================================================== */
-.plano-app { display: grid; gap: var(--esp-5); }
+.plano-app { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--esp-5); }
 
 .assinatura {
   --assinatura-cor: var(--agua);
@@ -766,6 +766,8 @@
 .planos-app__detalhe { color: var(--texto-sec); font-size: var(--fs-sm); }
 .planos-app__de { color: var(--texto-sec); font-size: var(--fs-sm); }
 .planos-app__acoes { display: flex; flex-wrap: wrap; gap: var(--esp-2); }
+/* "Pagar com cartão pelo Mercado Pago" quebra a linha em telas de 360 px */
+.planos-app__acoes .btn { white-space: normal; max-width: 100%; text-align: center; }
 .planos-app__erro {
   padding: var(--esp-2) var(--esp-3);
   border-radius: 10px;
@@ -1124,8 +1126,9 @@
 /* ==========================================================================
    Medicamentos (abas)
    ========================================================================== */
-.meds { display: grid; gap: var(--esp-5); }
-.meds__conteudo { display: grid; gap: var(--esp-5); }
+/* minmax(0, 1fr): nenhum conteúdo comprido alarga a coluna além da tela no celular */
+.meds { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--esp-5); }
+.meds__conteudo { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--esp-5); }
 .meds__abas { display: flex; flex-wrap: wrap; gap: var(--esp-2); }
 .meds__aba, .meds__adicionar {
   display: inline-flex;
@@ -1228,7 +1231,7 @@
 .painel-topo__data { font-size: var(--fs-sm); font-weight: 600; color: var(--verde-escuro); }
 .painel-topo .btn svg { width: 1.15rem; height: 1.15rem; }
 
-.painel { display: grid; gap: var(--esp-5); }
+.painel { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--esp-5); }
 .painel-rotulo { font-size: var(--fs-sm); font-weight: 600; color: var(--texto-sec); }
 
 /* Entrada em cascata dos cartões */
@@ -1602,6 +1605,7 @@
 /* Mais de um medicamento */
 .meds__mais { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--esp-4); margin-top: var(--esp-5); border: 2px dashed var(--verde); background: linear-gradient(135deg, var(--verde-suave), var(--superficie) 70%); }
 .meds__mais .btn svg { width: 1.1rem; height: 1.1rem; }
+.meds__mais .btn { white-space: normal; text-align: left; max-width: 100%; }
 .painel-doses__mais { margin-top: calc(-1 * var(--esp-2)); }
 .painel-doses__mais .link-seta { margin-top: 0; background: none; border: 0; padding: 0; cursor: pointer; font: inherit; font-weight: 600; }
 

@@ -43,7 +43,12 @@
     var p = String(nome || '').trim().split(/\s+/);
     return ((p[0] || '')[0] || '').toUpperCase() + ((p.length > 1 ? p[p.length - 1][0] : '') || '').toUpperCase();
   }
-  function primeiroNome(nome) { return String(nome || '').trim().split(/\s+/)[0] || ''; }
+  /** 'Dra. Ana Lima' → 'Dra. Ana'; 'Ana Lima' → 'Ana' (título não conta como nome). */
+  function primeiroNome(nome) {
+    var p = String(nome || '').trim().split(/\s+/);
+    if (p.length > 1 && /^(dr|dra|prof|profa|nutri)\.?$/i.test(p[0])) return p[0] + ' ' + p[1];
+    return p[0] || '';
+  }
 
   function textoDose(d) {
     if (d.semData) return 'sem data da última aplicação';
@@ -80,7 +85,7 @@
   function linkConvite() { return location.origin + '/convite.html?c=' + encodeURIComponent(perfil.codigo); }
 
   function renderPerfil() {
-    $('[data-prof-saudacao]').textContent = 'Olá, ' + primeiroNome(perfil.nome) + '. Aqui aparecem os pacientes que autorizaram o compartilhamento.';
+    $('[data-prof-saudacao]').textContent = 'Olá, ' + primeiroNome(perfil.nome).replace(/\.$/, '') + '. Aqui aparecem os pacientes que autorizaram o compartilhamento.';
     var link = linkConvite();
     $('[data-prof-link]').value = link;
     $('[data-prof-codigo]').textContent = perfil.codigo;
