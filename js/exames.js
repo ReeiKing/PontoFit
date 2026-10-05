@@ -402,6 +402,7 @@
       abertos[id] = true;
       PF.toast(editando ? 'Exame atualizado.' : 'Exame salvo. ' + resultados.length + (resultados.length === 1 ? ' resultado registrado.' : ' resultados registrados.'));
       await carregar();
+      oferecerCompartilhar();
     } catch (err) {
       erro.textContent = err.message;
     } finally {
@@ -411,6 +412,37 @@
 
   dlg.querySelectorAll('[data-exame-fechar]').forEach(function (b) { b.addEventListener('click', function () { dlg.close(); }); });
   $('[data-exame-novo]').addEventListener('click', function () { abrirDialogo(null); });
+
+  /* ---------- Compartilhar com o profissional ----------
+     Vínculos antigos não tinham "Exames de sangue" autorizado: depois de
+     salvar um exame, pergunta (uma vez por sessão) se pode compartilhar. */
+  var jaPerguntou = false;
+  async function oferecerCompartilhar() {
+    if (jaPerguntou || !S.getVinculos) return;
+    var r;
+    try { r = await S.getVinculos(); } catch (e) { return; }
+    var sem = (r.profissionais || []).filter(function (p) { return !p.compartilha.exames; });
+    if (!sem.length) return;
+    jaPerguntou = true;
+    var nomes = sem.map(function (p) { return p.nome; }).join(' e ');
+    PF.toast('Quer que ' + nomes + (sem.length > 1 ? ' vejam' : ' veja') + ' seus exames e laudos?', {
+      titulo: 'Compartilhar exames', tipo: 'info', duracao: 0,
+      acao: {
+        texto: 'Compartilhar',
+        onClick: async function () {
+          try {
+            for (var i = 0; i < sem.length; i++) {
+              var c = Object.assign({}, sem[i].compartilha, { exames: true });
+              await S.atualizarVinculo(sem[i].id, c);
+            }
+            PF.toast(nomes + (sem.length > 1 ? ' já veem' : ' já vê') + ' seus exames. Você muda isso em Minha ficha.');
+          } catch (err) {
+            PF.toast(err.message, { tipo: 'erro' });
+          }
+        }
+      }
+    });
+  }
 
   /* ---------- Carregar ---------- */
   async function carregar() {
