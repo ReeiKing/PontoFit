@@ -6,6 +6,8 @@
 // POST { acao: 'ativar', nome, profissao, registro?, empresa? }   cria o painel numa conta existente
 // POST { acao: 'atualizar', nome?, profissao?, registro?, empresa? }
 // POST { acao: 'trocar-codigo' }   novo link de convite (o antigo deixa de funcionar)
+// POST { acao: 'orientacoes', pacienteId, metaPesoKg?, metaData?, metaAguaCopos?, refeicoes?, observacoes? }
+//      metas e plano alimentar para o paciente (substitui as anteriores)
 //
 // Cada leitura confere o vínculo ativo e os campos compartilha_* do paciente.
 'use strict';
@@ -154,8 +156,23 @@ module.exports = async function handler(req, res) {
       if (!P.UUID.test(id)) throw new P.ErroUsuario(400, 'Paciente inválido.');
       const vinculo = await P.dados(db.from('vinculos').select('*').eq('profissional_id', prof.usuario_id).eq('paciente_id', id).eq('status', 'ativo').maybeSingle());
       if (!vinculo) throw new P.ErroUsuario(404, 'Esse paciente não compartilha dados com você (ou removeu o acesso).');
-      const [paciente] = await carregarPacientes(db, [vinculo], true);
+      const [[paciente], orient] = await Promise.all([
+        carregarPacientes(db, [vinculo], true),
+        P.dados(db.from('orientacoes').select('*').eq('vinculo_id', vinculo.id).maybeSingle())
+      ]);
+      paciente.orientacoes = P.orientacoesSaida(orient);
       return responder(res, 200, { hoje: P.hojeSP(), paciente: paciente });
+    }
+
+    if (req.method === 'POST' && acao === 'orientacoes') {
+      const corpo = req.body || {};
+      const id = String(corpo.pacienteId || '');
+      if (!P.UUID.test(id)) throw new P.ErroUsuario(400, 'Paciente inválido.');
+      const vinculo = await P.dados(db.from('vinculos').select('id').eq('profissional_id', prof.usuario_id).eq('paciente_id', id).eq('status', 'ativo').maybeSingle());
+      if (!vinculo) throw new P.ErroUsuario(404, 'Esse paciente não compartilha dados com você (ou removeu o acesso).');
+      const linha = Object.assign(P.validarOrientacoes(corpo), { vinculo_id: vinculo.id, atualizado_em: new Date().toISOString() });
+      const salva = await P.dados(db.from('orientacoes').upsert(linha, { onConflict: 'vinculo_id' }).select('*').single());
+      return responder(res, 200, { orientacoes: P.orientacoesSaida(salva) });
     }
 
     if (req.method === 'POST' && acao === 'atualizar') {

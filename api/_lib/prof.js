@@ -110,7 +110,54 @@ function resumoGestacao(ficha) {
   return { semana: Math.floor(dias / 7), diasExtra: dias % 7, dpp: ficha.gestacao_dpp || somarDias(dum, 280), pesoPreKg: num(ficha.peso_pre_gestacional_kg) };
 }
 
+/* ---------- Orientações do profissional (metas e plano alimentar) ---------- */
+const DATA = /^\d{4}-\d{2}-\d{2}$/;
+const HORA = /^([01]\d|2[0-3]):[0-5]\d$/;
+function textoLimpo(v, max) { return String(v == null ? '' : v).replace(/\r\n?/g, '\n').trim().slice(0, max); }
+
+/** Corpo → colunas de public.orientacoes (ou ErroUsuario). */
+function validarOrientacoes(c) {
+  c = c || {};
+  const linha = { meta_peso_kg: null, meta_data: null, meta_agua_copos: null, refeicoes: [], observacoes: null };
+  if (c.metaPesoKg != null && c.metaPesoKg !== '') {
+    const n = Number(c.metaPesoKg);
+    if (!isFinite(n) || n < 30 || n > 300) throw new ErroUsuario(400, 'A meta de peso deve ficar entre 30 e 300 kg.');
+    linha.meta_peso_kg = Math.round(n * 10) / 10;
+  }
+  if (c.metaData) {
+    if (!DATA.test(c.metaData) || c.metaData < hojeSP()) throw new ErroUsuario(400, 'A data da meta deve ser hoje ou depois.');
+    linha.meta_data = c.metaData;
+  }
+  if (c.metaAguaCopos != null && c.metaAguaCopos !== '') {
+    const n = Math.round(Number(c.metaAguaCopos));
+    if (!isFinite(n) || n < 4 || n > 20) throw new ErroUsuario(400, 'A meta de água deve ficar entre 4 e 20 copos.');
+    linha.meta_agua_copos = n;
+  }
+  const refeicoes = Array.isArray(c.refeicoes) ? c.refeicoes : [];
+  if (refeicoes.length > 12) throw new ErroUsuario(400, 'Use no máximo 12 refeições.');
+  linha.refeicoes = refeicoes.map(function (r) {
+    const nome = textoLimpo(r && r.nome, 60);
+    const itens = textoLimpo(r && r.itens, 1000);
+    const horario = textoLimpo(r && r.horario, 5);
+    if (!nome && !itens) return null;
+    if (!nome) throw new ErroUsuario(400, 'Dê um nome para cada refeição (ex.: Café da manhã).');
+    if (horario && !HORA.test(horario)) throw new ErroUsuario(400, 'Horário inválido em "' + nome + '".');
+    return { nome: nome, horario: horario || null, itens: itens };
+  }).filter(Boolean);
+  linha.observacoes = textoLimpo(c.observacoes, 2000) || null;
+  return linha;
+}
+
+function orientacoesSaida(o) {
+  if (!o) return null;
+  return {
+    metaPesoKg: num(o.meta_peso_kg), metaData: o.meta_data, metaAguaCopos: o.meta_agua_copos,
+    refeicoes: o.refeicoes || [], observacoes: o.observacoes, atualizadoEm: o.atualizado_em
+  };
+}
+
 module.exports = {
+  validarOrientacoes, orientacoesSaida,
   PROFISSOES, CODIGO, UUID, CAMPOS_COMPARTILHA, ErroUsuario,
   hojeSP, somarDias, diasEntre, idade, dados,
   profissionalPublico, compartilhaDe, colunasCompartilha, exigirProfissional,

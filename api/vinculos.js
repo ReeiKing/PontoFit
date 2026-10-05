@@ -1,7 +1,7 @@
 // /api/vinculos — convite de profissional e autorizações do paciente.
 //
 // GET  ?convite=CODIGO          (público) quem é o profissional do convite
-// GET                            (paciente) profissionais que me acompanham
+// GET                            (paciente) profissionais que me acompanham (com metas e plano alimentar)
 // POST { acao: 'aceitar',   codigo, compartilha: { peso, agua, medicamentos, ficha, gestacao } }
 // POST { acao: 'atualizar', id, compartilha }
 // POST { acao: 'revogar',   id }
@@ -10,7 +10,7 @@
 'use strict';
 
 const { supabaseAdmin, usuarioDaRequisicao, responder } = require('./_lib/pix');
-const { CODIGO, UUID, ErroUsuario, dados, profissionalPublico, compartilhaDe, colunasCompartilha } = require('./_lib/prof');
+const { CODIGO, UUID, ErroUsuario, dados, profissionalPublico, compartilhaDe, colunasCompartilha, orientacoesSaida } = require('./_lib/prof');
 
 function codigoDe(v) { return String(v || '').trim().toUpperCase(); }
 
@@ -33,10 +33,14 @@ module.exports = async function handler(req, res) {
     async function lista() {
       const vinc = await dados(db.from('vinculos').select('*').eq('paciente_id', usuario.id).eq('status', 'ativo').order('criado_em', { ascending: true }));
       if (!vinc.length) return [];
-      const profs = await dados(db.from('profissionais').select('usuario_id, nome, profissao, registro, empresa').in('usuario_id', vinc.map(function (v) { return v.profissional_id; })));
+      const [profs, orient] = await Promise.all([
+        dados(db.from('profissionais').select('usuario_id, nome, profissao, registro, empresa').in('usuario_id', vinc.map(function (v) { return v.profissional_id; }))),
+        dados(db.from('orientacoes').select('*').in('vinculo_id', vinc.map(function (v) { return v.id; })))
+      ]);
       return vinc.map(function (v) {
         const p = profs.find(function (x) { return x.usuario_id === v.profissional_id; }) || { nome: 'Profissional', profissao: 'outro' };
-        return Object.assign({ id: v.id, desde: v.criado_em, compartilha: compartilhaDe(v) }, profissionalPublico(p));
+        const o = orient.find(function (x) { return x.vinculo_id === v.id; });
+        return Object.assign({ id: v.id, desde: v.criado_em, compartilha: compartilhaDe(v), orientacoes: orientacoesSaida(o) }, profissionalPublico(p));
       });
     }
 

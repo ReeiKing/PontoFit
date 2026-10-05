@@ -1,7 +1,7 @@
 /* ==========================================================================
    PontoFit — app.js
    Layout da área do paciente (app.html):
-   - navegação por hash (#inicio, #receitas, #cesta, #ficha, #evolucao, #medicamentos, #mensagens, #plano)
+   - navegação por hash (#inicio, #receitas, #cesta, #ficha, #evolucao, #medicamentos, #orientacoes, #mensagens, #plano)
      sem recarregar, com transição entre as seções;
    - menu lateral fixo no desktop / gaveta no celular e tablet;
    - nome, e-mail e iniciais do usuário no menu.
@@ -25,6 +25,7 @@
     evolucao: 'Minha evolução',
     medicamentos: 'Medicamentos',
     gestacao: 'Gestação',
+    orientacoes: 'Plano alimentar',
     mensagens: 'Mensagens',
     plano: 'Assinaturas'
   };

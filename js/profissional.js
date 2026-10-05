@@ -540,7 +540,8 @@
     corpo.appendChild(el('p', 'texto-sm texto-sec prof-aviso', 'Dados informados pelo próprio paciente no app. Use como apoio ao acompanhamento.'));
   }
 
-  /* Abas do painel lateral: Resumo | Conversa */
+  /* Abas do painel lateral: Resumo | Conversa | Metas e plano */
+  var ABAS_DET = ['resumo', 'conversa', 'plano'];
   function mostrarAbaDetalhe(qual, focar) {
     document.querySelectorAll('[data-det-aba]').forEach(function (b) {
       var ativa = b.dataset.detAba === qual;
@@ -551,6 +552,7 @@
     corpo.hidden = qual !== 'resumo';
     var cx = $('[data-det-conversa]');
     cx.hidden = qual !== 'conversa';
+    $('[data-det-plano]').hidden = qual !== 'plano';
     if (qual === 'conversa') {
       var p = pacientes.find(function (x) { return x.id === abertoId; });
       if (!p) return;
@@ -564,8 +566,9 @@
   });
   document.querySelector('.prof-det-abas').addEventListener('keydown', function (e) {
     if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
-    var atual = document.querySelector('[data-det-aba][aria-selected="true"]').dataset.detAba;
-    mostrarAbaDetalhe(atual === 'resumo' ? 'conversa' : 'resumo', true);
+    var atual = ABAS_DET.indexOf(document.querySelector('[data-det-aba][aria-selected="true"]').dataset.detAba);
+    var passo = e.key === 'ArrowRight' ? 1 : -1;
+    mostrarAbaDetalhe(ABAS_DET[(atual + passo + ABAS_DET.length) % ABAS_DET.length], true);
   });
   function fecharConversa() {
     if (conversa) conversa.destruir();
@@ -604,7 +607,7 @@
   });
 
   async function abrirPaciente(id, aba) {
-    if (abertoId !== id) fecharConversa();
+    if (abertoId !== id) { fecharConversa(); preencherPlano(null); }
     abertoId = id;
     badgeNovasDetalhe();
     mostrarAbaDetalhe(aba || 'resumo', false);
@@ -618,6 +621,7 @@
     try {
       var r = await S.getPacienteProf(id);
       renderDetalhe(r.paciente);
+      preencherPlano(r.paciente.orientacoes);
     } catch (err) {
       corpo.textContent = '';
       corpo.appendChild(el('p', 'texto-sec', err.message));
@@ -626,6 +630,107 @@
       corpo.setAttribute('aria-busy', 'false');
     }
   }
+
+  /* ---------- Metas e plano alimentar ---------- */
+  var formPlano = $('[data-plano-form]');
+  var listaRef = $('[data-plano-refeicoes]');
+  var MODELO = [
+    ['Café da manhã', '07:00'], ['Lanche da manhã', '10:00'], ['Almoço', '12:30'], ['Lanche da tarde', '16:00'], ['Jantar', '19:30']
+  ];
+  var nRef = 0;
+
+  function linhaRefeicao(r) {
+    r = r || {};
+    nRef++;
+    var li = el('li', 'prof-refeicao');
+    var topo = el('div', 'prof-refeicao__topo');
+    function campo(rotulo, nome, tipo, valor, attrs) {
+      var c = el('div', 'campo prof-refeicao__' + nome);
+      var l = el('label', 'campo__label', rotulo);
+      var i = el(tipo === 'textarea' ? 'textarea' : 'input', 'input');
+      if (tipo !== 'textarea') i.type = tipo;
+      i.id = 'ref-' + nome + '-' + nRef;
+      l.htmlFor = i.id;
+      i.dataset.ref = nome;
+      i.value = valor || '';
+      Object.keys(attrs || {}).forEach(function (k) { i.setAttribute(k, attrs[k]); });
+      c.appendChild(l);
+      c.appendChild(i);
+      return c;
+    }
+    topo.appendChild(campo('Refeição', 'nome', 'text', r.nome, { maxlength: '60', placeholder: 'Ex.: Almoço' }));
+    topo.appendChild(campo('Horário', 'horario', 'time', r.horario));
+    var tirar = el('button', 'btn btn--sm btn--fantasma prof-refeicao__tirar', 'Remover');
+    tirar.type = 'button';
+    tirar.dataset.refTirar = '';
+    topo.appendChild(tirar);
+    li.appendChild(topo);
+    li.appendChild(campo('O que comer', 'itens', 'textarea', r.itens, { maxlength: '1000', rows: '3', placeholder: 'Ex.: 2 ovos mexidos, 1 fatia de pão integral, café sem açúcar' }));
+    return li;
+  }
+
+  function preencherPlano(o) {
+    o = o || {};
+    formPlano.metaPesoKg.value = o.metaPesoKg != null ? F.paraInput(o.metaPesoKg) : '';
+    formPlano.metaData.value = o.metaData || '';
+    formPlano.metaData.min = F.hojeISO();
+    formPlano.metaAguaCopos.value = o.metaAguaCopos != null ? o.metaAguaCopos : '';
+    formPlano.observacoes.value = o.observacoes || '';
+    listaRef.textContent = '';
+    (o.refeicoes || []).forEach(function (r) { listaRef.appendChild(linhaRefeicao(r)); });
+    $('[data-plano-atualizado]').textContent = o.atualizadoEm
+      ? 'Enviado ao paciente em ' + new Date(o.atualizadoEm).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) + '.'
+      : 'Ainda não enviado.';
+    $('[data-plano-erro]').textContent = '';
+  }
+
+  $('[data-plano-add]').addEventListener('click', function () {
+    if (listaRef.children.length >= 12) { PF.toast('Use no máximo 12 refeições.', { tipo: 'aviso' }); return; }
+    var li = linhaRefeicao();
+    listaRef.appendChild(li);
+    li.querySelector('input').focus();
+  });
+  $('[data-plano-modelo]').addEventListener('click', function () {
+    var temAlgo = Array.prototype.some.call(listaRef.querySelectorAll('[data-ref]'), function (i) { return i.value.trim(); });
+    if (temAlgo && !confirm('Substituir as refeições atuais pelo modelo?')) return;
+    listaRef.textContent = '';
+    MODELO.forEach(function (m) { listaRef.appendChild(linhaRefeicao({ nome: m[0], horario: m[1] })); });
+    listaRef.querySelector('[data-ref="itens"]').focus();
+  });
+  listaRef.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-ref-tirar]');
+    if (b) b.closest('li').remove();
+  });
+
+  formPlano.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var erro = $('[data-plano-erro]');
+    erro.textContent = '';
+    var peso = formPlano.metaPesoKg.value.trim();
+    var pesoNum = peso ? F.decimal(peso) : null;
+    if (peso && pesoNum == null) { erro.textContent = 'Meta de peso inválida.'; formPlano.metaPesoKg.focus(); return; }
+    var campos = {
+      metaPesoKg: pesoNum,
+      metaData: formPlano.metaData.value || null,
+      metaAguaCopos: formPlano.metaAguaCopos.value ? Number(formPlano.metaAguaCopos.value) : null,
+      observacoes: formPlano.observacoes.value,
+      refeicoes: Array.prototype.map.call(listaRef.children, function (li) {
+        var v = function (n) { return li.querySelector('[data-ref="' + n + '"]').value; };
+        return { nome: v('nome'), horario: v('horario'), itens: v('itens') };
+      })
+    };
+    var botao = formPlano.querySelector('[type="submit"]');
+    PF.setLoading(botao, true, 'Salvando…');
+    try {
+      var r = await S.salvarOrientacoes(abertoId, campos);
+      preencherPlano(r.orientacoes);
+      PF.toast('Metas e plano enviados. O paciente já vê no app.');
+    } catch (err) {
+      erro.textContent = err.message;
+    } finally {
+      PF.setLoading(botao, false);
+    }
+  });
 
   $('[data-prof-lista]').addEventListener('click', function (e) {
     var b = e.target.closest('[data-paciente]');

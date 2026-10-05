@@ -145,7 +145,7 @@
   }
 
   function mensagemDe(m, eu) {
-    return { id: m.id, autorId: m.autor_id, texto: m.texto, criadoEm: m.criado_em, lidaEm: m.lida_em, minha: m.autor_id === eu };
+    return { id: m.id, autorId: m.autor_id, texto: m.texto || '', anexo: m.anexo_path || null, criadoEm: m.criado_em, lidaEm: m.lida_em, minha: m.autor_id === eu };
   }
 
   function vazioParaNulo(v) {
@@ -584,14 +584,22 @@
     },
 
     /** Profissionais que acompanham a pessoa logada. → { profissionais: [...] } */
-    getVinculos: function () { return chamarApi('/api/vinculos'); },
+    getVinculos: function () {
+      // Várias partes do app pedem ao mesmo tempo (menu, ficha, painel): uma chamada só.
+      if (!cacheVinculos) cacheVinculos = chamarApi('/api/vinculos').catch(function (e) { cacheVinculos = null; throw e; });
+      setTimeout(function () { cacheVinculos = null; }, 30000);
+      return cacheVinculos;
+    },
     aceitarConvite: function (codigo, compartilha) {
+      cacheVinculos = null;
       return chamarApi('/api/vinculos', { method: 'POST', body: JSON.stringify({ acao: 'aceitar', codigo: codigo, compartilha: compartilha }) });
     },
     atualizarVinculo: function (id, compartilha) {
+      cacheVinculos = null;
       return chamarApi('/api/vinculos', { method: 'POST', body: JSON.stringify({ acao: 'atualizar', id: id, compartilha: compartilha }) });
     },
     revogarVinculo: function (id) {
+      cacheVinculos = null;
       return chamarApi('/api/vinculos', { method: 'POST', body: JSON.stringify({ acao: 'revogar', id: id }) });
     },
 
@@ -608,6 +616,10 @@
     },
     getPacientesProf: function () { return chamarApi('/api/prof?acao=pacientes'); },
     getPacienteProf: function (id) { return chamarApi('/api/prof?acao=paciente&id=' + encodeURIComponent(id)); },
+    /** Metas e plano alimentar do profissional para um paciente. → { orientacoes } */
+    salvarOrientacoes: function (pacienteId, campos) {
+      return chamarApi('/api/prof', { method: 'POST', body: JSON.stringify(Object.assign({ acao: 'orientacoes', pacienteId: pacienteId }, campos)) });
+    },
 
     /* ---------- Conversa profissional ↔ paciente (por vínculo) ----------
        O banco só deixa ler quem participa do vínculo ativo e só deixa enviar
@@ -616,20 +628,45 @@
     /** Últimas mensagens da conversa, da mais antiga para a mais nova. → [{ id, autorId, texto, criadoEm, lidaEm, minha }] */
     getMensagens: async function (vinculoId) {
       var eu = await uid();
-      var linhas = await q(sb.from('mensagens').select('id, autor_id, texto, criado_em, lida_em')
+      var linhas = await q(sb.from('mensagens').select('id, autor_id, texto, anexo_path, criado_em, lida_em')
         .eq('vinculo_id', vinculoId).order('criado_em', { ascending: false }).limit(200));
       return linhas.reverse().map(function (m) { return mensagemDe(m, eu); });
     },
 
-    enviarMensagem: async function (vinculoId, texto) {
+    /**
+     * Envia texto e/ou uma imagem (Blob já reduzido, JPEG/PNG/WebP até 5 MB).
+     * A imagem vai para o bucket privado "chat" em <vinculo>/<uuid>.<ext>.
+     */
+    enviarMensagem: async function (vinculoId, texto, imagem) {
       var eu = await uid();
-      var r = await sb.from('mensagens').insert({ vinculo_id: vinculoId, autor_id: eu, texto: String(texto).trim().slice(0, 2000) })
-        .select('id, autor_id, texto, criado_em, lida_em').single();
+      var caminho = null;
+      if (imagem) {
+        var ext = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' }[imagem.type];
+        if (!ext) throw erro('ANEXO', 'Envie uma foto em JPG, PNG ou WebP.');
+        if (imagem.size > 5 * 1024 * 1024) throw erro('ANEXO', 'A imagem passou de 5 MB. Escolha outra.');
+        caminho = vinculoId + '/' + crypto.randomUUID() + '.' + ext;
+        var up = await sb.storage.from('chat').upload(caminho, imagem, { contentType: imagem.type, upsert: false });
+        if (up.error) {
+          if (/row-level security|unauthorized|403/i.test(up.error.message || '')) {
+            throw erro('SEM_PLANO', 'Não foi possível enviar: o plano do paciente não está ativo ou o acesso foi removido.', up.error);
+          }
+          throw erro('ANEXO', 'Não foi possível enviar a imagem. Tente de novo.', up.error);
+        }
+      }
+      var r = await sb.from('mensagens').insert({ vinculo_id: vinculoId, autor_id: eu, texto: String(texto || '').trim().slice(0, 2000), anexo_path: caminho })
+        .select('id, autor_id, texto, anexo_path, criado_em, lida_em').single();
       if (r.error && r.error.code === '42501') {
         throw erro('SEM_PLANO', 'Não foi possível enviar: o plano do paciente não está ativo ou o acesso foi removido.', r.error);
       }
       if (r.error) throw traduzirDados(r.error);
       return mensagemDe(r.data, eu);
+    },
+
+    /** Endereço temporário (1 hora) para mostrar uma imagem da conversa. */
+    urlAnexo: async function (caminho) {
+      var r = await sb.storage.from('chat').createSignedUrl(caminho, 3600);
+      if (r.error) throw erro('ANEXO', 'Não foi possível abrir a imagem.', r.error);
+      return r.data.signedUrl;
     },
 
     /** Marca como lidas as mensagens que a outra pessoa enviou nesta conversa. */
@@ -700,6 +737,8 @@
       return chamarApi('/api/cartao/status?id=' + encodeURIComponent(compraId));
     }
   };
+
+  var cacheVinculos = null;
 
   async function chamarApi(caminho, opcoes) {
     var r = await sb.auth.getSession();

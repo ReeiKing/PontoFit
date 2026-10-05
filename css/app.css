@@ -1648,3 +1648,43 @@ textarea.conversa__campo, .conversa__campo { flex: 1; resize: none; height: 44px
 .mensagens__quem { display: grid; }
 .mensagens__quem:empty { display: none; }
 .mensagens__nome { font-family: var(--fonte-titulo); font-size: var(--fs-lead); }
+.conversa__anexar {
+  flex: none; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 1px solid var(--borda); border-radius: 50%;
+  background: var(--superficie); color: var(--texto-sec); cursor: pointer; transition: color .2s, border-color .2s;
+}
+.conversa__anexar:hover { color: var(--verde-escuro); border-color: var(--verde); }
+.conversa__anexar:focus-visible { outline: 3px solid var(--foco); outline-offset: 2px; }
+.conversa__anexar:disabled { opacity: .5; cursor: wait; }
+.conversa__anexar svg { width: 1.2rem; height: 1.2rem; }
+.conversa__previa { display: flex; align-items: center; gap: var(--esp-2); padding: var(--esp-2); border-radius: 12px; background: var(--superficie-2); }
+.conversa__previa img { width: 56px; height: 56px; object-fit: cover; border-radius: 8px; }
+.conversa__previa span { flex: 1; }
+.conversa__previa-tirar {
+  flex: none; width: 36px; height: 36px; border: 0; border-radius: 50%; background: var(--superficie); color: var(--texto);
+  font-size: 1.4rem; line-height: 1; cursor: pointer;
+}
+.conversa__imagem { display: block; margin: -.15rem -.4rem .3rem; border-radius: 10px; overflow: hidden; background: var(--superficie-2); min-height: 120px; }
+.conversa__imagem img { display: block; width: 100%; max-width: 320px; max-height: 360px; object-fit: cover; }
+.conversa__imagem--erro { display: grid; place-items: center; min-height: 60px; padding: var(--esp-2); color: var(--texto-sec); font-size: var(--fs-sm); }
+
+/* ---------- Plano alimentar (js/orientacoes.js) ---------- */
+.orientacoes { display: grid; gap: var(--esp-4); }
+.orientacao { display: grid; gap: var(--esp-3); }
+.orientacao__topo { display: grid; }
+.orientacao__quem { font-size: var(--fs-h3); }
+.orientacao__subtitulo { font-size: var(--fs-lead); margin-top: var(--esp-2); }
+.orientacao__metas { display: grid; gap: var(--esp-3); grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); }
+.orientacao__meta { display: grid; gap: .2rem; justify-items: start; padding: var(--esp-3) var(--esp-4); border-radius: 14px; background: var(--verde-suave); }
+.orientacao__meta--agua { background: var(--agua-suave); }
+.orientacao__meta .btn { margin-top: var(--esp-2); }
+.orientacao__valor { font-family: var(--fonte-titulo); font-size: 1.6rem; line-height: 1.2; }
+.orientacao__refeicoes { display: grid; gap: 0; padding: 0; margin: 0; list-style: none; border-left: 3px solid var(--borda); margin-left: .4rem; }
+.orientacao__refeicao { position: relative; display: grid; gap: .2rem; padding: var(--esp-2) 0 var(--esp-3) var(--esp-4); }
+.orientacao__refeicao::before {
+  content: ''; position: absolute; left: -.5rem; top: .85rem; width: .75rem; height: .75rem; border-radius: 50%;
+  background: var(--superficie); border: 3px solid var(--borda);
+}
+.orientacao__refeicao--proxima::before { background: var(--verde); border-color: var(--verde); }
+.orientacao__refeicao-topo { display: flex; flex-wrap: wrap; align-items: center; gap: var(--esp-2); }
+.orientacao__hora { font-variant-numeric: tabular-nums; color: var(--texto-sec); font-weight: 600; font-size: var(--fs-sm); }
+.orientacao__itens { margin: 0; white-space: pre-wrap; color: var(--texto); }

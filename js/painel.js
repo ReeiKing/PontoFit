@@ -326,8 +326,9 @@
   /* ---------- Água do dia ---------- */
   var agua = { copos: 0, meta: 8, timer: null };
 
-  /** Meta em copos de 250 ml: 35 ml por kg, entre 6 e 14 copos (8 sem peso). */
+  /** Meta em copos de 250 ml: a do profissional, se houver; senão 35 ml por kg, entre 6 e 14 copos (8 sem peso). */
   function metaAgua() {
+    if (dados.metaAguaProf) return dados.metaAguaProf;
     var r = dados.resumo;
     if (r.vazio) return 8;
     return Math.max(6, Math.min(14, Math.round(r.atual.pesoKg * 35 / 250)));
@@ -506,7 +507,8 @@
       S.getMedicamentos(),
       S.getAcessoAte(),
       S.getAgua(F.somarDias(F.hojeISO(), -60)).catch(function () { return []; }),
-      S.getFavoritas ? S.getFavoritas().catch(function () { return []; }) : Promise.resolve([])
+      S.getFavoritas ? S.getFavoritas().catch(function () { return []; }) : Promise.resolve([]),
+      S.getVinculos ? S.getVinculos().catch(function () { return { profissionais: [] }; }) : Promise.resolve({ profissionais: [] })
     ]);
     var meds = res[3];
     var apls = await Promise.all(meds.map(function (m) { return S.getAplicacoes(m.id).catch(function () { return []; }); }));
@@ -520,7 +522,9 @@
       aplicacoes: porMed,
       acessoAte: res[4],
       agua: res[5],
-      favoritas: res[6]
+      favoritas: res[6],
+      // Meta de água definida pelo profissional (a primeira que houver).
+      metaAguaProf: (res[7].profissionais || []).map(function (p) { return p.orientacoes && p.orientacoes.metaAguaCopos; }).filter(Boolean)[0] || null
     };
     dados.resumo = PF.evolucao ? PF.evolucao.calcular(dados.ficha, dados.pesos) : { vazio: true, serie: [] };
     dados.dose = proximaDose(meds, porMed);

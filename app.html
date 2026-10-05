@@ -117,6 +117,14 @@
             <span>Gestação</span>
           </a>
         </li>
+        <li hidden data-menu-orientacoes>
+          <a class="menu__item" href="#orientacoes" data-link-secao="orientacoes">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 14 2 2 4-4"/></svg>
+            <span>Plano alimentar</span>
+            <span class="badge badge--laranja menu__badge" data-badge-orientacoes aria-hidden="true" hidden>Novo</span>
+            <span class="sr-only" data-badge-orientacoes-leitor></span>
+          </a>
+        </li>
         <li hidden data-menu-mensagens>
           <a class="menu__item" href="#mensagens" data-link-secao="mensagens">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
@@ -1066,6 +1074,15 @@
       </div>
     </section>
 
+    <section class="secao-app" id="secao-orientacoes" data-secao="orientacoes" aria-labelledby="titulo-orientacoes" hidden>
+      <header class="secao-app__cabecalho">
+        <h1 id="titulo-orientacoes" tabindex="-1">Plano alimentar</h1>
+        <p class="texto-sec">Metas e refeições definidas pelos profissionais que acompanham você.</p>
+      </header>
+      <div class="orientacoes" data-orientacoes></div>
+      <p class="aviso-saude texto-sm texto-sec">Siga as orientações do seu profissional. Em caso de dúvida, fale com ele em Mensagens.</p>
+    </section>
+
     <section class="secao-app" id="secao-mensagens" data-secao="mensagens" aria-labelledby="titulo-mensagens" hidden>
       <header class="secao-app__cabecalho">
         <h1 id="titulo-mensagens" tabindex="-1">Mensagens</h1>
@@ -1223,5 +1240,6 @@
   <script src="js/vinculos.js"></script>
   <script src="js/conversa.js"></script>
   <script src="js/mensagens.js"></script>
+  <script src="js/orientacoes.js"></script>
 </body>
 </html>

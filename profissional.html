@@ -162,9 +162,38 @@
     <div class="prof-det-abas" role="tablist" aria-label="Paciente">
       <button class="prof-det-aba" type="button" role="tab" id="aba-resumo" aria-controls="det-resumo" aria-selected="true" data-det-aba="resumo">Resumo</button>
       <button class="prof-det-aba" type="button" role="tab" id="aba-conversa" aria-controls="det-conversa" aria-selected="false" tabindex="-1" data-det-aba="conversa">Conversa <span class="badge badge--laranja" data-det-novas hidden></span></button>
+      <button class="prof-det-aba" type="button" role="tab" id="aba-plano" aria-controls="det-plano" aria-selected="false" tabindex="-1" data-det-aba="plano">Metas e plano</button>
     </div>
     <div class="gerenciar__corpo" id="det-resumo" role="tabpanel" aria-labelledby="aba-resumo" data-det-corpo aria-busy="true"></div>
     <div class="prof-det-conversa" id="det-conversa" role="tabpanel" aria-labelledby="aba-conversa" data-det-conversa hidden></div>
+    <div class="gerenciar__corpo" id="det-plano" role="tabpanel" aria-labelledby="aba-plano" data-det-plano hidden>
+      <form class="prof-plano" data-plano-form novalidate>
+        <section class="ger-bloco">
+          <h3>Metas</h3>
+          <p class="texto-sm texto-sec">O paciente vê estas metas no app. A de água passa a valer no contador do dia; a de peso ele pode aplicar na evolução com um toque.</p>
+          <div class="prof-plano__metas">
+            <div class="campo"><label class="campo__label" for="pl-peso">Meta de peso (kg)</label><input class="input" id="pl-peso" name="metaPesoKg" type="text" inputmode="decimal" placeholder="Ex.: 72,5"></div>
+            <div class="campo"><label class="campo__label" for="pl-data">Até quando</label><input class="input" id="pl-data" name="metaData" type="date"></div>
+            <div class="campo"><label class="campo__label" for="pl-agua">Água (copos/dia)</label><input class="input" id="pl-agua" name="metaAguaCopos" type="number" min="4" max="20" step="1" placeholder="Ex.: 10 (250 ml cada)"></div>
+          </div>
+        </section>
+        <section class="ger-bloco">
+          <div class="prof-plano__topo">
+            <h3>Plano alimentar</h3>
+            <button class="btn btn--sm btn--fantasma" type="button" data-plano-modelo>Usar modelo de 5 refeições</button>
+          </div>
+          <ol class="prof-refeicoes" data-plano-refeicoes></ol>
+          <button class="btn btn--sm btn--secundario" type="button" data-plano-add><span>+ Adicionar refeição</span></button>
+        </section>
+        <section class="ger-bloco">
+          <h3><label for="pl-obs">Orientações gerais</label></h3>
+          <textarea class="input" id="pl-obs" name="observacoes" rows="4" maxlength="2000" placeholder="Ex.: evitar frituras, caminhar 30 min após o jantar…"></textarea>
+        </section>
+        <p class="texto-sm texto-sec" data-plano-atualizado></p>
+        <p class="campo__erro" data-plano-erro aria-live="polite"></p>
+        <div class="prof-plano__acoes"><button class="btn" type="submit"><span>Salvar e enviar ao paciente</span></button></div>
+      </form>
+    </div>
   </dialog>
 
   <script src="js/ui.js"></script>

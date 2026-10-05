@@ -74,3 +74,18 @@
 .prof-det-conversa .conversa { flex: 1; }
 .prof-det-conversa .conversa__lista { max-height: none; }
 .prof-novas { justify-self: start; padding: .2rem .65rem; border-radius: 999px; background: var(--agua-suave); color: var(--agua-escuro); font-size: var(--fs-xs); font-weight: 700; }
+
+/* Metas e plano alimentar */
+.prof-plano { display: grid; gap: var(--esp-4); }
+.prof-plano__metas { display: grid; gap: var(--esp-3); grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); }
+.prof-plano__topo { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--esp-2); }
+.prof-refeicoes { display: grid; gap: var(--esp-3); padding: 0; margin: 0; list-style: none; }
+.prof-refeicoes:empty::before { content: 'Nenhuma refeição. Adicione ou use o modelo.'; color: var(--texto-sec); font-size: var(--fs-sm); }
+.prof-refeicao { display: grid; gap: var(--esp-2); padding: var(--esp-3); border-radius: 12px; background: var(--superficie-2); }
+.prof-refeicao__topo { display: flex; flex-wrap: wrap; gap: var(--esp-2); align-items: flex-end; }
+.prof-refeicao__nome { flex: 1 1 10rem; }
+.prof-refeicao__horario { flex: 0 0 7.5rem; }
+.prof-refeicao__tirar { color: var(--vermelho); }
+.prof-refeicao textarea.input { min-height: 72px; }
+.prof-plano__acoes { position: sticky; bottom: 0; padding: var(--esp-3) 0; background: var(--fundo); }
+.prof-plano__acoes .btn { width: 100%; }
