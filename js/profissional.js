@@ -18,6 +18,9 @@
   var perfil = null;
   var pacientes = [];
   var filtro = { tipo: 'todos', busca: '' };
+  var naoLidas = {};   // vinculoId → mensagens novas
+  var conversa = null; // conversa aberta no painel lateral
+  var abertoId = null; // paciente aberto no painel lateral
 
   var OBJETIVOS = { emagrecer: 'Emagrecer', 'ganhar-massa': 'Ganhar massa', manter: 'Manter o peso', disposicao: 'Mais disposição' };
   var ATIVIDADE = { sedentario: 'Sedentário', leve: 'Leve', moderado: 'Moderado', intenso: 'Intenso' };
@@ -177,6 +180,7 @@
     try {
       var r = await S.getPacientesProf();
       pacientes = r.pacientes || [];
+      naoLidas = await S.getNaoLidas().catch(function () { return {}; });
       renderPacientes();
     } catch (err) {
       PF.toast(err.message, { tipo: 'erro' });
@@ -248,6 +252,8 @@
     topo.appendChild(quem);
     topo.appendChild(el('span', 'badge ' + (p.planoAtivo ? '' : 'badge--vermelho'), p.planoAtivo ? 'Plano ativo' : 'Sem plano'));
     botao.appendChild(topo);
+    var novas = naoLidas[p.vinculoId] || 0;
+    if (novas) botao.appendChild(el('span', 'prof-novas', novas + (novas === 1 ? ' mensagem nova' : ' mensagens novas')));
 
     var dl = el('dl', 'prof-paciente__dados');
     function item(rotulo, valor, extra) {
@@ -534,14 +540,81 @@
     corpo.appendChild(el('p', 'texto-sm texto-sec prof-aviso', 'Dados informados pelo próprio paciente no app. Use como apoio ao acompanhamento.'));
   }
 
-  async function abrirPaciente(id) {
+  /* Abas do painel lateral: Resumo | Conversa */
+  function mostrarAbaDetalhe(qual, focar) {
+    document.querySelectorAll('[data-det-aba]').forEach(function (b) {
+      var ativa = b.dataset.detAba === qual;
+      b.setAttribute('aria-selected', String(ativa));
+      b.tabIndex = ativa ? 0 : -1;
+      if (ativa && focar) b.focus();
+    });
+    corpo.hidden = qual !== 'resumo';
+    var cx = $('[data-det-conversa]');
+    cx.hidden = qual !== 'conversa';
+    if (qual === 'conversa') {
+      var p = pacientes.find(function (x) { return x.id === abertoId; });
+      if (!p) return;
+      if (!conversa) conversa = PF.conversa.montar(cx, { vinculoId: p.vinculoId, nomeOutro: p.nome });
+      if (!focar) conversa.focar();
+    }
+  }
+  document.querySelector('.prof-det-abas').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-det-aba]');
+    if (b) mostrarAbaDetalhe(b.dataset.detAba, false);
+  });
+  document.querySelector('.prof-det-abas').addEventListener('keydown', function (e) {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    var atual = document.querySelector('[data-det-aba][aria-selected="true"]').dataset.detAba;
+    mostrarAbaDetalhe(atual === 'resumo' ? 'conversa' : 'resumo', true);
+  });
+  function fecharConversa() {
+    if (conversa) conversa.destruir();
+    conversa = null;
+    $('[data-det-conversa]').textContent = '';
+  }
+  det.addEventListener('close', function () { fecharConversa(); abertoId = null; });
+
+  function badgeNovasDetalhe() {
+    var p = pacientes.find(function (x) { return x.id === abertoId; });
+    var n = p ? (naoLidas[p.vinculoId] || 0) : 0;
+    var b = $('[data-det-novas]');
+    b.hidden = !n;
+    b.textContent = n ? String(n) : '';
+  }
+
+  // Tempo real: contador de novas no cartão e na aba Conversa.
+  document.addEventListener('pf:mensagem', function (e) {
+    var m = e.detail.mensagem;
+    if (m.minha) return;
+    var p = pacientes.find(function (x) { return x.vinculoId === e.detail.vinculoId; });
+    if (!p) return;
+    var lendo = conversa && abertoId === p.id && !$('[data-det-conversa]').hidden;
+    if (!lendo) {
+      naoLidas[p.vinculoId] = (naoLidas[p.vinculoId] || 0) + 1;
+      if (abertoId === p.id) badgeNovasDetalhe();
+      renderLista();
+      PF.toast(m.texto.slice(0, 120), { titulo: p.nome, tipo: 'info', acao: { texto: 'Responder', onClick: function () { abrirPaciente(p.id, 'conversa'); } } });
+    }
+  });
+  document.addEventListener('pf:mensagens-lidas', function (e) {
+    if (!naoLidas[e.detail.vinculoId]) return;
+    delete naoLidas[e.detail.vinculoId];
+    badgeNovasDetalhe();
+    renderLista();
+  });
+
+  async function abrirPaciente(id, aba) {
+    if (abertoId !== id) fecharConversa();
+    abertoId = id;
+    badgeNovasDetalhe();
+    mostrarAbaDetalhe(aba || 'resumo', false);
     var resumo = pacientes.find(function (p) { return p.id === id; });
     $('[data-det-nome]').textContent = resumo ? resumo.nome : 'Carregando…';
     $('[data-det-info]').textContent = '';
     corpo.textContent = '';
     corpo.appendChild(el('p', 'texto-sec', 'Carregando…'));
     corpo.setAttribute('aria-busy', 'true');
-    if (typeof det.showModal === 'function') det.showModal(); else det.setAttribute('open', '');
+    if (!det.open) { if (typeof det.showModal === 'function') det.showModal(); else det.setAttribute('open', ''); }
     try {
       var r = await S.getPacienteProf(id);
       renderDetalhe(r.paciente);
@@ -569,6 +642,7 @@
       $('[data-prof-carregando]').hidden = true;
       if (r.profissional) {
         ativarPainel(r.profissional);
+        PF.conversa.ouvir();
       } else {
         var nome = u.nome && u.nome !== u.email ? u.nome : '';
         if (nome) $('#at-nome').value = nome;

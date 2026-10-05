@@ -154,8 +154,9 @@
     dados.assinantes.forEach(function (a) {
       contagem[a.situacao] = (contagem[a.situacao] || 0) + 1;
       if (a.bloqueado) contagem.bloqueados++;
+      if (a.profissional) contagem.profissionais = (contagem.profissionais || 0) + 1;
     });
-    [['todos', 'Todos'], ['ativo', 'Ativos'], ['a-vencer', 'A vencer'], ['vencido', 'Vencidos'], ['bloqueados', 'Bloqueados'], ['sem-pagamento', 'Nunca pagaram'], ['cortesia', 'Cortesia'], ['teste', 'Em teste']]
+    [['todos', 'Todos'], ['ativo', 'Ativos'], ['a-vencer', 'A vencer'], ['vencido', 'Vencidos'], ['bloqueados', 'Bloqueados'], ['sem-pagamento', 'Nunca pagaram'], ['cortesia', 'Cortesia'], ['teste', 'Em teste'], ['profissionais', 'Profissionais']]
       .forEach(function (f) {
         var b = el('button', 'filtro', f[1] + ' (' + (contagem[f[0]] || 0) + ')');
         b.type = 'button';
@@ -170,7 +171,8 @@
     var termo = normalizar(filtro.busca);
     return dados.assinantes.filter(function (a) {
       if (filtro.situacao === 'bloqueados' && !a.bloqueado) return false;
-      if (filtro.situacao !== 'todos' && filtro.situacao !== 'bloqueados' && a.situacao !== filtro.situacao) return false;
+      if (filtro.situacao === 'profissionais' && !a.profissional) return false;
+      if (['todos', 'bloqueados', 'profissionais'].indexOf(filtro.situacao) < 0 && a.situacao !== filtro.situacao) return false;
       return !termo || normalizar([a.nome, a.email, a.cpf].join(' ')).indexOf(termo) >= 0;
     });
   }
@@ -185,6 +187,10 @@
       quem.appendChild(el('strong', null, a.nome || '(sem nome)'));
       quem.appendChild(el('span', 'texto-sm texto-sec', a.email + (a.emailConfirmado ? '' : ' · e-mail não confirmado')));
       if (a.cpf) quem.appendChild(el('span', 'texto-xs texto-sec', 'CPF ' + a.cpf));
+      if (a.profissional) {
+        quem.appendChild(el('span', 'badge badge--agua', a.profissional.profissao + ' · ' + a.profissional.pacientes +
+          (a.profissional.pacientes === 1 ? ' paciente' : ' pacientes')));
+      }
       tr.appendChild(celula('Assinante', quem));
       var sit = el('div', 'admin-situacao');
       sit.appendChild(badge(SITUACOES[a.situacao]));
@@ -569,12 +575,13 @@
     var linhas;
     if (tipo === 'assinantes') {
       linhas = [['Nome', 'E-mail', 'CPF', 'E-mail confirmado', 'Situação', 'Bloqueado', 'Acesso até', 'Plano preferido',
-        'Último pagamento', 'Valor do último pagamento', 'Forma', 'Total pago (R$)', 'Nº de pagamentos', 'Dias liberados manualmente', 'Conta criada']];
+        'Último pagamento', 'Valor do último pagamento', 'Forma', 'Total pago (R$)', 'Nº de pagamentos', 'Dias liberados manualmente', 'Conta criada', 'Profissional', 'Pacientes vinculados']];
       assinantesFiltrados().forEach(function (a) {
         var u = a.ultimoPagamento;
         linhas.push([a.nome, a.email, a.cpf || '', a.emailConfirmado ? 'sim' : 'não', SITUACOES[a.situacao].nome, a.bloqueado ? 'sim' : 'não',
           a.acessoAte ? data(a.acessoAte) : '', PLANOS[a.plano] || a.plano, u ? data(u.data) : '', u ? decimalBR(u.valor) : '',
-          u ? (u.meio === 'pix' ? 'Pix' : 'Cartão') : '', decimalBR(a.totalPago), a.pagamentos, a.diasLiberados || 0, data(a.criadoEm)]);
+          u ? (u.meio === 'pix' ? 'Pix' : 'Cartão') : '', decimalBR(a.totalPago), a.pagamentos, a.diasLiberados || 0, data(a.criadoEm),
+          a.profissional ? a.profissional.profissao : '', a.profissional ? a.profissional.pacientes : '']);
       });
     } else {
       linhas = [['Data', 'Cliente', 'Plano', 'Desconto 50%', 'Forma', 'Valor (R$)', 'Situação']];

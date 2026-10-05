@@ -1610,3 +1610,41 @@
 .vinculo__quem { display: grid; }
 .vinculo__campos { display: flex; flex-wrap: wrap; gap: var(--esp-2); border: 0; padding: 0; margin: 0; }
 .vinculo__remover { color: var(--vermelho); }
+
+/* ---------- Conversa profissional ↔ paciente (js/conversa.js) ---------- */
+.conversa { display: flex; flex-direction: column; gap: var(--esp-2); min-height: 0; }
+.conversa__lista {
+  display: flex; flex-direction: column; gap: .4rem; flex: 1; min-height: 240px; max-height: 60vh;
+  overflow-y: auto; padding: var(--esp-2); margin: 0; list-style: none; border-radius: 12px; background: var(--superficie-2);
+}
+.conversa__lista:focus-visible { outline: 3px solid var(--foco); outline-offset: 2px; }
+.conversa__dia { align-self: center; padding: .15rem .7rem; border-radius: 999px; background: var(--superficie); color: var(--texto-sec); font-size: var(--fs-xs); font-weight: 600; margin: var(--esp-2) 0; }
+.conversa__msg {
+  align-self: flex-start; max-width: min(80%, 34rem); padding: .5rem .75rem .35rem; border-radius: 14px 14px 14px 4px;
+  background: var(--superficie); box-shadow: 0 1px 2px rgb(0 0 0 / .06); animation: msg-entra .2s ease-out;
+}
+.conversa__msg--minha { align-self: flex-end; border-radius: 14px 14px 4px 14px; background: var(--verde-suave); }
+.conversa__texto { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.conversa__hora { display: block; text-align: right; font-size: .7rem; color: var(--texto-sec); margin-top: .1rem; }
+.conversa__vazio { text-align: center; margin: 0; }
+.conversa__form { display: flex; gap: var(--esp-2); align-items: flex-end; }
+textarea.conversa__campo, .conversa__campo { flex: 1; resize: none; height: 44px; min-height: 44px; max-height: 160px; padding-block: .6rem; line-height: 1.4; }
+.conversa__enviar { flex: none; width: 44px; height: 44px; padding: 0; border-radius: 50%; }
+.conversa__enviar svg { width: 1.15rem; height: 1.15rem; }
+.conversa__erro:empty { display: none; }
+@keyframes msg-entra { from { opacity: 0; transform: translateY(6px); } }
+@media (prefers-reduced-motion: reduce) { .conversa__msg { animation: none; } }
+
+/* Seção Mensagens */
+.mensagens { display: grid; gap: var(--esp-3); }
+.mensagens__contatos { display: flex; gap: var(--esp-2); overflow-x: auto; padding-bottom: .2rem; }
+.mensagens__contato {
+  display: grid; gap: .1rem; justify-items: start; position: relative; min-width: 10rem; padding: var(--esp-2) var(--esp-3);
+  border: 1px solid var(--borda); border-radius: 12px; background: var(--superficie); color: inherit; font: inherit; text-align: left; cursor: pointer;
+}
+.mensagens__contato[aria-selected="true"] { border-color: var(--verde); background: var(--verde-suave); }
+.mensagens__contato .badge { position: absolute; top: .4rem; right: .4rem; }
+.mensagens__conversa { display: grid; gap: var(--esp-3); }
+.mensagens__quem { display: grid; }
+.mensagens__quem:empty { display: none; }
+.mensagens__nome { font-family: var(--fonte-titulo); font-size: var(--fs-lead); }

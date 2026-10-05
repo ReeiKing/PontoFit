@@ -42,7 +42,7 @@ module.exports = async function handler(req, res) {
     if (!admin) return responder(res, 403, { erro: 'Acesso restrito à administração.' });
 
     const db = supabaseAdmin();
-    const [usuariosAuth, perfis, pix, cartao, liberacoes, excluidas] = await Promise.all([
+    const [usuariosAuth, perfis, pix, cartao, liberacoes, excluidas, profissionais, vinculos] = await Promise.all([
       db.auth.admin.listUsers({ page: 1, perPage: 1000 }).then(function (r) {
         if (r.error) throw r.error;
         return r.data.users;
@@ -51,8 +51,16 @@ module.exports = async function handler(req, res) {
       todos(db.from('pagamentos_pix').select('id, usuario_id, plano, valor, status, com_desconto, criado_em, aprovado_em')),
       todos(db.from('pagamentos_cartao').select('id, usuario_id, plano, valor, status, com_desconto, criado_em, aprovado_em')),
       todos(db.from('admin_liberacoes').select('admin_id, usuario_id, dias, motivo, acesso_antes, acesso_depois, criado_em').order('criado_em', { ascending: false })),
-      todos(db.from('contas_excluidas').select('admin_id, nome, email, cpf_mascarado, motivo, pagamentos_aprovados, total_pago, excluida_em').order('excluida_em', { ascending: false }))
+      todos(db.from('contas_excluidas').select('admin_id, nome, email, cpf_mascarado, motivo, pagamentos_aprovados, total_pago, excluida_em').order('excluida_em', { ascending: false })),
+      todos(db.from('profissionais').select('usuario_id, profissao')),
+      todos(db.from('vinculos').select('profissional_id').eq('status', 'ativo'))
     ]);
+
+    // Contas com painel profissional e quantos pacientes compartilham com cada uma
+    const PROFISSOES = { nutricionista: 'Nutricionista', personal: 'Personal trainer', academia: 'Academia', medico: 'Médico(a)', outro: 'Profissional' };
+    const profDe = {};
+    profissionais.forEach(function (p) { profDe[p.usuario_id] = { profissao: PROFISSOES[p.profissao] || 'Profissional', pacientes: 0 }; });
+    vinculos.forEach(function (v) { if (profDe[v.profissional_id]) profDe[v.profissional_id].pacientes++; });
 
     const admins = new Set(usuariosAuth.filter(ehAdmin).map(function (u) { return u.id; }));
     const confirmado = {};
@@ -107,7 +115,8 @@ module.exports = async function handler(req, res) {
         totalPago: pagou ? Math.round(pagou.total * 100) / 100 : 0,
         pagamentos: pagou ? pagou.qtd : 0,
         ultimoPagamento: pagou ? { data: dataSP(pagou.ultimo.aprovado_em), valor: Number(pagou.ultimo.valor), meio: pagou.ultimo.meio, plano: pagou.ultimo.plano } : null,
-        criadoEm: dataSP(p.criado_em)
+        criadoEm: dataSP(p.criado_em),
+        profissional: profDe[p.id] || null
       };
     });
     perfis.forEach(function (p) { if (!nomes[p.id]) nomes[p.id] = p.nome || p.email; });

@@ -159,10 +159,16 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"/></svg>
       </button>
     </header>
-    <div class="gerenciar__corpo" data-det-corpo aria-busy="true"></div>
+    <div class="prof-det-abas" role="tablist" aria-label="Paciente">
+      <button class="prof-det-aba" type="button" role="tab" id="aba-resumo" aria-controls="det-resumo" aria-selected="true" data-det-aba="resumo">Resumo</button>
+      <button class="prof-det-aba" type="button" role="tab" id="aba-conversa" aria-controls="det-conversa" aria-selected="false" tabindex="-1" data-det-aba="conversa">Conversa <span class="badge badge--laranja" data-det-novas hidden></span></button>
+    </div>
+    <div class="gerenciar__corpo" id="det-resumo" role="tabpanel" aria-labelledby="aba-resumo" data-det-corpo aria-busy="true"></div>
+    <div class="prof-det-conversa" id="det-conversa" role="tabpanel" aria-labelledby="aba-conversa" data-det-conversa hidden></div>
   </dialog>
 
   <script src="js/ui.js"></script>
+  <script src="js/conversa.js"></script>
   <script src="js/profissional.js"></script>
 </body>
 </html>

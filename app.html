@@ -117,6 +117,14 @@
             <span>Gestação</span>
           </a>
         </li>
+        <li hidden data-menu-mensagens>
+          <a class="menu__item" href="#mensagens" data-link-secao="mensagens">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <span>Mensagens</span>
+            <span class="badge badge--laranja menu__badge" data-badge-mensagens aria-hidden="true" hidden></span>
+            <span class="sr-only" data-badge-mensagens-leitor></span>
+          </a>
+        </li>
         <li>
           <a class="menu__item" href="#plano" data-link-secao="plano">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
@@ -1058,6 +1066,20 @@
       </div>
     </section>
 
+    <section class="secao-app" id="secao-mensagens" data-secao="mensagens" aria-labelledby="titulo-mensagens" hidden>
+      <header class="secao-app__cabecalho">
+        <h1 id="titulo-mensagens" tabindex="-1">Mensagens</h1>
+        <p class="texto-sec">Converse com os profissionais que acompanham você.</p>
+      </header>
+      <div class="mensagens" data-mensagens>
+        <div class="mensagens__contatos" role="tablist" aria-label="Profissionais" data-mensagens-contatos hidden></div>
+        <section class="card mensagens__conversa" data-mensagens-conversa aria-live="off">
+          <header class="mensagens__quem" data-mensagens-quem></header>
+          <div data-mensagens-caixa></div>
+        </section>
+      </div>
+    </section>
+
     <section class="secao-app" id="secao-plano" data-secao="plano" aria-labelledby="titulo-plano" hidden>
       <header class="secao-app__cabecalho">
         <h1 id="titulo-plano" tabindex="-1">Assinaturas</h1>
@@ -1199,5 +1221,7 @@
   <script src="js/plano.js"></script>
   <script src="js/painel.js"></script>
   <script src="js/vinculos.js"></script>
+  <script src="js/conversa.js"></script>
+  <script src="js/mensagens.js"></script>
 </body>
 </html>

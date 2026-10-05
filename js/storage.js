@@ -144,6 +144,10 @@
     return id;
   }
 
+  function mensagemDe(m, eu) {
+    return { id: m.id, autorId: m.autor_id, texto: m.texto, criadoEm: m.criado_em, lidaEm: m.lida_em, minha: m.autor_id === eu };
+  }
+
   function vazioParaNulo(v) {
     return v === '' || v === undefined ? null : v;
   }
@@ -604,6 +608,64 @@
     },
     getPacientesProf: function () { return chamarApi('/api/prof?acao=pacientes'); },
     getPacienteProf: function (id) { return chamarApi('/api/prof?acao=paciente&id=' + encodeURIComponent(id)); },
+
+    /* ---------- Conversa profissional ↔ paciente (por vínculo) ----------
+       O banco só deixa ler quem participa do vínculo ativo e só deixa enviar
+       com o plano do paciente em dia (políticas em public.mensagens). */
+
+    /** Últimas mensagens da conversa, da mais antiga para a mais nova. → [{ id, autorId, texto, criadoEm, lidaEm, minha }] */
+    getMensagens: async function (vinculoId) {
+      var eu = await uid();
+      var linhas = await q(sb.from('mensagens').select('id, autor_id, texto, criado_em, lida_em')
+        .eq('vinculo_id', vinculoId).order('criado_em', { ascending: false }).limit(200));
+      return linhas.reverse().map(function (m) { return mensagemDe(m, eu); });
+    },
+
+    enviarMensagem: async function (vinculoId, texto) {
+      var eu = await uid();
+      var r = await sb.from('mensagens').insert({ vinculo_id: vinculoId, autor_id: eu, texto: String(texto).trim().slice(0, 2000) })
+        .select('id, autor_id, texto, criado_em, lida_em').single();
+      if (r.error && r.error.code === '42501') {
+        throw erro('SEM_PLANO', 'Não foi possível enviar: o plano do paciente não está ativo ou o acesso foi removido.', r.error);
+      }
+      if (r.error) throw traduzirDados(r.error);
+      return mensagemDe(r.data, eu);
+    },
+
+    /** Marca como lidas as mensagens que a outra pessoa enviou nesta conversa. */
+    marcarLidas: async function (vinculoId) {
+      var eu = await uid();
+      await q(sb.from('mensagens').update({ lida_em: new Date().toISOString() })
+        .eq('vinculo_id', vinculoId).neq('autor_id', eu).is('lida_em', null));
+    },
+
+    /** Mensagens não lidas por conversa. → { [vinculoId]: quantidade } */
+    getNaoLidas: async function () {
+      var eu = await uid();
+      var linhas = await q(sb.from('mensagens').select('vinculo_id').neq('autor_id', eu).is('lida_em', null).limit(1000));
+      var porVinculo = {};
+      linhas.forEach(function (m) { porVinculo[m.vinculo_id] = (porVinculo[m.vinculo_id] || 0) + 1; });
+      return porVinculo;
+    },
+
+    /**
+     * Avisa em tempo real a cada mensagem nova recebida ou enviada.
+     * @param {function(object, string)} aoReceber  (mensagem, vinculoId)
+     * @returns {function} cancela a escuta
+     */
+    ouvirMensagens: function (aoReceber) {
+      var canal = null;
+      var cancelado = false;
+      uid().then(function (eu) {
+        if (cancelado) return;
+        canal = sb.channel('mensagens-' + eu)
+          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'mensagens' }, function (p) {
+            if (p.new) aoReceber(mensagemDe(p.new, eu), p.new.vinculo_id);
+          })
+          .subscribe();
+      }).catch(function () { /* sem sessão: nada a ouvir */ });
+      return function () { cancelado = true; if (canal) sb.removeChannel(canal); };
+    },
 
     /* ---------- Administração (só administradores; o servidor confere) ---------- */
 

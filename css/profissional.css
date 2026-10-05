@@ -61,3 +61,16 @@
 .prof-agua__dia--meta .prof-agua__nivel { background: var(--verde); }
 .prof-agua__rotulo { font-size: var(--fs-xs); color: var(--texto-sec); text-transform: capitalize; }
 .prof-aviso { text-align: center; }
+
+/* Abas do painel do paciente e conversa */
+.prof-det-abas { display: flex; gap: var(--esp-1); padding: 0 var(--esp-5); border-bottom: 1px solid var(--borda); background: var(--superficie); }
+.prof-det-aba {
+  display: inline-flex; align-items: center; gap: .4rem; min-height: 44px; padding: 0 var(--esp-3); border: 0; border-bottom: 3px solid transparent;
+  background: none; color: var(--texto-sec); font: inherit; font-weight: 600; cursor: pointer;
+}
+.prof-det-aba[aria-selected="true"] { color: var(--verde-escuro); border-bottom-color: var(--verde); }
+.prof-det-aba:focus-visible { outline: 3px solid var(--foco); outline-offset: -3px; }
+.prof-det-conversa { flex: 1; display: flex; min-height: 0; padding: var(--esp-4) var(--esp-5); }
+.prof-det-conversa .conversa { flex: 1; }
+.prof-det-conversa .conversa__lista { max-height: none; }
+.prof-novas { justify-self: start; padding: .2rem .65rem; border-radius: 999px; background: var(--agua-suave); color: var(--agua-escuro); font-size: var(--fs-xs); font-weight: 700; }
