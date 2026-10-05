@@ -32,6 +32,7 @@
     if (texto != null) e.textContent = texto;
     return e;
   }
+  function litros(ml) { return (Number(ml || 0) / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 2 }) + ' L'; }
   function kg(n) { return n == null ? '—' : F.numero(n) + ' kg'; }
   function sinal(n) { return (n > 0 ? '+' : n < 0 ? '−' : '') + F.numero(Math.abs(n)); }
   function data(iso) { return iso ? F.dataCurta(iso) : '—'; }
@@ -277,7 +278,7 @@
       var d0 = p.doses[0];
       item('Próxima dose', d0.nome + ' ' + textoDose(d0));
     }
-    if (p.compartilha.agua && p.agua) item('Água hoje', p.agua.hoje + '/' + p.agua.meta + ' copos');
+    if (p.compartilha.agua && p.agua) item('Água hoje', litros(p.agua.hoje) + ' de ' + litros(p.agua.meta));
     if (dl.children.length) botao.appendChild(dl);
 
     if (p.alertas.length) {
@@ -474,25 +475,25 @@
     if (p.compartilha.agua) {
       var ba = bloco('Água');
       if (p.agua) {
-        ba.appendChild(dados([['Hoje', p.agua.hoje + ' de ' + p.agua.meta + ' copos'], ['Últimos 7 dias', p.agua.diasNaMeta7 + ' de 7 na meta']]));
+        ba.appendChild(dados([['Hoje', litros(p.agua.hoje) + ' de ' + litros(p.agua.meta)], ['Últimos 7 dias', p.agua.diasNaMeta7 + ' de 7 na meta']]));
         var semana = [];
         for (var i = 6; i >= 0; i--) {
           var iso = F.somarDias(F.hojeISO(), -i);
           var reg = (p.aguaDias || []).find(function (a) { return a.data === iso; });
-          semana.push({ iso: iso, copos: reg ? reg.copos : 0, meta: reg ? reg.meta : p.agua.meta });
+          semana.push({ iso: iso, ml: reg ? reg.ml : 0, meta: reg ? reg.meta : p.agua.meta });
         }
         var ul2 = el('ul', 'prof-agua');
         ul2.setAttribute('role', 'list');
         semana.forEach(function (d) {
-          var li = el('li', 'prof-agua__dia' + (d.copos >= d.meta ? ' prof-agua__dia--meta' : ''));
+          var li = el('li', 'prof-agua__dia' + (d.ml >= d.meta ? ' prof-agua__dia--meta' : ''));
           var col = el('span', 'prof-agua__coluna');
           var enc = el('span', 'prof-agua__nivel');
-          enc.style.height = Math.min(100, Math.round(d.copos / Math.max(1, d.meta) * 100)) + '%';
+          enc.style.height = Math.min(100, Math.round(d.ml / Math.max(1, d.meta) * 100)) + '%';
           col.appendChild(enc);
           li.appendChild(col);
           var nome = F.dataDe(d.iso).toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '');
           li.appendChild(el('span', 'prof-agua__rotulo', nome));
-          li.setAttribute('aria-label', F.dataExtenso(d.iso) + ': ' + d.copos + ' de ' + d.meta + ' copos');
+          li.setAttribute('aria-label', F.dataExtenso(d.iso) + ': ' + litros(d.ml) + ' de ' + litros(d.meta));
           ul2.appendChild(li);
         });
         ba.appendChild(ul2);
@@ -674,7 +675,7 @@
     formPlano.metaPesoKg.value = o.metaPesoKg != null ? F.paraInput(o.metaPesoKg) : '';
     formPlano.metaData.value = o.metaData || '';
     formPlano.metaData.min = F.hojeISO();
-    formPlano.metaAguaCopos.value = o.metaAguaCopos != null ? o.metaAguaCopos : '';
+    formPlano.metaAguaL.value = o.metaAguaMl != null ? F.paraInput(o.metaAguaMl / 1000) : '';
     formPlano.observacoes.value = o.observacoes || '';
     listaRef.textContent = '';
     (o.refeicoes || []).forEach(function (r) { listaRef.appendChild(linhaRefeicao(r)); });
@@ -709,10 +710,13 @@
     var peso = formPlano.metaPesoKg.value.trim();
     var pesoNum = peso ? F.decimal(peso) : null;
     if (peso && pesoNum == null) { erro.textContent = 'Meta de peso inválida.'; formPlano.metaPesoKg.focus(); return; }
+    var aguaL = formPlano.metaAguaL.value.trim();
+    var aguaNum = aguaL ? F.decimal(aguaL) : null;
+    if (aguaL && (aguaNum == null || aguaNum < 1 || aguaNum > 8)) { erro.textContent = 'A meta de água deve ficar entre 1 e 8 litros.'; formPlano.metaAguaL.focus(); return; }
     var campos = {
       metaPesoKg: pesoNum,
       metaData: formPlano.metaData.value || null,
-      metaAguaCopos: formPlano.metaAguaCopos.value ? Number(formPlano.metaAguaCopos.value) : null,
+      metaAguaMl: aguaL ? Math.round(aguaNum * 1000) : null,
       observacoes: formPlano.observacoes.value,
       refeicoes: Array.prototype.map.call(listaRef.children, function (li) {
         var v = function (n) { return li.querySelector('[data-ref="' + n + '"]').value; };

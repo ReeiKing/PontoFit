@@ -6,7 +6,7 @@
 // POST { acao: 'ativar', nome, profissao, registro?, empresa? }   cria o painel numa conta existente
 // POST { acao: 'atualizar', nome?, profissao?, registro?, empresa? }
 // POST { acao: 'trocar-codigo' }   novo link de convite (o antigo deixa de funcionar)
-// POST { acao: 'orientacoes', pacienteId, metaPesoKg?, metaData?, metaAguaCopos?, refeicoes?, observacoes? }
+// POST { acao: 'orientacoes', pacienteId, metaPesoKg?, metaData?, metaAguaMl?, refeicoes?, observacoes? }
 //      metas e plano alimentar para o paciente (substitui as anteriores)
 //
 // Cada leitura confere o vínculo ativo e os campos compartilha_* do paciente.
@@ -48,7 +48,7 @@ async function carregarPacientes(db, vinculos, detalhe) {
     P.dados(db.from('registros_peso').select('usuario_id, data, peso_kg, cintura_cm').in('usuario_id', ids).order('data', { ascending: true })),
     P.dados(db.from('medicamentos').select('id, usuario_id, nome, dose_ml, dose_mg, intervalo_dias, data_ultima_aplicacao, observacoes').in('usuario_id', ids)),
     P.dados(db.from('aplicacoes').select('usuario_id, medicamento_id, data, dose_ml').in('usuario_id', ids).order('data', { ascending: false })),
-    P.dados(db.from('registros_agua').select('usuario_id, data, copos, meta').in('usuario_id', ids).gte('data', desde).order('data', { ascending: false }))
+    P.dados(db.from('registros_agua').select('usuario_id, data, ml, meta_ml').in('usuario_id', ids).gte('data', desde).order('data', { ascending: false }))
   ]);
   const hoje = P.hojeSP();
 
@@ -112,12 +112,13 @@ async function carregarPacientes(db, vinculos, detalhe) {
       const reg = seus(agua);
       const hojeReg = reg.find(function (a) { return a.data === hoje; });
       const ultimos7 = reg.filter(function (a) { return a.data > P.somarDias(hoje, -7); });
+      // Em mililitros.
       p.agua = {
-        hoje: hojeReg ? hojeReg.copos : 0,
-        meta: hojeReg ? hojeReg.meta : (reg[0] ? reg[0].meta : 8),
-        diasNaMeta7: ultimos7.filter(function (a) { return a.copos >= a.meta; }).length
+        hoje: hojeReg ? hojeReg.ml : 0,
+        meta: hojeReg ? hojeReg.meta_ml : (reg[0] ? reg[0].meta_ml : 2000),
+        diasNaMeta7: ultimos7.filter(function (a) { return a.ml >= a.meta_ml; }).length
       };
-      if (detalhe) p.aguaDias = reg.map(function (a) { return { data: a.data, copos: a.copos, meta: a.meta }; });
+      if (detalhe) p.aguaDias = reg.map(function (a) { return { data: a.data, ml: a.ml, meta: a.meta_ml }; });
     }
 
     if (c.gestacao) p.gestacao = P.resumoGestacao(ficha);

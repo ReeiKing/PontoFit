@@ -118,7 +118,7 @@ function textoLimpo(v, max) { return String(v == null ? '' : v).replace(/\r\n?/g
 /** Corpo → colunas de public.orientacoes (ou ErroUsuario). */
 function validarOrientacoes(c) {
   c = c || {};
-  const linha = { meta_peso_kg: null, meta_data: null, meta_agua_copos: null, refeicoes: [], observacoes: null };
+  const linha = { meta_peso_kg: null, meta_data: null, meta_agua_ml: null, refeicoes: [], observacoes: null };
   if (c.metaPesoKg != null && c.metaPesoKg !== '') {
     const n = Number(c.metaPesoKg);
     if (!isFinite(n) || n < 30 || n > 300) throw new ErroUsuario(400, 'A meta de peso deve ficar entre 30 e 300 kg.');
@@ -128,10 +128,10 @@ function validarOrientacoes(c) {
     if (!DATA.test(c.metaData) || c.metaData < hojeSP()) throw new ErroUsuario(400, 'A data da meta deve ser hoje ou depois.');
     linha.meta_data = c.metaData;
   }
-  if (c.metaAguaCopos != null && c.metaAguaCopos !== '') {
-    const n = Math.round(Number(c.metaAguaCopos));
-    if (!isFinite(n) || n < 4 || n > 20) throw new ErroUsuario(400, 'A meta de água deve ficar entre 4 e 20 copos.');
-    linha.meta_agua_copos = n;
+  if (c.metaAguaMl != null && c.metaAguaMl !== '') {
+    const n = Math.round(Number(c.metaAguaMl) / 50) * 50;
+    if (!isFinite(n) || n < 1000 || n > 8000) throw new ErroUsuario(400, 'A meta de água deve ficar entre 1 e 8 litros por dia.');
+    linha.meta_agua_ml = n;
   }
   const refeicoes = Array.isArray(c.refeicoes) ? c.refeicoes : [];
   if (refeicoes.length > 12) throw new ErroUsuario(400, 'Use no máximo 12 refeições.');
@@ -151,7 +151,7 @@ function validarOrientacoes(c) {
 function orientacoesSaida(o) {
   if (!o) return null;
   return {
-    metaPesoKg: num(o.meta_peso_kg), metaData: o.meta_data, metaAguaCopos: o.meta_agua_copos,
+    metaPesoKg: num(o.meta_peso_kg), metaData: o.meta_data, metaAguaMl: o.meta_agua_ml,
     refeicoes: o.refeicoes || [], observacoes: o.observacoes, atualizadoEm: o.atualizado_em
   };
 }

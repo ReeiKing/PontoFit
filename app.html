@@ -256,9 +256,20 @@
               <p class="painel-agua__qtd" data-agua-qtd aria-live="polite">–</p>
               <p class="texto-sm texto-sec" data-agua-info></p>
               <div class="painel-agua__botoes">
-                <button class="btn btn--sm" type="button" data-agua-mais><span>+ 1 copo</span></button>
+                <button class="btn btn--sm" type="button" data-agua-mais><span data-agua-mais-texto>+ 1 copo (250 ml)</span></button>
                 <button class="btn btn--sm btn--secundario" type="button" data-agua-menos aria-label="Tirar um copo"><span>−</span></button>
               </div>
+              <details class="painel-agua__recipiente" data-agua-recipiente-caixa>
+                <summary>Seu recipiente: <strong data-agua-recipiente>copo de 250 ml</strong> <span class="painel-agua__trocar">trocar</span></summary>
+                <div class="painel-agua__opcoes" role="group" aria-label="Escolha o recipiente que você usa" data-agua-opcoes></div>
+                <form class="painel-agua__outro" data-agua-outro novalidate>
+                  <label class="texto-sm" for="agua-outro-ml">Outro tamanho (ml)</label>
+                  <div class="painel-agua__outro-linha">
+                    <input class="input" id="agua-outro-ml" name="ml" type="number" inputmode="numeric" min="50" max="3000" step="10" placeholder="Ex.: 600">
+                    <button class="btn btn--sm btn--secundario" type="submit"><span>Usar</span></button>
+                  </div>
+                </form>
+              </details>
               <p class="painel-agua__sequencia" data-agua-sequencia></p>
             </div>
           </section>

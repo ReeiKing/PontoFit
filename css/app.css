@@ -1688,3 +1688,15 @@ textarea.conversa__campo, .conversa__campo { flex: 1; resize: none; height: 44px
 .orientacao__refeicao-topo { display: flex; flex-wrap: wrap; align-items: center; gap: var(--esp-2); }
 .orientacao__hora { font-variant-numeric: tabular-nums; color: var(--texto-sec); font-weight: 600; font-size: var(--fs-sm); }
 .orientacao__itens { margin: 0; white-space: pre-wrap; color: var(--texto); }
+
+/* Água: recipiente do paciente */
+.painel-agua__recipiente { margin-top: var(--esp-2); font-size: var(--fs-sm); }
+.painel-agua__recipiente summary { cursor: pointer; color: var(--texto-sec); list-style: none; }
+.painel-agua__recipiente summary::-webkit-details-marker { display: none; }
+.painel-agua__recipiente summary strong { color: var(--texto); }
+.painel-agua__trocar { color: var(--link); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+.painel-agua__opcoes { display: flex; flex-wrap: wrap; gap: var(--esp-2); margin: var(--esp-3) 0; }
+.painel-agua__opcao { font-size: var(--fs-xs); padding: .35rem .7rem; min-height: 36px; }
+.painel-agua__outro { display: grid; gap: .3rem; }
+.painel-agua__outro-linha { display: flex; gap: var(--esp-2); }
+.painel-agua__outro-linha .input { flex: 1; max-width: 9rem; }

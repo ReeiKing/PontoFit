@@ -171,7 +171,7 @@
     ['profissionalContato', 'profissional_contato'], ['observacoes', 'observacoes'], ['metaPesoKg', 'meta_peso_kg', 'n'],
     ['metaData', 'meta_data'], ['marcosVistos', 'marcos_vistos', 'a'], ['atualizadoEm', 'atualizado_em'],
     ['gestante', 'gestante', 'b'], ['gestacaoDum', 'gestacao_dum'], ['gestacaoDpp', 'gestacao_dpp'],
-    ['pesoPreGestacionalKg', 'peso_pre_gestacional_kg', 'n']
+    ['pesoPreGestacionalKg', 'peso_pre_gestacional_kg', 'n'], ['recipienteMl', 'recipiente_ml', 'n']
   ];
   var CAMPOS_MED = [
     ['nome', 'nome'], ['doseMl', 'dose_ml', 'n'], ['doseMg', 'dose_mg', 'n'], ['intervaloValor', 'intervalo_valor', 'n'],
@@ -483,17 +483,19 @@
 
     /* ---------- Água do dia ---------- */
 
-    /** Registros desde uma data (AAAA-MM-DD). → [{ data, copos, meta }] (mais recente primeiro) */
+    /** Registros desde uma data (AAAA-MM-DD). → [{ data, ml, meta }] em mililitros (mais recente primeiro) */
     getAgua: async function (desde) {
-      var linhas = await q(sb.from('registros_agua').select('data, copos, meta').gte('data', desde).order('data', { ascending: false }));
-      return linhas.map(function (l) { return { data: l.data, copos: l.copos, meta: l.meta }; });
+      var linhas = await q(sb.from('registros_agua').select('data, ml, meta_ml').gte('data', desde).order('data', { ascending: false }));
+      return linhas.map(function (l) { return { data: l.data, ml: l.ml, meta: l.meta_ml }; });
     },
 
-    /** Grava os copos de um dia (cria ou atualiza). */
-    saveAgua: async function (data, copos, meta) {
+    /** Grava a água de um dia em ml (cria ou atualiza). copos/meta guardam o equivalente em copos de 250 ml. */
+    saveAgua: async function (data, ml, metaMl) {
       var id = await uid();
       await q(sb.from('registros_agua').upsert({
-        usuario_id: id, data: data, copos: copos, meta: meta, atualizado_em: new Date().toISOString()
+        usuario_id: id, data: data, ml: ml, meta_ml: metaMl,
+        copos: Math.min(40, Math.round(ml / 250)), meta: Math.max(1, Math.min(40, Math.round(metaMl / 250))),
+        atualizado_em: new Date().toISOString()
       }, { onConflict: 'usuario_id,data' }));
     },
 

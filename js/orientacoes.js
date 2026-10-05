@@ -38,7 +38,7 @@
   }
 
   function vazia(o) {
-    return !o || (o.metaPesoKg == null && o.metaAguaCopos == null && !(o.refeicoes || []).length && !o.observacoes);
+    return !o || (o.metaPesoKg == null && o.metaAguaMl == null && !(o.refeicoes || []).length && !o.observacoes);
   }
 
   /** Índice da próxima refeição pelo horário de agora (as sem horário não contam). */
@@ -64,7 +64,7 @@
       topo.appendChild(el('span', 'texto-sm texto-sec', [p.profissaoNome, 'atualizado em ' + new Date(o.atualizadoEm).toLocaleDateString('pt-BR')].join(' · ')));
       card.appendChild(topo);
 
-      if (o.metaPesoKg != null || o.metaAguaCopos != null) {
+      if (o.metaPesoKg != null || o.metaAguaMl != null) {
         var metas = el('div', 'orientacao__metas');
         if (o.metaPesoKg != null) {
           var mp = el('div', 'orientacao__meta');
@@ -78,11 +78,11 @@
           mp.appendChild(usar);
           metas.appendChild(mp);
         }
-        if (o.metaAguaCopos != null) {
+        if (o.metaAguaMl != null) {
           var ma = el('div', 'orientacao__meta orientacao__meta--agua');
           ma.appendChild(el('span', 'painel-rotulo', 'Água por dia'));
-          ma.appendChild(el('strong', 'orientacao__valor', o.metaAguaCopos + ' copos'));
-          ma.appendChild(el('span', 'texto-sm texto-sec', F.numero(o.metaAguaCopos * 0.25) + ' litros · já vale no contador do Início'));
+          ma.appendChild(el('strong', 'orientacao__valor', (o.metaAguaMl / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 2 }) + ' L'));
+          ma.appendChild(el('span', 'texto-sm texto-sec', 'Já vale no contador de água do Início'));
           metas.appendChild(ma);
         }
         card.appendChild(metas);
