@@ -1214,8 +1214,9 @@
 .pix__copia .input { flex: 1; min-width: 0; font-family: ui-monospace, monospace; font-size: var(--fs-sm); }
 .pix__validade:empty { display: none; }
 
-/* Acesso bloqueado: só "Meu plano" fica disponível no menu (js/app.js) */
-[data-acesso-bloqueado] .menu__item:not([data-link-secao="plano"]) {
+/* Acesso bloqueado: no menu só ficam Assinaturas, os painéis (profissional,
+   administração) e Sair (js/app.js) */
+[data-acesso-bloqueado] .menu__item:not([data-link-secao="plano"]):not(.menu__item--admin):not(.menu__item--sair) {
   opacity: .45;
   pointer-events: none;
 }

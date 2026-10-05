@@ -237,6 +237,12 @@
         mostrarSecao(secaoNormalizada(), false);
         if (!bloqueado) return;
         return profissional.then(function (prof) {
+          // Profissional sem plano: o lugar dele é o painel profissional (gratuito).
+          // "Meu app" (de=prof) entra mesmo assim, para ver os planos.
+          if (prof && !/[?&]de=prof\b/.test(location.search)) {
+            location.replace('profissional.html');
+            return;
+          }
           if (prof) {
             PF.toast('O painel do profissional é gratuito. O app pessoal (receitas, evolução…) precisa de um plano.', {
               titulo: 'Conta profissional', tipo: 'info', duracao: 10000,

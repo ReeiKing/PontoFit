@@ -78,7 +78,7 @@
       return;
     }
     // Já está logado? Vai direto para a área do paciente.
-    S.getUser().then(function (u) { if (u) location.replace(destino()); });
+    S.getUser().then(function (u) { if (u) irParaDestino(); });
   }
 
   /* ---------- Modo profissional e destino depois de entrar ----------
@@ -91,6 +91,15 @@
     var v = PARAMS.get('voltar') || '';
     if (/^[a-z0-9-]+\.html(\?[A-Za-z0-9=&%._-]*)?(#[A-Za-z0-9_-]*)?$/i.test(v)) return v;
     return MODO_PROF ? 'profissional.html' : 'app.html';
+  }
+
+  /** Vai para o destino; conta profissional que entrou pelo login comum vai para o painel profissional. */
+  function irParaDestino() {
+    var d = destino();
+    if (d !== 'app.html') { location.replace(d); return; }
+    S.getProfissional().then(function (r) {
+      location.replace(r && r.profissional ? 'profissional.html' : d);
+    }, function () { location.replace(d); });
   }
 
   function configurarModoProfissional() {
@@ -168,7 +177,7 @@
       try {
         await S.definirNovaSenha(form.senha.value);
         PF.toast('Senha alterada. Entrando na sua conta…', { titulo: 'Tudo certo' });
-        setTimeout(function () { location.replace(destino()); }, 1200);
+        setTimeout(function () { irParaDestino(); }, 1200);
       } catch (err) {
         PF.setLoading(botao, false);
         PF.toast(err.codigo === 'SEM_SESSAO' || err.codigo === 'AUTH'
@@ -410,7 +419,7 @@
       PF.setLoading(botao, true, 'Entrando…');
       try {
         await S.entrar(form.email.value, form.senha.value, form.lembrar.checked);
-        location.replace(destino());
+        irParaDestino();
       } catch (err) {
         PF.setLoading(botao, false);
         if (err && err.codigo === 'EMAIL_NAO_CONFIRMADO') {
@@ -466,7 +475,7 @@
           mostrarConfirmacao(form.email.value.trim().toLowerCase());
           return;
         }
-        location.replace(destino());
+        irParaDestino();
       } catch (err) {
         PF.setLoading(botao, false);
         mostrarErroServidor(form, err);
