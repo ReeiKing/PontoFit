@@ -746,6 +746,7 @@
   /* ---------- Início ---------- */
   PF.auth.pronto.then(async function (u) {
     if (!u) return;
+    $('[data-prof-email]').value = u.email || '';
     try {
       var r = await S.getProfissional();
       $('[data-prof-carregando]').hidden = true;
