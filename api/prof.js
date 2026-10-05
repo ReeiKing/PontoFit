@@ -42,13 +42,18 @@ async function carregarPacientes(db, vinculos, detalhe) {
   const ids = vinculos.map(function (v) { return v.paciente_id; });
   if (!ids.length) return [];
   const desde = P.somarDias(P.hojeSP(), detalhe ? -30 : -7);
-  const [perfis, fichas, pesos, meds, apls, agua] = await Promise.all([
+  const algumExame = vinculos.some(function (v) { return v.compartilha_exames; });
+  const [perfis, fichas, pesos, meds, apls, agua, exames] = await Promise.all([
     P.dados(db.from('perfis').select('id, nome, acesso_ate').in('id', ids)),
     P.dados(db.from('fichas').select('*').in('usuario_id', ids)),
     P.dados(db.from('registros_peso').select('usuario_id, data, peso_kg, cintura_cm').in('usuario_id', ids).order('data', { ascending: true })),
     P.dados(db.from('medicamentos').select('id, usuario_id, nome, dose_ml, dose_mg, intervalo_dias, data_ultima_aplicacao, observacoes').in('usuario_id', ids)),
     P.dados(db.from('aplicacoes').select('usuario_id, medicamento_id, data, dose_ml').in('usuario_id', ids).order('data', { ascending: false })),
-    P.dados(db.from('registros_agua').select('usuario_id, data, ml, meta_ml').in('usuario_id', ids).gte('data', desde).order('data', { ascending: false }))
+    P.dados(db.from('registros_agua').select('usuario_id, data, ml, meta_ml').in('usuario_id', ids).gte('data', desde).order('data', { ascending: false })),
+    algumExame
+      ? P.dados(db.from('exames').select('id, usuario_id, data, laboratorio, observacoes, arquivo_path, exame_resultados (marcador, nome, valor, unidade, ref_min, ref_max, posicao)')
+        .in('usuario_id', ids).order('data', { ascending: false }))
+      : Promise.resolve([])
   ]);
   const hoje = P.hojeSP();
 
@@ -122,8 +127,48 @@ async function carregarPacientes(db, vinculos, detalhe) {
     }
 
     if (c.gestacao) p.gestacao = P.resumoGestacao(ficha);
+
+    if (c.exames) {
+      const lista = seus(exames).map(exameSaida);
+      const ultimo = lista[0] || null;
+      p.exames = { total: lista.length, ultimo: ultimo ? { data: ultimo.data, resultados: ultimo.resultados.length, fora: ultimo.fora } : null };
+      if (detalhe) p.exames.lista = lista.slice(0, 12);
+    }
     return p;
   });
+}
+
+function situacao(r) {
+  if (r.refMin == null && r.refMax == null) return null;
+  if (r.refMin != null && r.valor < r.refMin) return 'abaixo';
+  if (r.refMax != null && r.valor > r.refMax) return 'acima';
+  return 'normal';
+}
+
+function exameSaida(e) {
+  const n = function (v) { return v == null ? null : Number(v); };
+  const resultados = (e.exame_resultados || []).sort(function (a, b) { return a.posicao - b.posicao; }).map(function (r) {
+    const x = { marcador: r.marcador, nome: r.nome, valor: n(r.valor), unidade: r.unidade, refMin: n(r.ref_min), refMax: n(r.ref_max) };
+    x.situacao = situacao(x);
+    return x;
+  });
+  return {
+    id: e.id, data: e.data, laboratorio: e.laboratorio, observacoes: e.observacoes, arquivo: e.arquivo_path || null, resultados: resultados,
+    fora: resultados.filter(function (r) { return r.situacao === 'abaixo' || r.situacao === 'acima'; }).length
+  };
+}
+
+/** Links temporários (1 hora) para os laudos, gerados pelo servidor. */
+async function assinarLaudos(db, lista) {
+  const caminhos = lista.filter(function (e) { return e.arquivo; }).map(function (e) { return e.arquivo; });
+  const porCaminho = {};
+  if (caminhos.length) {
+    const r = await db.storage.from('exames').createSignedUrls(caminhos, 3600);
+    if (r.error) console.error('[prof] laudos', r.error.message);
+    else (r.data || []).forEach(function (s) { if (s.signedUrl) porCaminho[s.path] = s.signedUrl; });
+  }
+  // O caminho interno do arquivo não sai do servidor; só o link temporário.
+  lista.forEach(function (e) { e.temLaudo = !!e.arquivo; e.laudoUrl = e.arquivo ? porCaminho[e.arquivo] || null : null; delete e.arquivo; });
 }
 
 module.exports = async function handler(req, res) {
@@ -162,6 +207,7 @@ module.exports = async function handler(req, res) {
         P.dados(db.from('orientacoes').select('*').eq('vinculo_id', vinculo.id).maybeSingle())
       ]);
       paciente.orientacoes = P.orientacoesSaida(orient);
+      if (paciente.exames && paciente.exames.lista) await assinarLaudos(db, paciente.exames.lista);
       return responder(res, 200, { hoje: P.hojeSP(), paciente: paciente });
     }
 

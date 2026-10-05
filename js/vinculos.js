@@ -12,7 +12,7 @@
   if (!caixa || !S) return;
   var lista = caixa.querySelector('[data-vinculos-lista]');
 
-  var CAMPOS = [['peso', 'Peso e meta'], ['agua', 'Água'], ['medicamentos', 'Medicamentos'], ['ficha', 'Ficha'], ['gestacao', 'Gestação']];
+  var CAMPOS = [['peso', 'Peso e meta'], ['agua', 'Água'], ['medicamentos', 'Medicamentos'], ['exames', 'Exames de sangue'], ['ficha', 'Ficha'], ['gestacao', 'Gestação']];
   var carregado = false;
 
   function el(tag, classe, texto) {

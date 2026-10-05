@@ -89,3 +89,16 @@
 .prof-refeicao textarea.input { min-height: 72px; }
 .prof-plano__acoes { position: sticky; bottom: 0; padding: var(--esp-3) 0; background: var(--fundo); }
 .prof-plano__acoes .btn { width: 100%; }
+
+/* Exames de sangue no detalhe do paciente */
+.prof-exame { border-top: 1px solid var(--borda); padding-top: var(--esp-2); }
+.prof-exame:first-of-type { border-top: 0; padding-top: 0; }
+.prof-exame__resumo { display: flex; flex-wrap: wrap; align-items: center; gap: .3rem var(--esp-2); cursor: pointer; padding: var(--esp-1) 0; }
+.prof-exame__lista { display: grid; gap: 0; padding: 0; margin: var(--esp-2) 0; list-style: none; }
+.prof-exame__item { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--esp-3); padding: var(--esp-2) 0; border-bottom: 1px solid var(--borda); }
+.prof-exame__item:last-child { border-bottom: 0; }
+.prof-exame__item > div:first-child { display: grid; }
+.prof-exame__item--fora .prof-exame__nome { font-weight: 700; }
+.prof-exame__nome { font-weight: 600; }
+.prof-exame__valor { display: grid; justify-items: end; text-align: right; gap: .15rem; }
+.prof-exame__obs { white-space: pre-wrap; margin: 0 0 var(--esp-2); }

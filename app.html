@@ -973,6 +973,71 @@
           </section>
         </div>
       </div>
+
+      <!-- Exames de sangue (js/exames.js, catálogo em js/exames-dados.js) -->
+      <section class="card exames" data-exames aria-labelledby="exames-titulo">
+        <div class="exames__topo">
+          <div>
+            <h2 class="evo__titulo" id="exames-titulo">Exames de sangue</h2>
+            <p class="texto-sec">Registre os resultados (testosterona, tireoide, colesterol…) e acompanhe a evolução. Se você autorizar, seu profissional também vê.</p>
+          </div>
+          <button class="btn" type="button" data-exame-novo>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg>
+            <span>Adicionar exame</span>
+          </button>
+        </div>
+        <p class="texto-sec exames__vazio" data-exames-vazio hidden>Nenhum exame registrado ainda. Tenha o laudo em mãos e toque em "Adicionar exame".</p>
+        <div class="exames__evolucao" data-exames-evolucao hidden>
+          <label class="campo__label" for="exames-marcador">Ver a evolução de</label>
+          <select class="input" id="exames-marcador" data-exames-marcador></select>
+          <div class="exames__grafico"><canvas data-exames-grafico role="img" aria-label="Evolução do marcador escolhido"></canvas></div>
+          <p class="texto-sm texto-sec" data-exames-grafico-info></p>
+        </div>
+        <ul class="exames__lista" role="list" data-exames-lista></ul>
+        <p class="texto-sm texto-sec">As referências variam entre laboratórios: confira sempre a do seu laudo. Quem interpreta os resultados é o seu médico.</p>
+      </section>
+
+      <dialog class="exame-dialogo" data-exame-dialogo aria-labelledby="exame-dialogo-titulo">
+        <form class="exame-dialogo__form" data-exame-form novalidate>
+          <header class="exame-dialogo__topo">
+            <h2 id="exame-dialogo-titulo" data-exame-dialogo-titulo>Novo exame</h2>
+            <button class="leitor__fechar" type="button" data-exame-fechar aria-label="Fechar">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </header>
+          <div class="exame-dialogo__corpo">
+            <div class="exame-dialogo__linha">
+              <div class="campo"><label class="campo__label" for="ex-data">Data da coleta</label><input class="input" id="ex-data" name="data" type="date" required></div>
+              <div class="campo"><label class="campo__label" for="ex-lab">Laboratório <span class="texto-sec">(opcional)</span></label><input class="input" id="ex-lab" name="laboratorio" type="text" maxlength="120"></div>
+            </div>
+            <div class="campo">
+              <span class="campo__label">Laudo em PDF ou foto <span class="texto-sec">(opcional, até 10 MB)</span></span>
+              <div class="exame-dialogo__arquivo" data-exame-arquivo-caixa>
+                <label class="btn btn--sm btn--secundario" for="ex-arquivo">Escolher arquivo</label>
+                <input class="sr-only" id="ex-arquivo" name="arquivo" type="file" accept="application/pdf,image/jpeg,image/png,image/webp">
+                <span class="texto-sm texto-sec" data-exame-arquivo-nome>Nenhum arquivo</span>
+                <button class="btn btn--sm btn--fantasma" type="button" data-exame-arquivo-tirar hidden>Remover</button>
+              </div>
+            </div>
+            <fieldset class="exame-dialogo__resultados">
+              <legend class="campo__label">Resultados</legend>
+              <p class="texto-sm texto-sec">Use um atalho ou escolha os marcadores. A referência já vem preenchida: ajuste se a do seu laudo for diferente.</p>
+              <div class="exame-dialogo__pacotes" data-exame-pacotes></div>
+              <ol class="exame-linhas" data-exame-linhas></ol>
+              <div class="exame-dialogo__add">
+                <label class="sr-only" for="ex-add">Adicionar marcador</label>
+                <select class="input" id="ex-add" data-exame-add></select>
+              </div>
+            </fieldset>
+            <div class="campo"><label class="campo__label" for="ex-obs">Observações <span class="texto-sec">(opcional)</span></label><textarea class="input" id="ex-obs" name="observacoes" rows="2" maxlength="2000"></textarea></div>
+            <p class="campo__erro" data-exame-erro aria-live="polite"></p>
+          </div>
+          <footer class="exame-dialogo__acoes">
+            <button class="btn btn--fantasma" type="button" data-exame-fechar>Cancelar</button>
+            <button class="btn" type="submit"><span>Salvar exame</span></button>
+          </footer>
+        </form>
+      </dialog>
     </section>
 
     <!-- ===================== Gestação (js/gestacao.js, conteúdo em js/gestacao-dados.js) ===================== -->
@@ -1244,6 +1309,8 @@
   <script src="js/nutrientes.js"></script>
   <script src="js/cesta.js"></script>
   <script src="js/medicamentos.js"></script>
+  <script src="js/exames-dados.js"></script>
+  <script src="js/exames.js"></script>
   <script src="js/gestacao-dados.js"></script>
   <script src="js/gestacao.js"></script>
   <script src="js/plano.js"></script>

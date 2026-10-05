@@ -83,6 +83,19 @@ async function detalhes(db, id) {
   };
 }
 
+/** Apaga os arquivos das pastas (melhor esforço: a conta já foi excluída). */
+async function apagarArquivos(db, pastas) {
+  for (const p of pastas) {
+    try {
+      const l = await db.storage.from(p.bucket).list(p.pasta, { limit: 1000 });
+      const nomes = ((l && l.data) || []).map(function (f) { return p.pasta + '/' + f.name; });
+      if (nomes.length) await db.storage.from(p.bucket).remove(nomes);
+    } catch (e) {
+      console.error('[admin] arquivos de', p.bucket, p.pasta, e.message || e);
+    }
+  }
+}
+
 module.exports = async function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'POST') return responder(res, 405, { erro: 'Use GET ou POST.' });
 
@@ -236,11 +249,16 @@ module.exports = async function handler(req, res) {
       }).select('id').single();
       if (eReg) throw eReg;
 
+      // Pastas de arquivos (laudos e imagens das conversas) para apagar depois.
+      const vincs = await db.from('vinculos').select('id').or('paciente_id.eq.' + id + ',profissional_id.eq.' + id);
+      const pastas = [{ bucket: 'exames', pasta: id }].concat(((vincs && vincs.data) || []).map(function (v) { return { bucket: 'chat', pasta: v.id }; }));
+
       const r = await db.auth.admin.deleteUser(id);
       if (r.error) {
         await db.from('contas_excluidas').delete().eq('id', registro.id);
         throw r.error;
       }
+      await apagarArquivos(db, pastas);
       return responder(res, 200, { excluido: true, email: usuario.email });
     } else {
       return responder(res, 400, { erro: 'Ação inválida.' });

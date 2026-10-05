@@ -499,6 +499,68 @@
       }, { onConflict: 'usuario_id,data' }));
     },
 
+    /* ---------- Exames de sangue ---------- */
+
+    /** → [{ id, data, laboratorio, observacoes, arquivo, resultados: [{ marcador, nome, valor, unidade, refMin, refMax }] }] (mais recente primeiro) */
+    getExames: async function () {
+      var linhas = await q(sb.from('exames')
+        .select('id, data, laboratorio, observacoes, arquivo_path, exame_resultados (marcador, nome, valor, unidade, ref_min, ref_max, posicao)')
+        .order('data', { ascending: false }));
+      return linhas.map(function (e) {
+        return {
+          id: e.id, data: e.data, laboratorio: e.laboratorio, observacoes: e.observacoes, arquivo: e.arquivo_path,
+          resultados: (e.exame_resultados || []).sort(function (a, b) { return a.posicao - b.posicao; }).map(function (r) {
+            return { marcador: r.marcador, nome: r.nome, valor: num(r.valor), unidade: r.unidade, refMin: num(r.ref_min), refMax: num(r.ref_max) };
+          })
+        };
+      });
+    },
+
+    /**
+     * Cria ou substitui um exame. campos: { id?, data, laboratorio, observacoes, resultados, arquivo?: File, removerArquivo?: bool, arquivoAtual? }
+     * O laudo (PDF ou imagem, até 10 MB) vai para o bucket privado "exames" em <usuario>/<uuid>.<ext>.
+     */
+    saveExame: async function (campos) {
+      var eu = await uid();
+      var caminho = campos.removerArquivo ? null : (campos.arquivoAtual || null);
+      if (campos.arquivo) {
+        var ext = { 'application/pdf': 'pdf', 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' }[campos.arquivo.type];
+        if (!ext) throw erro('ANEXO', 'Envie o laudo em PDF ou foto (JPG, PNG ou WebP).');
+        if (campos.arquivo.size > 10 * 1024 * 1024) throw erro('ANEXO', 'O laudo passou de 10 MB. Envie um arquivo menor.');
+        caminho = eu + '/' + crypto.randomUUID() + '.' + ext;
+        var up = await sb.storage.from('exames').upload(caminho, campos.arquivo, { contentType: campos.arquivo.type, upsert: false });
+        if (up.error) throw erro('ANEXO', 'Não foi possível enviar o laudo. Tente de novo.', up.error);
+      }
+      var linha = { data: campos.data, laboratorio: vazioParaNulo(campos.laboratorio), observacoes: vazioParaNulo(campos.observacoes), arquivo_path: caminho };
+      var id = campos.id;
+      if (id) {
+        await q(sb.from('exames').update(linha).eq('id', id));
+        await q(sb.from('exame_resultados').delete().eq('exame_id', id));
+      } else {
+        id = crypto.randomUUID();
+        await q(sb.from('exames').insert(Object.assign({ id: id, usuario_id: eu }, linha)));
+      }
+      var resultados = (campos.resultados || []).map(function (r, i) {
+        return { exame_id: id, usuario_id: eu, marcador: r.marcador, nome: r.nome, valor: r.valor, unidade: vazioParaNulo(r.unidade), ref_min: r.refMin, ref_max: r.refMax, posicao: i };
+      });
+      if (resultados.length) await q(sb.from('exame_resultados').insert(resultados));
+      // Laudo antigo trocado ou removido: apaga o arquivo.
+      if (campos.arquivoAtual && campos.arquivoAtual !== caminho) await sb.storage.from('exames').remove([campos.arquivoAtual]);
+      return id;
+    },
+
+    excluirExame: async function (id, arquivo) {
+      await q(sb.from('exames').delete().eq('id', id));
+      if (arquivo) await sb.storage.from('exames').remove([arquivo]);
+    },
+
+    /** Endereço temporário (1 hora) do laudo. */
+    urlLaudo: async function (caminho) {
+      var r = await sb.storage.from('exames').createSignedUrl(caminho, 3600);
+      if (r.error) throw erro('ANEXO', 'Não foi possível abrir o laudo.', r.error);
+      return r.data.signedUrl;
+    },
+
     /* ---------- Receitas favoritas ---------- */
 
     /** → [id da receita, ...] */

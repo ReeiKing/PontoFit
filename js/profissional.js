@@ -33,6 +33,7 @@
     return e;
   }
   function litros(ml) { return (Number(ml || 0) / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 2 }) + ' L'; }
+  function num3(n) { return Number(n).toLocaleString('pt-BR', { maximumFractionDigits: 3 }); }
   function kg(n) { return n == null ? '—' : F.numero(n) + ' kg'; }
   function sinal(n) { return (n > 0 ? '+' : n < 0 ? '−' : '') + F.numero(Math.abs(n)); }
   function data(iso) { return iso ? F.dataCurta(iso) : '—'; }
@@ -278,6 +279,10 @@
       var d0 = p.doses[0];
       item('Próxima dose', d0.nome + ' ' + textoDose(d0));
     }
+    if (p.compartilha.exames && p.exames && p.exames.ultimo) {
+      var ue = p.exames.ultimo;
+      item('Último exame', data(ue.data) + (ue.fora ? ' · ' + ue.fora + ' fora da ref.' : ' · tudo na ref.'));
+    }
     if (p.compartilha.agua && p.agua) item('Água hoje', litros(p.agua.hoje) + ' de ' + litros(p.agua.meta));
     if (dl.children.length) botao.appendChild(dl);
 
@@ -470,6 +475,57 @@
         bm.appendChild(el('p', 'texto-sm texto-sec', 'Nenhum medicamento cadastrado.'));
       }
     } else naoCompartilhado('Medicamentos');
+
+    // Exames de sangue
+    if (p.compartilha.exames) {
+      var bx = bloco('Exames de sangue');
+      var lista = (p.exames && p.exames.lista) || [];
+      if (!lista.length) bx.appendChild(el('p', 'texto-sm texto-sec', 'Nenhum exame registrado ainda.'));
+      lista.forEach(function (ex, i) {
+        var sec = el('details', 'prof-exame');
+        if (i === 0) sec.open = true;
+        var sum = el('summary', 'prof-exame__resumo');
+        sum.appendChild(el('strong', null, data(ex.data)));
+        sum.appendChild(el('span', 'texto-sm texto-sec', [ex.laboratorio, ex.resultados.length + (ex.resultados.length === 1 ? ' resultado' : ' resultados')].filter(Boolean).join(' · ')));
+        sum.appendChild(el('span', 'badge ' + (ex.fora ? 'badge--laranja' : ''), ex.fora ? ex.fora + ' fora da referência' : 'Tudo na referência'));
+        sec.appendChild(sum);
+        var ul = el('ul', 'prof-exame__lista');
+        ul.setAttribute('role', 'list');
+        ex.resultados.forEach(function (r) {
+          var li = el('li', 'prof-exame__item' + (r.situacao === 'acima' || r.situacao === 'abaixo' ? ' prof-exame__item--fora' : ''));
+          var q = el('div');
+          q.appendChild(el('span', 'prof-exame__nome', r.nome));
+          q.appendChild(el('span', 'texto-xs texto-sec', 'Ref.: ' + PF.exames.textoRef(r.refMin, r.refMax, r.unidade)));
+          li.appendChild(q);
+          var v = el('div', 'prof-exame__valor');
+          v.appendChild(el('strong', null, num3(r.valor) + (r.unidade ? ' ' + r.unidade : '')));
+          // Variação desde o exame anterior com o mesmo marcador
+          for (var j = i + 1; j < lista.length; j++) {
+            var ant = lista[j].resultados.find(function (x) { return x.marcador === r.marcador; });
+            if (ant) {
+              var dif = Math.round((r.valor - ant.valor) * 1000) / 1000;
+              if (dif) v.appendChild(el('span', 'texto-xs texto-sec', (dif > 0 ? '↑ +' : '↓ −') + num3(Math.abs(dif)) + ' desde ' + data(lista[j].data)));
+              break;
+            }
+          }
+          if (r.situacao && r.situacao !== 'normal') v.appendChild(el('span', 'badge ' + (r.situacao === 'acima' ? 'badge--vermelho' : 'badge--laranja'), r.situacao === 'acima' ? 'Acima' : 'Abaixo'));
+          li.appendChild(v);
+          ul.appendChild(li);
+        });
+        sec.appendChild(ul);
+        if (ex.observacoes) sec.appendChild(el('p', 'texto-sm prof-exame__obs', ex.observacoes));
+        if (ex.laudoUrl) {
+          var a = el('a', 'btn btn--sm btn--secundario', 'Ver laudo');
+          a.href = ex.laudoUrl;
+          a.target = '_blank';
+          a.rel = 'noopener';
+          sec.appendChild(a);
+        } else if (ex.temLaudo) {
+          sec.appendChild(el('p', 'texto-xs texto-sec', 'Laudo anexado, mas indisponível agora. Atualize em instantes.'));
+        }
+        bx.appendChild(sec);
+      });
+    } else naoCompartilhado('Exames de sangue');
 
     // Água
     if (p.compartilha.agua) {

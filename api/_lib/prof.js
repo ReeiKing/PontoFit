@@ -8,7 +8,7 @@ const { supabaseAdmin, usuarioDaRequisicao } = require('./pix');
 const PROFISSOES = { nutricionista: 'Nutricionista', personal: 'Personal trainer', academia: 'Academia', medico: 'Médico(a)', outro: 'Profissional' };
 const CODIGO = /^[A-Z0-9-]{4,24}$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const CAMPOS_COMPARTILHA = ['peso', 'agua', 'medicamentos', 'ficha', 'gestacao'];
+const CAMPOS_COMPARTILHA = ['peso', 'agua', 'medicamentos', 'exames', 'ficha', 'gestacao'];
 
 class ErroUsuario extends Error {
   constructor(status, mensagem) { super(mensagem); this.status = status; }

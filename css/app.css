@@ -1701,3 +1701,71 @@ textarea.conversa__campo, .conversa__campo { flex: 1; resize: none; height: 44px
 .painel-agua__outro { display: grid; gap: .3rem; }
 .painel-agua__outro-linha { display: flex; gap: var(--esp-2); }
 .painel-agua__outro-linha .input { flex: 1; max-width: 9rem; }
+
+/* ---------- Exames de sangue (js/exames.js) ---------- */
+.exames { display: grid; gap: var(--esp-4); margin-top: var(--esp-5); }
+.exames__topo { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: var(--esp-3); }
+.exames__topo > div { flex: 1 1 18rem; }
+.exames__topo .btn svg { width: 1.1rem; height: 1.1rem; }
+.exames__evolucao { display: grid; gap: var(--esp-2); padding: var(--esp-4); border-radius: 14px; background: var(--superficie-2); }
+.exames__evolucao .input { max-width: 26rem; }
+.exames__grafico { position: relative; height: 220px; }
+.exames__lista { display: grid; gap: var(--esp-3); padding: 0; margin: 0; list-style: none; }
+.exame { border: 1px solid var(--borda); border-radius: 14px; overflow: hidden; background: var(--superficie); }
+.exame__cabecalho {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--esp-2) var(--esp-3); width: 100%; padding: var(--esp-3) var(--esp-4);
+  border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer;
+}
+.exame__cabecalho:focus-visible { outline: 3px solid var(--foco); outline-offset: -3px; }
+.exame__quem { display: grid; flex: 1 1 12rem; }
+.exame__quem strong::first-letter { text-transform: uppercase; }
+.exame__seta { width: 1.2rem; height: 1.2rem; flex: none; transition: transform .2s; color: var(--texto-sec); }
+.exame__cabecalho[aria-expanded="true"] .exame__seta { transform: rotate(180deg); }
+.exame__corpo { display: grid; gap: var(--esp-3); padding: 0 var(--esp-4) var(--esp-4); }
+.exame__tabela td, .exame__tabela tbody th { height: auto; padding-block: var(--esp-2); vertical-align: top; }
+.exame__tabela tbody th { padding-inline: var(--esp-3); border-bottom: 1px solid var(--borda); font-weight: 600; text-align: left; color: var(--texto); font-size: var(--fs-base, 1rem); }
+.exame__tabela tr:last-child th { border-bottom: 0; }
+.exame__valor { display: grid; }
+.exame__variacao { font-size: var(--fs-xs); color: var(--texto-sec); }
+.exame__obs { margin: 0; white-space: pre-wrap; }
+.exame__acoes { display: flex; flex-wrap: wrap; gap: var(--esp-2); }
+.exame__excluir { color: var(--vermelho); }
+@media (max-width: 639px) {
+  .exame__tabela tr { grid-template-columns: 1fr 1fr auto; padding: var(--esp-2) var(--esp-3); gap: .2rem var(--esp-3); }
+  .exame__tabela tbody th { display: block; grid-column: 1 / 3; padding: 0; border: 0; }
+  /* Situação vai para o canto, ao lado do nome */
+  .exame__tabela td[data-rotulo="Situação"] { grid-column: 3; grid-row: 1; justify-self: end; }
+  .exame__tabela td[data-rotulo="Situação"]::before { display: none; }
+}
+
+/* Cadastro do exame */
+.exame-dialogo { width: min(760px, calc(100% - 1rem)); max-height: calc(100dvh - 1rem); padding: 0; border: 0; border-radius: 18px; background: var(--fundo); color: var(--texto); box-shadow: var(--sombra-3, 0 20px 60px rgb(0 0 0 / .3)); }
+.exame-dialogo::backdrop { background: rgb(15 25 20 / .5); }
+.exame-dialogo[open] { display: flex; }
+.exame-dialogo__form { display: flex; flex-direction: column; width: 100%; max-height: calc(100dvh - 1rem); }
+.exame-dialogo__topo { display: flex; justify-content: space-between; align-items: center; gap: var(--esp-3); padding: var(--esp-3) var(--esp-5); border-bottom: 1px solid var(--borda); background: var(--superficie); }
+.exame-dialogo__topo h2 { font-size: var(--fs-h3); }
+.exame-dialogo__corpo { display: grid; gap: var(--esp-4); padding: var(--esp-4) var(--esp-5); overflow: auto; }
+.exame-dialogo__linha { display: grid; gap: var(--esp-3); grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); }
+.exame-dialogo__arquivo { display: flex; flex-wrap: wrap; align-items: center; gap: var(--esp-2); }
+.exame-dialogo__arquivo:focus-within label { outline: 3px solid var(--foco); outline-offset: 2px; }
+.exame-dialogo__resultados { display: grid; gap: var(--esp-3); border: 0; padding: 0; margin: 0; }
+.exame-dialogo__pacotes { display: flex; flex-wrap: wrap; gap: var(--esp-2); }
+.exame-linhas { display: grid; gap: var(--esp-2); padding: 0; margin: 0; list-style: none; }
+.exame-linha {
+  position: relative; display: grid; gap: var(--esp-2); padding: var(--esp-3); padding-right: 2.8rem; border-radius: 12px; background: var(--superficie-2);
+  grid-template-columns: minmax(9rem, 2fr) minmax(6rem, 1.2fr) minmax(5rem, 1fr) minmax(5rem, 1fr) minmax(5rem, 1fr);
+}
+.exame-linha .campo__label { font-size: var(--fs-xs); }
+.exame-linha .input { min-height: 40px; padding-block: .4rem; }
+.exame-linha .input[readonly] { background: transparent; border-color: transparent; padding-inline: 0; font-weight: 600; }
+.exame-linha__tirar {
+  position: absolute; top: .4rem; right: .4rem; width: 36px; height: 36px; border: 0; border-radius: 50%;
+  background: var(--superficie); color: var(--vermelho); font-size: 1.3rem; line-height: 1; cursor: pointer;
+}
+@media (max-width: 639px) {
+  .exame-linha { grid-template-columns: 1fr 1fr; }
+  .exame-linha__nome { grid-column: 1 / -1; }
+}
+.exame-dialogo__add .input { max-width: 26rem; }
+.exame-dialogo__acoes { display: flex; justify-content: flex-end; gap: var(--esp-2); padding: var(--esp-3) var(--esp-5); border-top: 1px solid var(--borda); background: var(--superficie); }

@@ -67,7 +67,7 @@
     var erro = $('[data-convite-form-erro]');
     erro.textContent = '';
     var compartilha = {};
-    ['peso', 'agua', 'medicamentos', 'ficha', 'gestacao'].forEach(function (k) { compartilha[k] = form[k].checked; });
+    ['peso', 'agua', 'medicamentos', 'exames', 'ficha', 'gestacao'].forEach(function (k) { compartilha[k] = form[k].checked; });
     if (!Object.keys(compartilha).some(function (k) { return compartilha[k]; })) {
       erro.textContent = 'Marque pelo menos uma informação para compartilhar.';
       return;
